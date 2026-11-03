@@ -369,7 +369,7 @@ GUNLER = [
     ("2027-01-22", "Berat Kandili", "kandil", "Şaban ayının on beşinci gecesi."),
     ("2027-02-07", "İlk Teravih", "gun", "Ramazan'ın ilk gecesi; ilk teravih namazı kılınır."),
     ("2027-02-08", "Ramazan Başlangıcı", "gun", "İlk oruç."),
-    ("2027-03-05", "Kadir Gecesi", "kandil", "Bin aydan daha hayırlı gece (Kadr 97:3)."),
+    ("2027-03-05", "Kadir Gecesi", "kandil", "“Kadir gecesi bin aydan hayırlıdır.” (Kadr 97:3)"),
     ("2027-03-08", "Ramazan Bayramı Arefesi", "arefe", ""),
     ("2027-03-09", "Ramazan Bayramı 1. Gün", "bayram", ""),
     ("2027-03-10", "Ramazan Bayramı 2. Gün", "bayram", ""),
@@ -388,6 +388,11 @@ GUNLER = [
 ]
 DINI = {"kaynak": "Diyanet İşleri Başkanlığı dinî günler takvimi (basında yayımlanan 2026-2027 duyuruları)",
         "gunler": [{"tarih": t, "ad": a, "tur": k, "aciklama": d} for t, a, k, d in GUNLER]}
+
+# Uygulama metinlerinde geçen âyet alıntıları
+for sure, ayet, alinti in [(7, 180, "En güzel isimler Allah'ındır, O'na o isimlerle dua edin"), (97, 3, "Kadir gecesi bin aydan hayırlıdır")]:
+    if norm(alinti) not in norm(MEAL[(sure, ayet)]):
+        HATA.append(f"Alıntı eşleşmedi: {sure}:{ayet}")
 
 if HATA:
     print("\n".join(HATA))

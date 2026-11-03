@@ -51,7 +51,7 @@ targets:
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UIAppFonts: [Amiri-Regular.ttf, Amiri-Bold.ttf]
-        NSLocationWhenInUseUsageDescription: Kıble yönünü bulunduğun yere göre doğru göstermek için kullanılır. Konumun telefondan çıkmaz.
+        NSLocationWhenInUseUsageDescription: Kıble yönünü ve istersen namaz vakitlerini bulunduğun yere göre hesaplamak için kullanılır. Konumun telefondan çıkmaz.
         UIFileSharingEnabled: true
-        LSSupportsOpeningDocumentsInPlace: false
+        LSSupportsOpeningDocumentsInPlace: true
         ITSAppUsesNonExemptEncryption: false
