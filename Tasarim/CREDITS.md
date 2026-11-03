@@ -1,6 +1,6 @@
 # Kaynaklar ve lisanslar
 
-## Ses döngüleri (`Tasarim/ses/`)
+## Ses döngüleri (`Resources/Sounds/`)
 
 | Dosya | Kaynak | Lisans |
 | --- | --- | --- |
@@ -9,7 +9,7 @@
 | dere | Blanket · stream | CC0 |
 | sadirvan | Blanket · stream + Moodist · droplets | CC0 + Pixabay / CC0 |
 
-Her döngü 15–70 sn, eşit güçlü çapraz geçişle dikişsiz; ayrıntılar `veri/manifest.json`.
+Her döngü 15–70 sn, eşit güçlü çapraz geçişle dikişsiz; ayrıntılar `Tasarim/veri/manifest.json`.
 
 ## Metinler
 

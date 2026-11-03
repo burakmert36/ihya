@@ -1,0 +1,91 @@
+name: IPA derle
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "Tasarim/**", ".claude/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # arm64 macOS makinelerinde kapasite sıkıntısı olduğunda Intel makineler kullanılır (iPhone için derleme aynıdır).
+    runs-on: ${{ vars.BUILD_RUNNER || 'macos-15-intel' }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sürüm numarası
+        run: echo "VERSION=$(cat VERSION | tr -d '[:space:]').${{ github.run_number }}" >> "$GITHUB_ENV"
+
+      - name: En yeni Xcode'u seç
+        run: |
+          XC=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
+          [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
+          echo "Seçilen: $XC"
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
+
+      - name: XcodeGen
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Derle
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project Ihya.xcodeproj -scheme Ihya -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            build 2>&1 | tee build.log | grep -E "error:|warning: unre|\*\* BUILD" | head -300
+
+      - name: IPA paketle
+        run: |
+          APP=build/Build/Products/Release-iphoneos/Ihya.app
+          mkdir -p out/Payload
+          cp -R "$APP" out/Payload/
+          (cd out && zip -qry Ihya.ipa Payload)
+          ls -la out/Ihya.ipa
+
+      - name: SideStore kaynağı
+        run: python3 scripts/make_source.py out/Ihya.ipa "$VERSION" "${{ github.repository }}" > out/sidestore.json
+
+      - name: Sürümü yayınla
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "v$VERSION" out/Ihya.ipa out/sidestore.json \
+            --title "İhya $VERSION" \
+            --notes "Telefona kurmak için: SideStore'da kaynak olarak https://github.com/${{ github.repository }}/releases/latest/download/sidestore.json ekle ya da Ihya.ipa dosyasını SideStore ile aç." \
+            --latest
+
+      - name: Derleme özetini kaydet
+        if: always()
+        run: |
+          mkdir -p /tmp/logs
+          {
+            echo "run=${{ github.run_number }} status=${{ job.status }} sha=${{ github.sha }}"
+            if [ -f build.log ]; then
+              grep -E "error:|fatal error|\*\* BUILD" build.log | sort -u | head -200
+              echo "----- son 80 satır -----"
+              tail -80 build.log
+            fi
+          } > /tmp/logs/build-summary.txt
+          git config user.name "build-bot"
+          git config user.email "build-bot@users.noreply.github.com"
+          git fetch origin build-logs || true
+          git checkout -B build-logs
+          git rm -rq --cached . || true
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp /tmp/logs/build-summary.txt .
+          git add build-summary.txt
+          git commit -qm "build ${{ github.run_number }}: ${{ job.status }}" || true
+          git push -f origin build-logs || true
