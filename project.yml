@@ -37,8 +37,8 @@ targets:
     info:
       path: App/Info.plist
       properties:
-        CFBundleDisplayName: İhya
-        CFBundleName: İhya
+        CFBundleDisplayName: Ihya
+        CFBundleName: Ihya
         CFBundleDevelopmentRegion: tr
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)

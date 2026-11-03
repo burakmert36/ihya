@@ -1,0 +1,2 @@
+/* Ana ekrandaki ad. Info.plist ASCII "Ihya" kalır: SideStore App ID adında Türkçe harf kabul etmiyor. */
+"CFBundleDisplayName" = "İhya";
