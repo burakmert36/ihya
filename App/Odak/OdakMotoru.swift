@@ -59,9 +59,13 @@ final class OdakMotoru {
         depo.degistir { $0.devam = d; $0.sonTur = tur; $0.sonPlan = plan }
         depo.hemenKaydet()
         Bildirim.odakBitti(d.bitis, bitki: BitkiKatalogu.ad(tur))
-        if depo.ayarlar.sesOdakta, !depo.kayit.sonKatman.isEmpty, let ses {
-            if !ses.caliyor { ses.yukle(depo.kayit.sonKatman, baslat: true) }
-            if depo.ayarlar.sesSondaAzalt { ses.sondaAzalt(bitis: d.bitis) }
+        if depo.ayarlar.sesOdakta, let ses {
+            let k = ses.katman.isEmpty ? depo.kayit.sonKatman : ses.katman
+            let m = ses.katman.isEmpty ? depo.kayit.sonMesafe : ses.mesafe
+            if !k.isEmpty {
+                if !ses.caliyor { ses.yukle(k, mesafe: m, baslat: true) }
+                if depo.ayarlar.sesSondaAzalt { ses.sondaAzalt(bitis: d.bitis) }
+            }
         }
         Efekt.cal("efekt_baslat", duzey: 0.5)
         Dokunsal.orta()

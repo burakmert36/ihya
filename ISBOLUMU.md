@@ -15,8 +15,8 @@ Bu dosya işin nerede olduğunu gösterir. Her aşama bitince güncellenir.
 | A0 | Proje iskeleti, GitHub derleme hattı (IPA + simülatör ekran görüntüleri), uygulama simgesi | Bitti |
 | A1 | İçerik: 314 Buhârî hadisi, 129 söz, 28 konulu dua, Dua Defterim, 99 isim, dinî günler 2026–2027 | Bitti |
 | A2 | Bitki motoru v2: 27 çiçek, 27 ağaç, evreler, fiyatlar; uygulamada JavaScriptCore ile çizim | Bitti |
-| A3 | Uygulama ekranları ve servisleri (aşağıdaki liste) | Sürüyor |
-| A4 | Ekran görüntüleriyle denetim, düzeltmeler, performans ve pil | Sırada |
+| A3 | Uygulama ekranları ve servisleri (aşağıdaki liste) | Bitti (sürüm 1.0.4+) |
+| A4 | Ekran görüntüleriyle denetim, düzeltmeler, performans ve pil | Sürüyor |
 | A5 | Sürüm yayını ve kısa kullanım notu | Sırada |
 
 ## A3 · Ekranlar
@@ -27,9 +27,9 @@ Bu dosya işin nerede olduğunu gösterir. Her aşama bitince güncellenir.
 | Odak | Tür seçimi, 10–120 dk, konu (ad, renk, açıklama), oturum adı; büyüyen bitki, evre çubuğu; kilitlemek serbest, uygulamadan çıkınca kuruma; tamamlanma kutlaması |
 | Bahçe | Gün/hafta/ay/yıl bahçesi, özet, grafikler, konu dağılımı, seri |
 | Koleksiyon | 54 tür, tohumla kilit açma (dikmek ücretsiz), kilit açılınca kutlama |
-| Sesler | 15 doğa sesi, karışım kaydetme (en çok 6 ses), hepsini kıs, "Odak süresince", "Sonda sesi yavaşça azalt", alt şerit |
+| Sesler | 15 doğa sesi; her ses için ayrı düzey ve yakınlık-uzaklık; karışım kaydetme (en çok 6 ses), hepsini kıs, "Odak süresince", "Sonda sesi yavaşça azalt", alt şerit |
 | Zikir | Dönen tesbih (hız dokunuşa göre), sonsuz sayaç, 33×3 tesbihat, titreşim ve ses ayarı, kaydetme, istatistik |
-| Kitaplık | Hadisler (punto, koyu okuma, kaydetme), sözler, dualar, Dua Defterim, Esmâ, kıble, dinî günler, PDF kitaplar, kaydedilenler |
+| Kitaplık | Hadisler (punto, koyu okuma, kaydetme), sözler, dualar, Dua Defterim (istiğfar ve salavat sayaçlı), Esmâ, kıble, dinî günler, PDF kitaplar, kaydedilenler |
 | Vakitler | Bugün, otuz günlük takvim |
 | Ayarlar | Vakit yeri, bildirimler, ezan ve bildirim sesi, odak, sesler, tesbih, görünüm, kaynaklar |
 

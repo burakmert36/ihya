@@ -48,6 +48,7 @@ struct Karisim: Codable, Identifiable, Hashable {
     var id = UUID()
     var ad: String
     var katman: [String: Double]
+    var mesafe: [String: Double]? = nil
 }
 
 struct Favori: Codable, Identifiable, Hashable {
@@ -155,6 +156,7 @@ struct Kayit: Codable {
     var zikirler: [ZikirKaydi] = []
     var karisimlar: [Karisim] = []
     var sonKatman: [String: Double] = [:]
+    var sonMesafe: [String: Double] = [:]
     var favoriler: [Favori] = []
     var kitaplar: [Kitap] = []
     var namaz: [String: [Int]] = [:]
@@ -164,7 +166,7 @@ struct Kayit: Codable {
     var sonPlan: Int = 25
 
     enum CodingKeys: String, CodingKey {
-        case ayarlar, oturumlar, devam, konular, zikirler, karisimlar, sonKatman, favoriler, kitaplar, namaz, tohum, acik, sonTur, sonPlan
+        case ayarlar, oturumlar, devam, konular, zikirler, karisimlar, sonKatman, sonMesafe, favoriler, kitaplar, namaz, tohum, acik, sonTur, sonPlan
     }
 
     static let varsayilanKonular: [Konu] = [
@@ -183,7 +185,7 @@ extension Kayit {
         ayarlar = v(.ayarlar, ayarlar); oturumlar = v(.oturumlar, oturumlar)
         devam = (try? c.decodeIfPresent(DevamEdenOdak.self, forKey: .devam)) ?? nil
         konular = v(.konular, konular); zikirler = v(.zikirler, zikirler); karisimlar = v(.karisimlar, karisimlar)
-        sonKatman = v(.sonKatman, sonKatman); favoriler = v(.favoriler, favoriler); kitaplar = v(.kitaplar, kitaplar)
+        sonKatman = v(.sonKatman, sonKatman); sonMesafe = v(.sonMesafe, sonMesafe); favoriler = v(.favoriler, favoriler); kitaplar = v(.kitaplar, kitaplar)
         namaz = v(.namaz, namaz); tohum = v(.tohum, tohum); acik = v(.acik, acik)
         sonTur = v(.sonTur, sonTur); sonPlan = v(.sonPlan, sonPlan)
     }

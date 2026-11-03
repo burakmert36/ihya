@@ -35,7 +35,7 @@ struct SeslerEkrani: View {
         .navigationTitle("Sesler")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
-            if ses.katman.isEmpty, !depo.kayit.sonKatman.isEmpty { ses.yukle(depo.kayit.sonKatman, baslat: false) }
+            if ses.katman.isEmpty, !depo.kayit.sonKatman.isEmpty { ses.yukle(depo.kayit.sonKatman, mesafe: depo.kayit.sonMesafe, baslat: false) }
         }
         .alert("Karışımı kaydet", isPresented: $adSor) {
             TextField("Karışım adı", text: $yeniAd)
@@ -87,7 +87,7 @@ struct SeslerEkrani: View {
                     .disabled(ses.katman.isEmpty)
                     ForEach(depo.kayit.karisimlar) { k in
                         Button {
-                            ses.yukle(k.katman, baslat: true)
+                            ses.yukle(k.katman, mesafe: k.mesafe ?? [:], baslat: true)
                             Dokunsal.hafif()
                         } label: {
                             VStack(alignment: .leading, spacing: 2) {
@@ -115,14 +115,34 @@ struct SeslerEkrani: View {
         }
     }
 
+    /// Her ses için ayrı düzey ve yakınlık-uzaklık.
     private var seviyeler: some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
+            BolumBasligi(metin: "Seçili sesler", simge: "slider.horizontal.3")
             ForEach(SesTuru.tumu.filter { ses.katman[$0.id] != nil }) { t in
-                HStack(spacing: 10) {
-                    Image(systemName: t.simge).frame(width: 24).foregroundStyle(Color.ihya)
-                    Text(t.ad).font(.subheadline).frame(width: 118, alignment: .leading).lineLimit(1)
-                    Slider(value: Binding(get: { ses.katman[t.id] ?? 0.7 }, set: { ses.duzey(t.id, $0) }), in: 0.05...1)
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 8) {
+                        Image(systemName: t.simge).frame(width: 22).foregroundStyle(Color.ihya)
+                        Text(t.ad).font(.subheadline.weight(.medium))
+                        Spacer()
+                        Button { ses.degistir(t.id) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.tertiary) }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("\(t.ad) sesini kapat")
+                    }
+                    HStack(spacing: 8) {
+                        Text("Düzey").font(.caption).foregroundStyle(.secondary).frame(width: 46, alignment: .leading)
+                        Image(systemName: "speaker.fill").font(.caption2).foregroundStyle(.secondary)
+                        Slider(value: Binding(get: { ses.katman[t.id] ?? 0.7 }, set: { ses.duzey(t.id, $0) }), in: 0.05...1)
+                        Image(systemName: "speaker.wave.3.fill").font(.caption2).foregroundStyle(.secondary)
+                    }
+                    HStack(spacing: 8) {
+                        Text("Uzaklık").font(.caption).foregroundStyle(.secondary).frame(width: 46, alignment: .leading)
+                        Text("Yakın").font(.caption2).foregroundStyle(.secondary)
+                        Slider(value: Binding(get: { ses.mesafe[t.id] ?? 0 }, set: { ses.mesafeAyarla(t.id, $0) }), in: 0...1)
+                        Text("Uzak").font(.caption2).foregroundStyle(.secondary)
+                    }
                 }
+                if t.id != SesTuru.tumu.last(where: { ses.katman[$0.id] != nil })?.id { Divider() }
             }
         }
         .camKart()
@@ -131,7 +151,7 @@ struct SeslerEkrani: View {
     private func kaydet() {
         let ad = yeniAd.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !ses.katman.isEmpty else { return }
-        let k = Karisim(ad: ad.isEmpty ? "Karışım \(depo.kayit.karisimlar.count + 1)" : ad, katman: ses.katman)
+        let k = Karisim(ad: ad.isEmpty ? "Karışım \(depo.kayit.karisimlar.count + 1)" : ad, katman: ses.katman, mesafe: ses.mesafe)
         depo.degistir { $0.karisimlar.insert(k, at: 0) }
         Dokunsal.basari()
     }

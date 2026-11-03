@@ -4,7 +4,7 @@
 UDID="$1"; OUT="$2"; APPID=com.burakmert36.ihya
 mkdir -p "$OUT"
 cek() { # cek <ekran> <dosya> [bekleme] [görünüm]
-  local ekran="$1" dosya="$2" bekle="${3:-6}" gorunum="${4:-light}"
+  local ekran="$1" dosya="$2" bekle="${3:-13}" gorunum="${4:-light}"
   xcrun simctl ui "$UDID" appearance "$gorunum" || true
   xcrun simctl terminate "$UDID" "$APPID" 2>/dev/null || true
   xcrun simctl launch --terminate-running-process "$UDID" "$APPID" -ekranGoruntusu 1 -ekran "$ekran" > /dev/null
@@ -13,13 +13,13 @@ cek() { # cek <ekran> <dosya> [bekleme] [görünüm]
 }
 # ısınma: ilk açılış yavaş (Intel simülatör); ekran görüntüsünden önce bir kez aç-kapat
 xcrun simctl launch "$UDID" "$APPID" -ekranGoruntusu 1 > /dev/null; sleep 25
-cek bugun 01-bugun 9
+cek bugun 01-bugun 16
 cek odak 02-odak
-cek odak-calisiyor 03-odak-calisiyor 7
-cek odak-bitti 04-odak-bitti 7
-cek bahce 05-bahce 8
+cek odak-calisiyor 03-odak-calisiyor 14
+cek odak-bitti 04-odak-bitti 14
+cek bahce 05-bahce 15
 cek istatistik 06-istatistik
-cek koleksiyon 07-koleksiyon 8
+cek koleksiyon 07-koleksiyon 15
 cek sesler 08-sesler
 cek kitaplik 09-kitaplik
 cek hadis 10-hadis
@@ -35,6 +35,6 @@ cek zikir-istatistik 19-zikir-istatistik
 cek vakitler 20-vakitler
 cek ayarlar 21-ayarlar
 cek okuma 22-okuma
-cek bugun 23-bugun-koyu 8 dark
-cek bahce 24-bahce-koyu 8 dark
+cek bugun 23-bugun-koyu 15 dark
+cek bahce 24-bahce-koyu 15 dark
 xcrun simctl ui "$UDID" appearance light || true

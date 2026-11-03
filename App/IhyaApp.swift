@@ -148,6 +148,7 @@ struct KokGorunum: View {
             switch yeni {
             case .background:
                 odak.arkaPlanaGecti()
+                sesSeciminiSakla()
                 depo.hemenKaydet()
                 ArkaPlan.planla()
             case .active:
@@ -160,9 +161,13 @@ struct KokGorunum: View {
             vakit.ayarla(yeni)
             Task { await Bildirim.vakitleriKur(vakit, yeni) }
         }
-        .onChange(of: ses.katman) { _, yeni in
-            if !yeni.isEmpty { depo.degistir { $0.sonKatman = yeni } }
-        }
+        .onChange(of: Set(ses.katman.keys)) { _, _ in sesSeciminiSakla() }
+    }
+
+    /// Ses seçimi yalnız seçim değişince ve arka plana geçerken saklanır (sürgü sürüklerken her karede değil).
+    private func sesSeciminiSakla() {
+        guard !ses.katman.isEmpty, ses.katman != depo.kayit.sonKatman || ses.mesafe != depo.kayit.sonMesafe else { return }
+        depo.degistir { $0.sonKatman = ses.katman; $0.sonMesafe = ses.mesafe }
     }
 
     private func baslangic() async {

@@ -33,10 +33,15 @@ struct SesTuru: Identifiable, Hashable {
 @MainActor
 private final class Katman {
     let oynatici = AVAudioPlayerNode()
+    /// Uzaklık: alçak geçiren süzgeç (uzak ses boğuk) ve yankı (uzak ses odada dağılır).
+    let suzgec = AVAudioUnitEQ(numberOfBands: 1)
+    let yanki = AVAudioUnitReverb()
     let dosya: AVAudioFile
     let bas: AVAudioFramePosition
     let uzunluk: AVAudioFrameCount
     private var aktif = false
+    private var duzey: Double = 0.7
+    private var mesafe: Double = 0
 
     init?(_ tur: SesTuru) {
         guard let url = Bundle.main.url(forResource: tur.id, withExtension: "mp3"), let f = try? AVAudioFile(forReading: url) else { return nil }
@@ -44,6 +49,22 @@ private final class Katman {
         let sr = f.processingFormat.sampleRate
         bas = AVAudioFramePosition(tur.bas * sr)
         uzunluk = AVAudioFrameCount(min(tur.uzunluk * sr, Double(f.length - bas)))
+        let b = suzgec.bands[0]
+        b.filterType = .lowPass
+        b.frequency = 20000
+        b.bypass = false
+        yanki.loadFactoryPreset(.mediumRoom)
+        yanki.wetDryMix = 2
+    }
+
+    /// d: 0 yakın … 1 uzak. Kesim frekansı 20 kHz'den 1,1 kHz'e iner, yankı artar, ses biraz kısılır.
+    func ayarla(duzey: Double? = nil, mesafe: Double? = nil) {
+        if let duzey { self.duzey = duzey }
+        if let mesafe { self.mesafe = mesafe }
+        let d = max(0, min(1, self.mesafe))
+        suzgec.bands[0].frequency = Float(20000 * pow(1100.0 / 20000.0, d))
+        yanki.wetDryMix = Float(2 + 46 * d)
+        oynatici.volume = Float(self.duzey * (1 - 0.45 * d))
     }
 
     private func kuyruga() {
@@ -73,6 +94,7 @@ private final class Katman {
 final class SesMotoru {
     static let enFazla = 6
     private(set) var katman: [String: Double] = [:]     // seçili sesler ve düzeyleri
+    private(set) var mesafe: [String: Double] = [:]     // 0 yakın … 1 uzak
     private(set) var caliyor = false
     private(set) var anaDuzey: Double = 1
 
@@ -107,6 +129,7 @@ final class SesMotoru {
     func degistir(_ id: String) {
         if katman[id] != nil {
             katman[id] = nil
+            mesafe[id] = nil
             if let k = katmanlar.removeValue(forKey: id) { kapat(k) }
             if katman.isEmpty { duraklat() }
         } else {
@@ -118,7 +141,12 @@ final class SesMotoru {
 
     func duzey(_ id: String, _ v: Double) {
         katman[id] = v
-        katmanlar[id]?.oynatici.volume = Float(v)
+        katmanlar[id]?.ayarla(duzey: v)
+    }
+
+    func mesafeAyarla(_ id: String, _ v: Double) {
+        mesafe[id] = v
+        katmanlar[id]?.ayarla(mesafe: v)
     }
 
     func ana(_ v: Double) {
@@ -128,9 +156,11 @@ final class SesMotoru {
 
     private func uygula() { motor.mainMixerNode.outputVolume = Float(anaDuzey * gecisCarpani) }
 
-    func yukle(_ k: [String: Double], baslat: Bool) {
+    func yukle(_ k: [String: Double], mesafe m: [String: Double] = [:], baslat: Bool) {
         for (id, kat) in katmanlar where k[id] == nil { kapat(kat); katmanlar[id] = nil }
         katman = k.filter { SesTuru.bul($0.key) != nil }
+        mesafe = m.filter { katman[$0.key] != nil }
+        for (id, kat) in katmanlar { kat.ayarla(duzey: katman[id] ?? 0.7, mesafe: mesafe[id] ?? 0) }
         if baslat || caliyor { oynat() }
     }
 
@@ -142,6 +172,7 @@ final class SesMotoru {
             for k in self.katmanlar.values { self.kapat(k) }
             self.katmanlar = [:]
             self.katman = [:]
+            self.mesafe = [:]
             self.caliyor = false
             self.motor.stop()
             self.gecisCarpani = 1
@@ -205,11 +236,16 @@ final class SesMotoru {
     }
 
     private func ac(_ id: String) {
-        if let k = katmanlar[id] { k.oynatici.volume = Float(katman[id] ?? 0.7); k.baslat(); return }
+        if let k = katmanlar[id] { k.ayarla(duzey: katman[id] ?? 0.7, mesafe: mesafe[id] ?? 0); k.baslat(); return }
         guard let tur = SesTuru.bul(id), let k = Katman(tur) else { return }
+        let bicim = k.dosya.processingFormat
         motor.attach(k.oynatici)
-        motor.connect(k.oynatici, to: motor.mainMixerNode, format: k.dosya.processingFormat)
-        k.oynatici.volume = Float(katman[id] ?? 0.7)
+        motor.attach(k.suzgec)
+        motor.attach(k.yanki)
+        motor.connect(k.oynatici, to: k.suzgec, format: bicim)
+        motor.connect(k.suzgec, to: k.yanki, format: bicim)
+        motor.connect(k.yanki, to: motor.mainMixerNode, format: bicim)
+        k.ayarla(duzey: katman[id] ?? 0.7, mesafe: mesafe[id] ?? 0)
         katmanlar[id] = k
         if !motor.isRunning { try? motor.start() }
         k.baslat()
@@ -218,6 +254,8 @@ final class SesMotoru {
     private func kapat(_ k: Katman) {
         k.durdur()
         motor.detach(k.oynatici)
+        motor.detach(k.suzgec)
+        motor.detach(k.yanki)
     }
 
     private func gecisle(hedef: Double, sure: Double, bitince: (() -> Void)? = nil) {

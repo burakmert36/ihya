@@ -171,20 +171,27 @@ struct DefterKarti: View {
                 if let sayac, let t = oge.tekrar {
                     Button {
                         if sayac.wrappedValue < t {
-                            sayac.wrappedValue += 1
-                            if sayac.wrappedValue == t { Dokunsal.basari() } else { Dokunsal.hafif(0.5) }
+                            withAnimation(.snappy) { sayac.wrappedValue += 1 }
+                            if sayac.wrappedValue == t { Dokunsal.basari() }
                         } else {
                             sayac.wrappedValue = 0
                         }
                     } label: {
-                        Text("\(sayac.wrappedValue)/\(t)")
-                            .font(.subheadline.weight(.semibold)).monospacedDigit()
-                            .padding(.horizontal, 12).padding(.vertical, 6)
-                            .background(Capsule().fill(sayac.wrappedValue == t ? Color.ihya : Color.ihya.opacity(0.15)))
-                            .foregroundStyle(sayac.wrappedValue == t ? Color.white : Color.ihya)
-                            .contentTransition(.numericText())
+                        HStack(spacing: 5) {
+                            Image(systemName: sayac.wrappedValue == t ? "checkmark" : "plus")
+                                .font(.footnote.weight(.bold))
+                                .contentTransition(.symbolEffect(.replace))
+                            Text("\(sayac.wrappedValue)/\(t)")
+                                .font(.subheadline.weight(.semibold)).monospacedDigit()
+                                .contentTransition(.numericText(value: Double(sayac.wrappedValue)))
+                        }
+                        .padding(.horizontal, 14).padding(.vertical, 9)
+                        .background(Capsule().fill(sayac.wrappedValue == t ? Color.ihya : Color.ihya.opacity(0.15)))
+                        .foregroundStyle(sayac.wrappedValue == t ? Color.white : Color.ihya)
+                        .contentShape(Capsule())
                     }
                     .buttonStyle(.plain)
+                    .sensoryFeedback(.increase, trigger: sayac.wrappedValue)
                     .accessibilityLabel("Sayaç \(sayac.wrappedValue) / \(t)")
                 } else if let t = oge.tekrar, t > 1 {
                     Text("\(t) kere").font(.caption).foregroundStyle(.secondary)

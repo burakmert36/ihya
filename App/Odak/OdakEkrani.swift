@@ -96,11 +96,16 @@ struct OdakKurulum: View {
         .navigationTitle("Odak")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                Label("\(depo.kayit.tohum)", systemImage: "leaf.circle.fill")
-                    .labelStyle(.titleAndIcon)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color.ihya)
-                    .accessibilityLabel("\(depo.kayit.tohum) tohum")
+                HStack(spacing: 4) {
+                    Image(systemName: "leaf.circle.fill")
+                    Text("\(depo.kayit.tohum)").monospacedDigit()
+                }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Color.ihya)
+                .fixedSize()
+                .padding(.horizontal, 4)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(depo.kayit.tohum) tohum")
             }
             ToolbarItemGroup(placement: .topBarTrailing) {
                 NavigationLink(value: Rota.sesler) { Image(systemName: ses.caliyor ? "speaker.wave.2.fill" : "speaker.wave.2") }
