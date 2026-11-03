@@ -87,7 +87,7 @@ final class SesMotoru {
     init() {
         let m = NotificationCenter.default
         gozlemciler.append(m.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] not in
-            guard let tip = (not.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap { AVAudioSession.InterruptionType(rawValue: $0) } else { return }
+            guard let ham = not.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt, let tip = AVAudioSession.InterruptionType(rawValue: ham) else { return }
             Task { @MainActor in
                 if tip == .ended, self?.caliyor == true { self?.motoruBaslat() }
             }
