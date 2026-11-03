@@ -7,7 +7,6 @@
 | yagmur_hafif, yagmur, yagmur_cam, yagmur_siddetli, firtina, gokgurultusu, kamp_atesi, kafe, kutuphane, orman_ruzgar, kuslar, deniz, gece | Moodist (github.com/remvze/moodist) | Pixabay İçerik Lisansı / CC0 |
 | somine | Blanket (github.com/rafaelmardojai/blanket) · fireplace | Kamu malı |
 | dere | Blanket · stream | CC0 |
-| sadirvan | Blanket · stream + Moodist · droplets | CC0 + Pixabay / CC0 |
 
 Her döngü 15–70 sn, eşit güçlü çapraz geçişle dikişsiz; ayrıntılar `Tasarim/veri/manifest.json`.
 

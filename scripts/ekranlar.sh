@@ -11,6 +11,8 @@ cek() { # cek <ekran> <dosya> [bekleme] [görünüm]
   sleep "$bekle"
   xcrun simctl io "$UDID" screenshot "$OUT/$dosya.png" > /dev/null 2>&1 && echo "✓ $dosya" || echo "✗ $dosya"
 }
+# ısınma: ilk açılış yavaş (Intel simülatör); ekran görüntüsünden önce bir kez aç-kapat
+xcrun simctl launch "$UDID" "$APPID" -ekranGoruntusu 1 > /dev/null; sleep 25
 cek bugun 01-bugun 9
 cek odak 02-odak
 cek odak-calisiyor 03-odak-calisiyor 7
