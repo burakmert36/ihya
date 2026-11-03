@@ -1,0 +1,114 @@
+{
+ "yagmur_hafif": {
+  "L": 60.0,
+  "P": 0.5,
+  "kb": 835,
+  "kaynak": "Moodist · light-rain",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "yagmur": {
+  "L": 34.719297,
+  "P": 0.5,
+  "kb": 489,
+  "kaynak": "Moodist · rain-on-leaves",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "yagmur_cam": {
+  "L": 25.642653,
+  "P": 0.5,
+  "kb": 365,
+  "kaynak": "Moodist · rain-on-window",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "yagmur_siddetli": {
+  "L": 14.288141,
+  "P": 0.5,
+  "kb": 210,
+  "kaynak": "Moodist · heavy-rain",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "firtina": {
+  "L": 48.0,
+  "P": 0.5,
+  "kb": 670,
+  "kaynak": "Moodist · howling-wind",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "gokgurultusu": {
+  "L": 60.0,
+  "P": 0.5,
+  "kb": 835,
+  "kaynak": "Moodist · thunder",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "kamp_atesi": {
+  "L": 60.0,
+  "P": 0.5,
+  "kb": 835,
+  "kaynak": "Moodist · campfire",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "somine": {
+  "L": 18.0,
+  "P": 0.5,
+  "kb": 260,
+  "kaynak": "Blanket · fireplace",
+  "lisans": "Kamu malı (Blanket)"
+ },
+ "kafe": {
+  "L": 70.0,
+  "P": 0.5,
+  "kb": 971,
+  "kaynak": "Moodist · cafe",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "kutuphane": {
+  "L": 70.0,
+  "P": 0.5,
+  "kb": 971,
+  "kaynak": "Moodist · library",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "orman_ruzgar": {
+  "L": 48.0,
+  "P": 0.5,
+  "kb": 670,
+  "kaynak": "Moodist · wind-in-trees",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "kuslar": {
+  "L": 70.0,
+  "P": 0.5,
+  "kb": 971,
+  "kaynak": "Moodist · birds",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "dere": {
+  "L": 70.0,
+  "P": 0.5,
+  "kb": 971,
+  "kaynak": "Blanket · stream",
+  "lisans": "CC0 (Blanket)"
+ },
+ "deniz": {
+  "L": 70.0,
+  "P": 0.5,
+  "kb": 971,
+  "kaynak": "Moodist · waves",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "gece": {
+  "L": 70.0,
+  "P": 0.5,
+  "kb": 971,
+  "kaynak": "Moodist · crickets",
+  "lisans": "Pixabay İçerik Lisansı / CC0 (Moodist)"
+ },
+ "sadirvan": {
+  "L": 44.0,
+  "P": 0.5,
+  "kb": 616,
+  "kaynak": "Blanket · stream + Moodist · droplets",
+  "lisans": "CC0 (Blanket) + Pixabay/CC0 (Moodist)"
+ }
+}

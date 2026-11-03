@@ -1,0 +1,48 @@
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<radialGradient id="gGolge" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#0B2A12" stop-opacity="0.42"/><stop offset="1" stop-color="#0B2A12" stop-opacity="0"/></radialGradient>
+<linearGradient id="gToprak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B98A5E"/><stop offset="1" stop-color="#6B4A31"/></linearGradient>
+<linearGradient id="gYaprak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A8EC72"/><stop offset=".5" stop-color="#43A84F"/><stop offset="1" stop-color="#1D6633"/></linearGradient>
+<linearGradient id="gYaprakGenc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E3FF9E"/><stop offset=".55" stop-color="#8BD45A"/><stop offset="1" stop-color="#3E8E3A"/></linearGradient>
+<linearGradient id="gYaprakKoyu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7FD06E"/><stop offset=".55" stop-color="#2A8445"/><stop offset="1" stop-color="#0F4A28"/></linearGradient>
+<linearGradient id="gYaprakParlak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9BF08A"/><stop offset="1" stop-color="#2E9A4E"/></linearGradient>
+<linearGradient id="gLaleYaprak" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9FD08A"/><stop offset=".5" stop-color="#5C9E66"/><stop offset="1" stop-color="#2F6A44"/></linearGradient>
+<linearGradient id="gReyhan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#B9FF7A"/><stop offset=".5" stop-color="#4DBA45"/><stop offset="1" stop-color="#1E7A2E"/></linearGradient>
+<linearGradient id="gLavantaYaprak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C9DDB8"/><stop offset="1" stop-color="#6E8E66"/></linearGradient>
+<linearGradient id="gZeytinGumus" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EEF6DC"/><stop offset=".5" stop-color="#A7C48E"/><stop offset="1" stop-color="#5E7E52"/></linearGradient>
+<linearGradient id="gHurmaYaprak" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C6EE7E"/><stop offset=".5" stop-color="#6AAE48"/><stop offset="1" stop-color="#2F6A2E"/></linearGradient>
+<radialGradient id="gKureKoyu" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#7CE06E"/><stop offset=".45" stop-color="#22884A"/><stop offset="1" stop-color="#0B3D24"/></radialGradient>
+<radialGradient id="gKureNar" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#8FE276"/><stop offset=".5" stop-color="#2E8C3E"/><stop offset="1" stop-color="#114822"/></radialGradient>
+<radialGradient id="gKureZeytin" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#C8E29E"/><stop offset=".5" stop-color="#6E9A58"/><stop offset="1" stop-color="#2E4E2C"/></radialGradient>
+<radialGradient id="gKureCinar" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#D6FF8E"/><stop offset=".45" stop-color="#5DBB4C"/><stop offset="1" stop-color="#1F6A2E"/></radialGradient>
+<radialGradient id="gParlak" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".9"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient>
+<linearGradient id="gGovde" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5A3A24"/><stop offset=".4" stop-color="#B08560"/><stop offset="1" stop-color="#4A2F1E"/></linearGradient>
+<linearGradient id="gGovdeKoyu" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3A241A"/><stop offset=".4" stop-color="#7E5640"/><stop offset="1" stop-color="#2E1C14"/></linearGradient>
+<linearGradient id="gGovdeGri" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4E463C"/><stop offset=".45" stop-color="#B9AE9A"/><stop offset="1" stop-color="#3E372F"/></linearGradient>
+<linearGradient id="gGovdeCinar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6E6450"/><stop offset=".45" stop-color="#CFC2A2"/><stop offset="1" stop-color="#5A5040"/></linearGradient>
+<linearGradient id="gHurmaGovde" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6B4A2A"/><stop offset=".45" stop-color="#C79A62"/><stop offset="1" stop-color="#5A3A20"/></linearGradient>
+<linearGradient id="gServi" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4E9A62"/><stop offset=".45" stop-color="#1F5A3A"/><stop offset="1" stop-color="#0B2A1D"/></linearGradient>
+<linearGradient id="gGonca" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="p3gul1" stop-color="#FF6C8A"/><stop offset=".6" class="p3gul2" stop-color="#D5123F"/><stop offset="1" stop-color="#7A0624"/></linearGradient>
+<linearGradient id="gGulDis" x1="0" y1="0" x2="1" y2="1"><stop offset="0" class="p3gul1" stop-color="#FF8AA2"/><stop offset=".55" class="p3gul2" stop-color="#E01848"/><stop offset="1" stop-color="#8E0A2C"/></linearGradient>
+<radialGradient id="gGul" cx="35%" cy="30%" r="80%"><stop offset="0" class="p3gul1" stop-color="#FF7A93"/><stop offset=".6" class="p3gul2" stop-color="#DA1444"/><stop offset="1" stop-color="#7E0626"/></radialGradient>
+<linearGradient id="gGulIc" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C4123C"/><stop offset="1" stop-color="#5E031B"/></linearGradient>
+<linearGradient id="gLale" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="p3lale" stop-color="#FF4040"/><stop offset=".72" stop-color="#D9142A"/><stop offset="1" stop-color="#FFB020"/></linearGradient>
+<linearGradient id="gLaleOn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF7A6A"/><stop offset=".6" class="p3lale" stop-color="#F0262E"/><stop offset="1" stop-color="#FFC233"/></linearGradient>
+<linearGradient id="gLaleTom" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E8505A"/><stop offset="1" stop-color="#6FAE5A"/></linearGradient>
+<radialGradient id="gSogan" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#F3D7B0"/><stop offset="1" stop-color="#A06A3C"/></radialGradient>
+<radialGradient id="gSoganMor" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#E8C8E8"/><stop offset="1" stop-color="#7A4A7E"/></radialGradient>
+<linearGradient id="gMenekse" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D9B2FF"/><stop offset=".55" class="p3mor" stop-color="#8A4FE0"/><stop offset="1" stop-color="#4E2290"/></linearGradient>
+<linearGradient id="gSumbul" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C6BCFF"/><stop offset=".55" class="p3mor" stop-color="#6A55F0"/><stop offset="1" stop-color="#3A2A9E"/></linearGradient>
+<radialGradient id="gSumbulTom" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#C9E6B8"/><stop offset="1" stop-color="#6F7FB8"/></radialGradient>
+<linearGradient id="gLavanta" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D8C2FF"/><stop offset="1" stop-color="#7A4FD8"/></linearGradient>
+<radialGradient id="gBadem" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".55" stop-color="#FFD6E4"/><stop offset="1" stop-color="#F08DAE"/></radialGradient>
+<radialGradient id="gBeyaz" cx="40%" cy="35%" r="70%"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EDE6D6"/></radialGradient>
+<linearGradient id="gNarCicek" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF8A3D"/><stop offset="1" stop-color="#E2273A"/></linearGradient>
+<radialGradient id="gNar" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#FF9A8A"/><stop offset=".5" class="p3nar" stop-color="#E2273A"/><stop offset="1" stop-color="#7E0C1E"/></radialGradient>
+<radialGradient id="gTurunc" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#FFE9A0"/><stop offset=".5" class="p3turunc" stop-color="#FF9A1F"/><stop offset="1" stop-color="#C24E08"/></radialGradient>
+<radialGradient id="gZeytinMeyve" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#9A86B6"/><stop offset=".5" stop-color="#3E2C55"/><stop offset="1" stop-color="#1A1028"/></radialGradient>
+<radialGradient id="gZeytinYesil" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#E4F0A0"/><stop offset="1" stop-color="#7A8E2E"/></radialGradient>
+<radialGradient id="gHurmaMeyve" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#FFD27A"/><stop offset=".55" stop-color="#E07B1F"/><stop offset="1" stop-color="#8F3D0E"/></radialGradient>
+<linearGradient id="gSaksi" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9A4A2A"/><stop offset=".4" stop-color="#E08A5A"/><stop offset="1" stop-color="#8A3E22"/></linearGradient>
+<linearGradient id="gSaksiAgiz" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B05A34"/><stop offset=".4" stop-color="#F2A270"/><stop offset="1" stop-color="#9A4628"/></linearGradient>
+<linearGradient id="gKuru" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D9C7A6"/><stop offset="1" stop-color="#8E7A60"/></linearGradient>
+<style>@supports (color: color(display-p3 1 0 0)){.p3gul1{stop-color:color(display-p3 1 0.45 0.58)}.p3gul2{stop-color:color(display-p3 0.9 0.05 0.27)}.p3lale{stop-color:color(display-p3 0.98 0.12 0.15)}.p3mor{stop-color:color(display-p3 0.52 0.3 0.95)}.p3nar{stop-color:color(display-p3 0.92 0.12 0.22)}.p3turunc{stop-color:color(display-p3 1 0.6 0.05)}}</style></defs></svg>

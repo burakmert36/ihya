@@ -1,0 +1,10 @@
+.claude/
+Tasarim/ses/
+Tasarim/veri/
+*.mp3
+*.caf
+*.json
+*.svg
+*.png
+*.txt
+graphify-out/
