@@ -10,7 +10,9 @@
     "humanizer@humanizer": true,
     "hallmark@hallmark": true,
     "diagram-design@diagram-design": true,
-    "last30days@last30days-skill": true
+    "last30days@last30days-skill": true,
+    "ponytail@ponytail": true,
+    "impeccable@impeccable": true
   },
   "extraKnownMarketplaces": {
     "superpowers-marketplace": {
@@ -77,6 +79,18 @@
       "source": {
         "source": "github",
         "repo": "mvanhorn/last30days-skill"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    },
+    "impeccable": {
+      "source": {
+        "source": "github",
+        "repo": "pbakaus/impeccable"
       }
     }
   }
