@@ -167,12 +167,15 @@ final class BitkiMotoru: @unchecked Sendable {
             kuyruk.async {
                 if let r = self.onbellek.object(forKey: anahtar) { devam.resume(returning: r); return }
                 let sekil = self.sekiller(tur, dk, tohum, lod)
-                let bicim = UIGraphicsImageRendererFormat()
-                bicim.scale = olcek
-                bicim.opaque = false
-                let resim = UIGraphicsImageRenderer(size: boyut, format: bicim).image { c in
-                    self.ciz(sekil, c.cgContext, boyut: boyut, cerceve: cerceve)
-                }
+                let w = Int((boyut.width * olcek).rounded()), h = Int((boyut.height * olcek).rounded())
+                guard let uzay = CGColorSpace(name: CGColorSpace.sRGB),
+                      let c = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0, space: uzay,
+                                        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { devam.resume(returning: nil); return }
+                c.translateBy(x: 0, y: CGFloat(h))
+                c.scaleBy(x: olcek, y: -olcek)
+                self.ciz(sekil, c, boyut: boyut, cerceve: cerceve)
+                guard let cg = c.makeImage() else { devam.resume(returning: nil); return }
+                let resim = UIImage(cgImage: cg, scale: olcek, orientation: .up)
                 self.onbellek.setObject(resim, forKey: anahtar)
                 devam.resume(returning: resim)
             }

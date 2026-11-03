@@ -7,7 +7,7 @@ import SwiftUI
 @Observable
 final class Depo {
     private(set) var kayit: Kayit
-    @ObservationIgnored private let kalici: Bool
+    private let kalici: Bool
     @ObservationIgnored private var yazmaGorevi: Task<Void, Never>?
 
     static var dosya: URL {

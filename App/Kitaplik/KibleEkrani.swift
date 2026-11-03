@@ -5,13 +5,14 @@ import SwiftUI
 @Observable
 final class KibleYonetici: NSObject, CLLocationManagerDelegate {
     var yon: Double = 0                 // cihazın baktığı yön (derece, kuzeyden)
+    var surekliYon: Double = 0          // animasyon için 360'ta sıçramayan yön
     var pusulaVar = CLLocationManager.headingAvailable()
     var enlem = 40.1826
     var boylam = 29.0665
     var konumlu = false
     var dogruluk: Double = -1
 
-    @ObservationIgnored private let yonetici = CLLocationManager()
+    private let yonetici = CLLocationManager()
     static let kabe = (enlem: 21.4225, boylam: 39.8262)
 
     override init() {
@@ -47,7 +48,9 @@ final class KibleYonetici: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
-        yon = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        let yeni = newHeading.trueHeading >= 0 ? newHeading.trueHeading : newHeading.magneticHeading
+        surekliYon += Aci.normal(yeni - yon)
+        yon = yeni
         dogruluk = newHeading.headingAccuracy
     }
 
@@ -72,7 +75,7 @@ struct KibleEkrani: View {
     @State private var y = KibleYonetici()
 
     var body: some View {
-        let fark = Self.aci(y.kibleAcisi - y.yon)
+        let fark = Aci.normal(y.kibleAcisi - y.yon)
         let hizali = y.pusulaVar && abs(fark) < 4
         VStack(spacing: 24) {
             VStack(spacing: 4) {
@@ -89,8 +92,8 @@ struct KibleEkrani: View {
                     .fill(hizali ? Color.ihya.opacity(0.14) : Color.secondary.opacity(0.06))
                     .animation(.easeInOut(duration: 0.3), value: hizali)
                 Kadran(kible: y.kibleAcisi)
-                    .rotationEffect(.degrees(-y.yon))
-                    .animation(.interpolatingSpring(stiffness: 60, damping: 14), value: y.yon)
+                    .rotationEffect(.degrees(-y.surekliYon))
+                    .animation(.spring(response: 0.45, dampingFraction: 0.8), value: y.surekliYon)
                 Image(systemName: "arrowtriangle.up.fill")
                     .font(.title3)
                     .foregroundStyle(hizali ? Color.ihya : .primary)
@@ -120,8 +123,11 @@ struct KibleEkrani: View {
         .onDisappear { y.durdur() }
     }
 
+}
+
+enum Aci {
     /// -180…180 aralığına getirir.
-    static func aci(_ a: Double) -> Double {
+    static func normal(_ a: Double) -> Double {
         var x = a.truncatingRemainder(dividingBy: 360)
         if x > 180 { x -= 360 }
         if x < -180 { x += 360 }

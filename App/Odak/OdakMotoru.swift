@@ -19,7 +19,7 @@ final class OdakMotoru {
     /// Tamamlanan oturumdan sonra kilidi açılabilecek ilk tür (kutlama ekranı için)
     private(set) var sonKazanc = 0
 
-    @ObservationIgnored private let depo: Depo
+    private let depo: Depo
     @ObservationIgnored private weak var ses: SesMotoru?
     @ObservationIgnored private var arkaPlanGiris: Date?
     @ObservationIgnored private var sonKilit: Date?
@@ -175,8 +175,10 @@ enum KilitDinleyici {
     static func kur(_ c: @escaping @MainActor () -> Void) {
         geriCagri = c
         let merkez = CFNotificationCenterGetDarwinNotifyCenter()
-        CFNotificationCenterAddObserver(merkez, nil, { _, _, _, _, _ in
-            Task { @MainActor in KilitDinleyici.geriCagri?() }
-        }, "com.apple.springboard.lockcomplete" as CFString, nil, .deliverImmediately)
+        CFNotificationCenterAddObserver(merkez, nil, kilitGeriCagrisi, "com.apple.springboard.lockcomplete" as CFString, nil, .deliverImmediately)
     }
+
+    fileprivate static func bildir() { Task { @MainActor in geriCagri?() } }
 }
+
+private let kilitGeriCagrisi: CFNotificationCallback = { _, _, _, _, _ in KilitDinleyici.bildir() }

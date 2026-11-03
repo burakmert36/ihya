@@ -8,6 +8,13 @@ struct GunVakti: Codable, Hashable {
     let hicri: String
 }
 
+enum VakitSabit {
+    static let ilceKodu = 9335 // Bursa merkez
+    static var onbellekDosyasi: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("vakitler.json")
+    }
+}
+
 enum VakitAdi {
     static let adlar = ["İmsak", "Güneş", "Öğle", "İkindi", "Akşam", "Yatsı"]
     /// "İkindi Vaktine", "Akşam Vaktine" (başlıklar için)
@@ -27,14 +34,10 @@ final class VakitServisi {
     private(set) var boylam = 29.0665
     private(set) var konumAdi = "Bursa"
 
-    static let ilceKodu = 9335 // Bursa merkez
-    private static var onbellekDosyasi: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("vakitler.json")
-    }
 
     init() {
         for g in VakitServisi.gomulu() { takvim[g.gun] = g }
-        if let veri = try? Data(contentsOf: VakitServisi.onbellekDosyasi), let liste = try? JSONDecoder().decode([GunVakti].self, from: veri) {
+        if let veri = try? Data(contentsOf: VakitSabit.onbellekDosyasi), let liste = try? JSONDecoder().decode([GunVakti].self, from: veri) {
             for g in liste { takvim[g.gun] = g }
         }
     }
@@ -99,7 +102,7 @@ final class VakitServisi {
     }
 
     nonisolated static func indir() async -> [GunVakti]? {
-        guard let url = URL(string: "https://ezanvakti.emushaf.net/vakitler/\(ilceKodu)") else { return nil }
+        guard let url = URL(string: "https://ezanvakti.emushaf.net/vakitler/\(VakitSabit.ilceKodu)") else { return nil }
         var istek = URLRequest(url: url, timeoutInterval: 20)
         istek.setValue("application/json", forHTTPHeaderField: "Accept")
         guard let (veri, yanit) = try? await URLSession.shared.data(for: istek),
@@ -119,7 +122,7 @@ final class VakitServisi {
     nonisolated static func onbellegeYaz(_ liste: [GunVakti]) {
         let esik = Depo.gunAnahtariBagimsiz(Calendar.current.date(byAdding: .day, value: -3, to: .now)!)
         let tut = liste.filter { $0.gun >= esik }.sorted { $0.gun < $1.gun }
-        if let veri = try? JSONEncoder().encode(tut) { try? veri.write(to: onbellekDosyasi, options: .atomic) }
+        if let veri = try? JSONEncoder().encode(tut) { try? veri.write(to: VakitSabit.onbellekDosyasi, options: .atomic) }
     }
 
     /// Pakete gömülü 30 günlük Diyanet cetveli.

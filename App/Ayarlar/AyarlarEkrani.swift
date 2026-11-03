@@ -179,7 +179,7 @@ private struct Kaynak: View {
 /// Tek seferlik konum (vakit hesabı için).
 @Observable
 final class KonumAlici: NSObject, CLLocationManagerDelegate {
-    @ObservationIgnored private let y = CLLocationManager()
+    private let y = CLLocationManager()
     @ObservationIgnored private var bitince: ((Double, Double) -> Void)?
 
     override init() {

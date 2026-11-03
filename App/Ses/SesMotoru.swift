@@ -76,7 +76,7 @@ final class SesMotoru {
     private(set) var caliyor = false
     private(set) var anaDuzey: Double = 1
 
-    @ObservationIgnored private let motor = AVAudioEngine()
+    private let motor = AVAudioEngine()
     @ObservationIgnored private var katmanlar: [String: Katman] = [:]
     @ObservationIgnored private var gecis: Task<Void, Never>?
     @ObservationIgnored private var sonumGorevi: Task<Void, Never>?
@@ -87,7 +87,7 @@ final class SesMotoru {
     init() {
         let m = NotificationCenter.default
         gozlemciler.append(m.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] not in
-            guard let tip = (not.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap(AVAudioSession.InterruptionType.init) else { return }
+            guard let tip = (not.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap { AVAudioSession.InterruptionType(rawValue: $0) } else { return }
             Task { @MainActor in
                 if tip == .ended, self?.caliyor == true { self?.motoruBaslat() }
             }
