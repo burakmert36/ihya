@@ -196,7 +196,7 @@ struct OdakOzeti: View {
                 Spacer()
                 HStack(spacing: -10) {
                     ForEach(bugun.suffix(5)) { o in
-                        BitkiResmi(tur: o.tur, dk: o.sure, tohum: o.tohum, cerceve: CGRect(x: -6, y: -14, width: 112, height: 134), lod: 0.6, kurudu: o.durum == .vazgecildi)
+                        BitkiResmi(tur: o.tur, dk: o.sure, tohum: o.tohum, lod: 0.6, kurudu: o.durum == .vazgecildi, sigdir: true)
                             .frame(width: 40, height: 48)
                     }
                 }

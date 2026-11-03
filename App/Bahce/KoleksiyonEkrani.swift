@@ -62,7 +62,7 @@ struct KoleksiyonHucresi: View {
     var body: some View {
         VStack(spacing: 6) {
             ZStack(alignment: .topTrailing) {
-                BitkiResmi(tur: tur.id, dk: Double(tur.dk), tohum: 7, cerceve: CGRect(x: -6, y: -14, width: 112, height: 134), lod: 0.6, siluet: !acik)
+                BitkiResmi(tur: tur.id, dk: Double(tur.dk), tohum: 7, lod: 0.6, siluet: !acik, sigdir: true)
                     .frame(height: 96)
                 if tur.nadide {
                     Image(systemName: "sparkles").font(.caption).foregroundStyle(Color(red: 0.9, green: 0.65, blue: 0.1))
@@ -99,7 +99,7 @@ struct BitkiDetay: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 18) {
-                    BitkiResmi(tur: tur.id, dk: Double(tur.dk), tohum: 7, cerceve: CGRect(x: -4, y: -10, width: 108, height: 128), siluet: !acik)
+                    BitkiResmi(tur: tur.id, dk: Double(tur.dk), tohum: 7, siluet: !acik, sigdir: true)
                         .frame(height: 250)
                     VStack(spacing: 6) {
                         Text(tur.ad).font(.title.weight(.bold))

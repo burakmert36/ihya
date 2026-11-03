@@ -57,6 +57,9 @@ jobs:
         continue-on-error: true
         run: |
           xcrun simctl install "$UDID" dd/Build/Products/Debug-iphonesimulator/Ihya.app
+          xcrun simctl privacy "$UDID" grant location com.burakmert36.ihya || true
+          xcrun simctl privacy "$UDID" grant location-always com.burakmert36.ihya || true
+          xcrun simctl location "$UDID" set 40.1826,29.0665 || true
           bash scripts/ekranlar.sh "$UDID" shots 2>&1 | tee logs/ekran.log
 
       - name: Sonuçları kaydet

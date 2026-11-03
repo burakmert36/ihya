@@ -34,6 +34,9 @@ struct SeslerEkrani: View {
         }
         .navigationTitle("Sesler")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if ses.katman.isEmpty, !depo.kayit.sonKatman.isEmpty { ses.yukle(depo.kayit.sonKatman, baslat: false) }
+        }
         .alert("Karışımı kaydet", isPresented: $adSor) {
             TextField("Karışım adı", text: $yeniAd)
             Button("Kaydet") { kaydet() }

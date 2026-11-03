@@ -127,7 +127,7 @@ struct OturumSatiri: View {
     var body: some View {
         HStack(spacing: 12) {
             BitkiResmi(tur: oturum.tur, dk: oturum.durum == .tamam ? Double(oturum.plan) : max(1, oturum.sure), tohum: oturum.tohum,
-                       cerceve: CGRect(x: -4, y: -12, width: 108, height: 130), lod: 0.5, kurudu: oturum.durum == .vazgecildi)
+                       lod: 0.5, kurudu: oturum.durum == .vazgecildi, sigdir: true)
                 .frame(width: 36, height: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text(oturum.ad.isEmpty ? BitkiKatalogu.ad(oturum.tur) : oturum.ad).font(.subheadline.weight(.medium)).lineLimit(1)
@@ -302,7 +302,7 @@ struct IstatistikEkrani: View {
                             HStack(spacing: 14) {
                                 ForEach(turler) { t in
                                     VStack(spacing: 4) {
-                                        BitkiResmi(tur: t.tur, dk: Double(BitkiKatalogu.bul(t.tur)?.dk ?? 25), cerceve: CGRect(x: -4, y: -10, width: 108, height: 128), lod: 0.6)
+                                        BitkiResmi(tur: t.tur, dk: Double(BitkiKatalogu.bul(t.tur)?.dk ?? 25), lod: 0.6, sigdir: true)
                                             .frame(width: 56, height: 66)
                                         Text("\(BitkiKatalogu.ad(t.tur)) ×\(t.adet)").font(.caption2)
                                     }

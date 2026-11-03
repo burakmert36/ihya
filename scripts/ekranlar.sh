@@ -7,7 +7,7 @@ cek() { # cek <ekran> <dosya> [bekleme] [görünüm]
   local ekran="$1" dosya="$2" bekle="${3:-6}" gorunum="${4:-light}"
   xcrun simctl ui "$UDID" appearance "$gorunum" || true
   xcrun simctl terminate "$UDID" "$APPID" 2>/dev/null || true
-  xcrun simctl launch "$UDID" "$APPID" -ekranGoruntusu 1 -ekran "$ekran" > /dev/null
+  xcrun simctl launch --terminate-running-process "$UDID" "$APPID" -ekranGoruntusu 1 -ekran "$ekran" > /dev/null
   sleep "$bekle"
   xcrun simctl io "$UDID" screenshot "$OUT/$dosya.png" > /dev/null 2>&1 && echo "✓ $dosya" || echo "✗ $dosya"
 }

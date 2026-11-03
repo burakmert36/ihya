@@ -155,7 +155,7 @@ struct OdakKurulum: View {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.6).delay(0.15)) { zipla = false }
                     } label: {
                         VStack(spacing: 4) {
-                            BitkiResmi(tur: b.id, dk: Double(b.dk), tohum: 7, cerceve: CGRect(x: -2, y: -6, width: 104, height: 124), lod: 0.6)
+                            BitkiResmi(tur: b.id, dk: Double(b.dk), tohum: 7, lod: 0.6, sigdir: true)
                                 .frame(width: 54, height: 62)
                             Text(b.ad).font(.caption2).lineLimit(1)
                         }

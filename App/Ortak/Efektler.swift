@@ -61,7 +61,7 @@ struct KilitKutlamasi: View {
                         .fill(Color(hex: tur.renk).opacity(0.18))
                         .frame(width: 210, height: 210)
                         .scaleEffect(asama >= 1 ? 1 : 0.2)
-                    BitkiResmi(tur: tur.id, dk: Double(tur.dk), tohum: 7, cerceve: CGRect(x: -4, y: -10, width: 108, height: 128))
+                    BitkiResmi(tur: tur.id, dk: Double(tur.dk), tohum: 7, sigdir: true)
                         .frame(width: 180, height: 210)
                         .scaleEffect(asama >= 1 ? 1 : 0.1)
                         .rotationEffect(.degrees(asama >= 1 ? 0 : -25))

@@ -159,9 +159,10 @@ final class BitkiMotoru: @unchecked Sendable {
     }
 
     /// Bitkiyi verilen boyutta (pt) ve çerçevede (çizim birimi) çizer.
-    func resim(tur: String, dk: Double, tohum: Int, boyut: CGSize, olcek: CGFloat, cerceve: CGRect, lod: Double = 1) async -> UIImage? {
+    /// sigdir: çerçeveyi yok sayar, bitkinin kendi sınırına göre kadrajlar (küçük simgeler için).
+    func resim(tur: String, dk: Double, tohum: Int, boyut: CGSize, olcek: CGFloat, cerceve: CGRect, lod: Double = 1, sigdir: Bool = false) async -> UIImage? {
         guard boyut.width > 1, boyut.height > 1 else { return nil }
-        let anahtar = "\(tur)|\(Int(dk * 20))|\(tohum)|\(Int(boyut.width))x\(Int(boyut.height))|\(Int(cerceve.minX)),\(Int(cerceve.minY)),\(Int(cerceve.width)),\(Int(cerceve.height))|\(lod)" as NSString
+        let anahtar = "\(tur)|\(Int(dk * 20))|\(tohum)|\(Int(boyut.width))x\(Int(boyut.height))|\(Int(cerceve.minX)),\(Int(cerceve.minY)),\(Int(cerceve.width)),\(Int(cerceve.height))|\(lod)|\(sigdir)" as NSString
         if let r = onbellek.object(forKey: anahtar) { return r }
         return await withCheckedContinuation { devam in
             kuyruk.async {
@@ -173,13 +174,33 @@ final class BitkiMotoru: @unchecked Sendable {
                                         bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { devam.resume(returning: nil); return }
                 c.translateBy(x: 0, y: CGFloat(h))
                 c.scaleBy(x: olcek, y: -olcek)
-                self.ciz(sekil, c, boyut: boyut, cerceve: cerceve)
+                self.ciz(sekil, c, boyut: boyut, cerceve: sigdir ? self.kadraj(sekil, oran: boyut.width / boyut.height) : cerceve)
                 guard let cg = c.makeImage() else { devam.resume(returning: nil); return }
                 let resim = UIImage(cgImage: cg, scale: olcek, orientation: .up)
                 self.onbellek.setObject(resim, forKey: anahtar)
                 devam.resume(returning: resim)
             }
         }
+    }
+
+    /// Şekillerin sınırına (gölge hariç) göre, alt kenarı koruyarak istenen orana genişletilmiş kadraj.
+    private func kadraj(_ sekiller: [Sekil], oran: CGFloat) -> CGRect {
+        var r = CGRect.null
+        for s in sekiller where s.f != "url(#gGolge)" {
+            let y = yol(s.d)
+            let b = s.s != "none" && s.w > 0 ? y.boundingBoxOfPath.insetBy(dx: -s.w / 2, dy: -s.w / 2) : y.boundingBoxOfPath
+            if !b.isNull, b.width.isFinite { r = r.union(b) }
+        }
+        guard !r.isNull, r.width > 0.5, r.height > 0.5 else { return CGRect(x: 0, y: 0, width: 100, height: 120) }
+        var b = r.insetBy(dx: -max(1.5, r.width * 0.08), dy: -max(1.5, r.height * 0.06))
+        if b.width / b.height < oran {
+            let w = b.height * oran
+            b = CGRect(x: b.midX - w / 2, y: b.minY, width: w, height: b.height)
+        } else {
+            let h = b.width / oran
+            b = CGRect(x: b.minX, y: b.maxY - h, width: b.width, height: h)
+        }
+        return b
     }
 
     private func ciz(_ sekiller: [Sekil], _ c: CGContext, boyut: CGSize, cerceve: CGRect) {
@@ -308,13 +329,14 @@ struct BitkiResmi: View {
     var lod: Double = 1
     var kurudu = false
     var siluet = false
+    var sigdir = false
 
     @Environment(\.displayScale) private var olcek
     @State private var resim: UIImage?
 
     var body: some View {
         GeometryReader { geo in
-            let anahtar = "\(tur)|\(Int(dk * 20))|\(tohum)|\(Int(geo.size.width))x\(Int(geo.size.height))|\(cerceve.debugDescription)|\(lod)"
+            let anahtar = "\(tur)|\(Int(dk * 20))|\(tohum)|\(Int(geo.size.width))x\(Int(geo.size.height))|\(cerceve.debugDescription)|\(lod)|\(sigdir)"
             Group {
                 if let resim {
                     Image(uiImage: resim)
@@ -327,13 +349,13 @@ struct BitkiResmi: View {
             }
             .frame(width: geo.size.width, height: geo.size.height)
             .task(id: anahtar) {
-                let r = await BitkiMotoru.ortak.resim(tur: tur, dk: dk, tohum: tohum, boyut: geo.size, olcek: olcek, cerceve: cerceve, lod: lod)
+                let r = await BitkiMotoru.ortak.resim(tur: tur, dk: dk, tohum: tohum, boyut: geo.size, olcek: olcek, cerceve: cerceve, lod: lod, sigdir: sigdir)
                 if let r { resim = r }
             }
         }
         .saturation(kurudu ? 0.15 : 1)
         .colorMultiply(kurudu ? Color(red: 0.82, green: 0.68, blue: 0.52) : .white)
         .brightness(siluet ? -1 : 0)
-        .opacity(siluet ? 0.22 : 1)
+        .opacity(siluet ? 0.3 : 1)
     }
 }
