@@ -152,11 +152,8 @@ final class Yonlendirici {
         return yol.last?.sahne ?? sekme.sahne
     }
 
-    /// PDF okurken alt çubuk gizlenir.
-    var okumada: Bool {
-        if case .kitap = yol.last { return true }
-        return false
-    }
+    /// Alt çubuk yalnız kök ekranlarda görünür (alt ekranlar kendi düğmelerini alta koyar).
+    var okumada: Bool { !yol.isEmpty }
 
     func odakAc() {
         odakYol = []
@@ -394,7 +391,7 @@ struct AltCubuk: View {
 
                     Button { yon.odakAc(); Dokunsal.orta() } label: {
                         FilizSimgesi()
-                            .fill(.white)
+                            .fill(palet.dolguMetin)
                             .frame(width: 30, height: 30)
                             .frame(width: 64, height: 64)
                             .contentShape(Circle())

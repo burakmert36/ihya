@@ -487,7 +487,6 @@ struct OdakCalisiyor: View {
         HStack(spacing: 10) {
             if d.molada {
                 AnaDugme(baslik: "DEVAM", yukseklik: 40) { odak.molayiBitir() }
-                    .layoutPriority(1)
             } else {
                 Button { odak.molaVer() } label: {
                     Text("Mola · 5 dk").font(.kalin(16)).tracking(0.4).frame(maxWidth: .infinity, minHeight: 40)
@@ -559,21 +558,21 @@ struct OdakSonuc: View {
             HStack(spacing: 10) {
                 if basarili {
                     AnaDugme(baslik: "BAHÇEYE DİK", yukseklik: 40) { kapat(bahce: true) }
-                        .layoutPriority(1)
                     Button { odak.kapat() } label: {
-                        Text("Yeni").font(.kalin(16)).frame(maxWidth: .infinity, minHeight: 40)
+                        Text("Yeni").font(.kalin(16)).frame(minHeight: 40).padding(.horizontal, 14)
                     }
                     .buttonStyle(.glass).controlSize(.large)
+                    .fixedSize()
                 } else {
                     AnaDugme(baslik: "İHYA ET · \(oturum.plan) dk", yukseklik: 40) {
                         odak.kapat()
                         odak.baslat(tur: oturum.tur, plan: oturum.plan, konu: oturum.konu, ad: oturum.ad, ihya: oturum.id)
                     }
-                    .layoutPriority(1)
                     Button { kapat(bahce: true) } label: {
-                        Text("Bahçe").font(.kalin(16)).frame(maxWidth: .infinity, minHeight: 40)
+                        Text("Bahçe").font(.kalin(16)).frame(minHeight: 40).padding(.horizontal, 14)
                     }
                     .buttonStyle(.glass).controlSize(.large)
+                    .fixedSize()
                 }
             }
         }

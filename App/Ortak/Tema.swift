@@ -368,10 +368,10 @@ struct CamDugme: View {
                 if let simge { Image(systemName: simge) }
                 Text(baslik)
             }
-            .font(.kalin(14))
+            .font(.kalin(13))
             .foregroundStyle(renk ?? Color.primary)
             .lineLimit(1)
-            .minimumScaleFactor(0.8)
+            .minimumScaleFactor(0.7)
             .frame(maxWidth: .infinity, minHeight: yukseklik)
         }
         .buttonStyle(.glass)

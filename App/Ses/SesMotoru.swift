@@ -79,14 +79,14 @@ private final class Yuva {
         return true
     }
 
-    /// d: 0 yakın … 1 uzak. Kesim frekansı 20 kHz'den 1,1 kHz'e iner, yankı artar, ses biraz kısılır.
+    /// d: 0 yakın … 1 uzak. Kesim frekansı 20 kHz'den 2,2 kHz'e iner, yankı artar, ses biraz kısılır.
     func ayarla(duzey: Double? = nil, mesafe: Double? = nil) {
         if let duzey { self.duzey = duzey }
         if let mesafe { self.mesafe = mesafe }
         let d = max(0, min(1, self.mesafe))
-        suzgec.bands[0].frequency = Float(20000 * pow(1100.0 / 20000.0, d))
-        yanki.wetDryMix = Float(46 * d)
-        oynatici.volume = Float(self.duzey * (1 - 0.45 * d))
+        suzgec.bands[0].frequency = Float(20000 * pow(2200.0 / 20000.0, d))
+        yanki.wetDryMix = Float(40 * d)
+        oynatici.volume = Float(self.duzey * (1 - 0.3 * d))
     }
 
     func baslat() {
