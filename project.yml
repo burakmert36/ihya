@@ -52,7 +52,7 @@ targets:
           UIColorName: AccentColor
         UIBackgroundModes: [audio, fetch, processing]
         BGTaskSchedulerPermittedIdentifiers: [com.burakmert36.ihya.vakit]
-        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UIAppFonts: [Amiri-Regular.ttf, Amiri-Bold.ttf]

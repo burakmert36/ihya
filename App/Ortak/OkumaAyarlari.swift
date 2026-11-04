@@ -48,35 +48,7 @@ struct OkumaAyarlariSayfasi: View {
                     .sicakIsik()
 
                     bolum("Tema") {
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 8) {
-                            ForEach(OkumaTemasi.allCases) { t in
-                                let secili = a.okumaTemasi == t
-                                Button { depo.degistir { $0.ayarlar.okumaTemasi = t }; Dokunsal.hafif(0.5) } label: {
-                                    VStack(spacing: 6) {
-                                        ZStack {
-                                            if t == .otomatik {
-                                                HStack(spacing: 0) {
-                                                    Color(hex: OkumaTemasi.gunduz.zemin)
-                                                    Color(hex: OkumaTemasi.gece.zemin)
-                                                }
-                                            } else {
-                                                Color(hex: t.zemin)
-                                            }
-                                            Text("Aa").font(.system(size: 17, weight: .semibold, design: .serif))
-                                                .foregroundStyle(Color(hex: t == .otomatik ? "#8A8172" : t.yazi))
-                                        }
-                                        .frame(height: 48)
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(secili ? palet.vurgu : Color.primary.opacity(0.15), lineWidth: secili ? 2 : 1))
-                                        Text(t.ad).font(.system(size: 10.5, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
-                                            .foregroundStyle(secili ? palet.vurgu : .secondary)
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("\(t.ad) teması")
-                                .accessibilityAddTraits(secili ? .isSelected : [])
-                            }
-                        }
+                        OkumaTemaSecici()
                         if a.okumaTemasi == .otomatik {
                             Text("Akşam ezanından imsaka kadar gece, öbür saatlerde gündüz teması. Şu an: \(etkin.ad).")
                                 .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
@@ -130,5 +102,44 @@ struct OkumaAyarlariSayfasi: View {
             icerik()
         }
         .camKart(kose: 22, ic: 14)
+    }
+}
+
+/// Okuma teması seçimi (beş kare).
+struct OkumaTemaSecici: View {
+    @Environment(Depo.self) private var depo
+    @Environment(\.palet) private var palet
+
+    var body: some View {
+        let a = depo.ayarlar
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 8) {
+            ForEach(OkumaTemasi.allCases) { t in
+                let secili = a.okumaTemasi == t
+                Button { depo.degistir { $0.ayarlar.okumaTemasi = t }; Dokunsal.hafif(0.5) } label: {
+                    VStack(spacing: 6) {
+                        ZStack {
+                            if t == .otomatik {
+                                HStack(spacing: 0) {
+                                    Color(hex: OkumaTemasi.gunduz.zemin)
+                                    Color(hex: OkumaTemasi.gece.zemin)
+                                }
+                            } else {
+                                Color(hex: t.zemin)
+                            }
+                            Text("Aa").font(.system(size: 17, weight: .semibold, design: .serif))
+                                .foregroundStyle(Color(hex: t == .otomatik ? "#8A8172" : t.yazi))
+                        }
+                        .frame(height: 48)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(secili ? palet.vurgu : Color.primary.opacity(0.15), lineWidth: secili ? 2 : 1))
+                        Text(t.ad).font(.system(size: 10.5, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
+                            .foregroundStyle(secili ? palet.vurgu : .secondary)
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(t.ad) teması")
+                .accessibilityAddTraits(secili ? .isSelected : [])
+            }
+        }
     }
 }

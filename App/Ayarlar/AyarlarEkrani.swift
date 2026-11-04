@@ -116,79 +116,7 @@ struct AyarlarEkrani: View {
                     Ayrac()
                     anahtar("Cuma özeti", alt: "Cuma sabahı geçen yedi günün odak, namaz ve zikir özeti.", depo.ayar(\.cumaOzeti))
                 }
-                grup("Ezan ve bildirim sesi") {
-                    secimSatiri("Bildirim sesi", alt: nil) {
-                        Picker("", selection: depo.ayar(\.ezan)) {
-                            ForEach(EzanTuru.allCases) { Text($0.ad).tag($0) }
-                        }
-                        .pickerStyle(.menu)
-                    }
-                    if depo.ayarlar.ezan == .muezzin {
-                        let a = depo.ayarlar
-                        let m = Muezzin.bul(a.muezzin)
-                        Ayrac()
-                        Button { muezzinAc = true } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "speaker.wave.2.circle.fill").font(.system(size: 26)).foregroundStyle(Color(hex: "#1FB25A"))
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(a.vakitMuezzin.count == 6 ? "Her vakte ayrı müezzin" : m.ad).font(.kalin(15))
-                                    Text(EzanCalar.hazir(m) || a.vakitMuezzin.count == 6 ? "Dinle, değiştir ya da vakitlere ayır" : "Kayıt inmedi; dokun ve seç")
-                                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
-                            }
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    if let kayit = depo.ayarlar.ezan.kayitAdi {
-                        let hazir = EzanKaydi.mevcut(kayit) && ezanDurum >= 0
-                        Ayrac()
-                        HStack {
-                            Label(hazir ? "Kayıt hazır" : "Kayıt yok", systemImage: hazir ? "checkmark.circle.fill" : "exclamationmark.circle")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundStyle(hazir ? Color(hex: "#34C759") : Color.orange)
-                            Spacer()
-                            Button(hazir ? "Değiştir" : "Ses dosyası ekle") { secici = .ezan(depo.ayarlar.ezan) }.font(.system(size: 14, weight: .bold))
-                            if hazir {
-                                Button("Sil", role: .destructive) { EzanKaydi.sil(kayit); ezanDurum += 1 }.font(.system(size: 14, weight: .bold))
-                            }
-                        }
-                    }
-                    if depo.ayarlar.ezan != .sessiz {
-                        Ayrac()
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                            ForEach(AyarlarEkrani.tonlar) { t in
-                                let on = depo.ayarlar.bildirimTonu == t.id
-                                Button {
-                                    depo.degistir { $0.ayarlar.bildirimTonu = t.id }
-                                    Efekt.cal(t.id, duzey: 0.9)
-                                } label: {
-                                    HStack(spacing: 5) {
-                                        Image(systemName: on ? "speaker.wave.2.fill" : "play.fill").font(.system(size: 11, weight: .bold))
-                                        Text(t.ad).font(.kalin(13))
-                                    }
-                                    .foregroundStyle(on ? Color.white : Color.primary)
-                                    .frame(maxWidth: .infinity, minHeight: 38)
-                                    .background(Capsule().fill(on ? Color(hex: "#1FB25A") : Color.primary.opacity(0.07)))
-                                    .contentShape(Capsule())
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityAddTraits(on ? .isSelected : [])
-                            }
-                        }
-                    }
-                    Ayrac()
-                    Button {
-                        Task { mesaj = await Bildirim.dene(depo.ayarlar) }
-                    } label: {
-                        Label("Deneme bildirimi gönder", systemImage: "bell.badge").font(.kalin(14)).frame(maxWidth: .infinity, minHeight: 30)
-                    }
-                    .buttonStyle(.glass)
-                    Text("Tona dokununca telefon sessizde de duyulur. Bildirim sesini ise iOS, telefon sessiz kipteyken çalmaz. iOS bildirim sesini 30 saniyeyle sınırlar: ezanın ilk 29 saniyesi çalar; uygulama açıksa ezanın tamamı okunur. Makamlı ezan için kendi kaydını da ekleyebilirsin.")
-                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
-                }
+                ezanGrubu
                 grup("Odak") {
                     anahtar("Uygulamadan çıkınca bitki kurusun", alt: "Ekranı kilitlemek serbest; başka uygulamada 10 sn'den uzun kalırsan bitki kurur.", depo.ayar(\.katiMod))
                     Ayrac()
@@ -219,29 +147,7 @@ struct AyarlarEkrani: View {
                     Ayrac()
                     anahtar("Kilit ekranında göster", alt: "Odak seslerini kilit ekranından başlatıp durdurursun. Açıkken çalan müzik durur; kapalıyken müzikle birlikte çalar.", depo.ayar(\.sesKilitEkrani))
                 }
-                grup("Tilavet") {
-                    secimSatiri("Hafız", alt: Hafiz.bul(depo.ayarlar.tilavetHafiz).unvan) {
-                        Picker("", selection: depo.ayar(\.tilavetHafiz)) {
-                            ForEach(Hafiz.Grup.allCases, id: \.self) { g in
-                                Section(g.ad) { ForEach(Hafiz.grup(g)) { Text($0.ad).tag($0.id) } }
-                            }
-                        }
-                        .pickerStyle(.menu)
-                    }
-                    Ayrac()
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Telefondaki kayıtlar").font(.system(size: 15, weight: .bold))
-                            Text(ByteCountFormatter.string(fromByteCount: kayitBoyutu, countStyle: .file)).font(.system(size: 12.5, weight: .medium)).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button("Sil", role: .destructive) { kayitSilSor = true }
-                            .font(.system(size: 14, weight: .bold))
-                            .disabled(kayitBoyutu == 0)
-                    }
-                    Text("Âyet kayıtları dinledikçe iner ve internetsiz yeniden çalar. Silinse de gerektiğinde yeniden iner.")
-                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
-                }
+                tilavetGrubu
                 grup("Tesbih") {
                     anahtar("Titreşim", alt: nil, depo.ayar(\.tesbihTitresim))
                     Ayrac()
@@ -425,6 +331,108 @@ struct AyarlarEkrani: View {
         }
         .padding(8)
         .camYuzey(palet.cam(), in: .rect(cornerRadius: 26))
+    }
+
+    private var ezanGrubu: some View {
+        grup("Ezan ve bildirim sesi") {
+            secimSatiri("Bildirim sesi", alt: nil) {
+                Picker("", selection: depo.ayar(\.ezan)) {
+                    ForEach(EzanTuru.allCases) { Text($0.ad).tag($0) }
+                }
+                .pickerStyle(.menu)
+            }
+            if depo.ayarlar.ezan == .muezzin {
+                let a = depo.ayarlar
+                let m = Muezzin.bul(a.muezzin)
+                Ayrac()
+                Button { muezzinAc = true } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "speaker.wave.2.circle.fill").font(.system(size: 26)).foregroundStyle(Color(hex: "#1FB25A"))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(a.vakitMuezzin.count == 6 ? "Her vakte ayrı müezzin" : m.ad).font(.kalin(15))
+                            Text(EzanCalar.hazir(m) || a.vakitMuezzin.count == 6 ? "Dinle, değiştir ya da vakitlere ayır" : "Kayıt inmedi; dokun ve seç")
+                                .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            if let kayit = depo.ayarlar.ezan.kayitAdi {
+                let hazir = EzanKaydi.mevcut(kayit) && ezanDurum >= 0
+                Ayrac()
+                HStack {
+                    Label(hazir ? "Kayıt hazır" : "Kayıt yok", systemImage: hazir ? "checkmark.circle.fill" : "exclamationmark.circle")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(hazir ? Color(hex: "#34C759") : Color.orange)
+                    Spacer()
+                    Button(hazir ? "Değiştir" : "Ses dosyası ekle") { secici = .ezan(depo.ayarlar.ezan) }.font(.system(size: 14, weight: .bold))
+                    if hazir {
+                        Button("Sil", role: .destructive) { EzanKaydi.sil(kayit); ezanDurum += 1 }.font(.system(size: 14, weight: .bold))
+                    }
+                }
+            }
+            if depo.ayarlar.ezan != .sessiz {
+                Ayrac()
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                    ForEach(AyarlarEkrani.tonlar) { t in
+                        let on = depo.ayarlar.bildirimTonu == t.id
+                        Button {
+                            depo.degistir { $0.ayarlar.bildirimTonu = t.id }
+                            Efekt.cal(t.id, duzey: 0.9)
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: on ? "speaker.wave.2.fill" : "play.fill").font(.system(size: 11, weight: .bold))
+                                Text(t.ad).font(.kalin(13))
+                            }
+                            .foregroundStyle(on ? Color.white : Color.primary)
+                            .frame(maxWidth: .infinity, minHeight: 38)
+                            .background(Capsule().fill(on ? Color(hex: "#1FB25A") : Color.primary.opacity(0.07)))
+                            .contentShape(Capsule())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityAddTraits(on ? .isSelected : [])
+                    }
+                }
+            }
+            Ayrac()
+            Button {
+                Task { mesaj = await Bildirim.dene(depo.ayarlar) }
+            } label: {
+                Label("Deneme bildirimi gönder", systemImage: "bell.badge").font(.kalin(14)).frame(maxWidth: .infinity, minHeight: 30)
+            }
+            .buttonStyle(.glass)
+            Text("Tona dokununca telefon sessizde de duyulur. Bildirim sesini ise iOS, telefon sessiz kipteyken çalmaz. iOS bildirim sesini 30 saniyeyle sınırlar: ezanın ilk 29 saniyesi çalar; uygulama açıksa ezanın tamamı okunur. Makamlı ezan için kendi kaydını da ekleyebilirsin.")
+                .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+        }
+    }
+
+    private var tilavetGrubu: some View {
+        grup("Tilavet") {
+            secimSatiri("Hafız", alt: Hafiz.bul(depo.ayarlar.tilavetHafiz).unvan) {
+                Picker("", selection: depo.ayar(\.tilavetHafiz)) {
+                    ForEach(Hafiz.Grup.allCases, id: \.self) { g in
+                        Section(g.ad) { ForEach(Hafiz.grup(g)) { Text($0.ad).tag($0.id) } }
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+            Ayrac()
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Telefondaki kayıtlar").font(.system(size: 15, weight: .bold))
+                    Text(ByteCountFormatter.string(fromByteCount: kayitBoyutu, countStyle: .file)).font(.system(size: 12.5, weight: .medium)).foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button("Sil", role: .destructive) { kayitSilSor = true }
+                    .font(.system(size: 14, weight: .bold))
+                    .disabled(kayitBoyutu == 0)
+            }
+            Text("Âyet kayıtları dinledikçe iner ve internetsiz yeniden çalar. Silinse de gerektiğinde yeniden iner.")
+                .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+        }
     }
 
     private func grup<I: View>(_ baslik: String, @ViewBuilder _ icerik: () -> I) -> some View {

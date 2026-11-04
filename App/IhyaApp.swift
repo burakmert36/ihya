@@ -10,6 +10,7 @@ struct IhyaApp: App {
     @State private var ses: SesMotoru
     @State private var odak: OdakMotoru
     @State private var yon = Yonlendirici()
+    @UIApplicationDelegateAdaptor(UygulamaTemsilcisi.self) private var temsilci
 
     init() {
         // Sessiz kipte de duyulsun; başka uygulamaların sesini kesmesin.
@@ -39,6 +40,24 @@ struct IhyaApp: App {
         }
         .backgroundTask(.appRefresh(ArkaPlan.kimlik)) {
             await ArkaPlan.calis()
+        }
+    }
+}
+
+/// Ekran yönü: uygulama dik durur; yalnız kitap okuyucu yana dönebilir.
+final class UygulamaTemsilcisi: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask { YonKilidi.maske }
+}
+
+enum YonKilidi {
+    nonisolated(unsafe) static var maske: UIInterfaceOrientationMask = .portrait
+
+    @MainActor static func ayarla(_ m: UIInterfaceOrientationMask) {
+        maske = m
+        for case let sahne as UIWindowScene in UIApplication.shared.connectedScenes {
+            var vc = sahne.keyWindow?.rootViewController
+            while let v = vc { v.setNeedsUpdateOfSupportedInterfaceOrientations(); vc = v.presentedViewController }
+            sahne.requestGeometryUpdate(.iOS(interfaceOrientations: m)) { _ in }
         }
     }
 }

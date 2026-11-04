@@ -83,6 +83,30 @@ struct Kitap: Codable, Identifiable, Hashable {
     var toplam: Int = 0
     var eklenme = Date()
     var son: Date?
+    /// Yer imi konan sayfalar (0'dan)
+    var yerImleri: [Int] = []
+    /// Sayfa görünümünde yakınlık (1: ekrana sığar)
+    var yakinlik: Double = 1
+    /// Toplam okuma süresi (sn)
+    var okumaSn: Double = 0
+    /// Okuma bitti olarak işaretlendi
+    var bitti = false
+
+    var oran: Double { toplam > 0 ? Double(min(sayfa + 1, toplam)) / Double(toplam) : 0 }
+    var tamam: Bool { bitti || (toplam > 0 && sayfa + 1 >= toplam) }
+    var basladi: Bool { sayfa > 0 || son != nil }
+}
+
+extension Kitap {
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        ad = try c.decode(String.self, forKey: .ad)
+        dosya = try c.decode(String.self, forKey: .dosya)
+        func v<T: Decodable>(_ k: CodingKeys, _ d: T) -> T { (try? c.decodeIfPresent(T.self, forKey: k)) ?? d }
+        id = v(.id, UUID()); sayfa = v(.sayfa, 0); toplam = v(.toplam, 0); eklenme = v(.eklenme, Date())
+        son = try? c.decodeIfPresent(Date.self, forKey: .son)
+        yerImleri = v(.yerImleri, []); yakinlik = v(.yakinlik, 1); okumaSn = v(.okumaSn, 0); bitti = v(.bitti, false)
+    }
 }
 
 enum EzanTuru: String, Codable, CaseIterable, Identifiable {
@@ -214,12 +238,21 @@ struct Ayarlar: Codable, Equatable {
     var muezzin: String = "mekke"
     /// Vakte göre müezzin (imsak, güneş, öğle, ikindi, akşam, yatsı); boşsa hepsinde "muezzin".
     var vakitMuezzin: [String] = []
+    /// Kitap okuyucu: sayfalar yana çevrilsin (kapalıysa aşağı kayar)
+    var kitapYatay: Bool = false
+    /// Sayfalar sağdan sola (Arapça, Osmanlıca kitaplar)
+    var kitapSagdanSola: Bool = false
+    /// 0 dik, 1 yan, 2 telefonla döner
+    var kitapEkran: Int = 0
+    /// Sayfa yerine yalnız yazı (büyütünce satırlar ekrana sığar)
+    var kitapMetin: Bool = false
 
     enum CodingKeys: String, CodingKey {
         case konumKipi, enlem, boylam, konumAdi, vakitBildirim, onceDakika, ezan, bildirimTonu, katiMod
         case sesOdakta, sesSondaAzalt, tesbihTitresim, tesbihSes, tesbihSesDuzeyi, okumaPunto, okumaKoyu, tema, gunlukHedef, ezandaSustur, kuranDinlerkenKis
         case kuranMeal, kuranOkunus, kuranPunto, ilceKodu, ilceAdi, tilavetHafiz, tilavetHiz, tilavetTakip, tilavetDevam, sesKilitEkrani
         case okumaTemasi, sicakIsik, satirAraligi, ekranAcik, seriHatirlatma, seriHatirlatmaDk, cumaOzeti, muezzin, vakitMuezzin
+        case kitapYatay, kitapSagdanSola, kitapEkran, kitapMetin
     }
 
     /// Vaktin müezzini (Muezzin.id).
@@ -257,6 +290,8 @@ extension Ayarlar {
         sicakIsik = v(.sicakIsik, sicakIsik); satirAraligi = v(.satirAraligi, satirAraligi); ekranAcik = v(.ekranAcik, ekranAcik)
         seriHatirlatma = v(.seriHatirlatma, seriHatirlatma); seriHatirlatmaDk = v(.seriHatirlatmaDk, seriHatirlatmaDk); cumaOzeti = v(.cumaOzeti, cumaOzeti)
         muezzin = v(.muezzin, muezzin); vakitMuezzin = v(.vakitMuezzin, vakitMuezzin)
+        kitapYatay = v(.kitapYatay, kitapYatay); kitapSagdanSola = v(.kitapSagdanSola, kitapSagdanSola)
+        kitapEkran = v(.kitapEkran, kitapEkran); kitapMetin = v(.kitapMetin, kitapMetin)
         let vb = v(.vakitBildirim, vakitBildirim)
         if vb.count == 6 { vakitBildirim = vb }
     }
