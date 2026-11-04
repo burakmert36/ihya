@@ -20,6 +20,18 @@ Bu dosya işin nerede olduğunu gösterir. Her aşama bitince güncellenir.
 | A4b | Tasarıma sadık arayüz: sahne zeminleri, Liquid Glass, beş tema, yeni alt çubuk, ses motoru ve bildirim düzeltmeleri | Sürüyor (1.1) |
 | A5 | Sürüm yayını ve kısa kullanım notu | Sırada |
 
+## 1.3 eklenenler
+
+- Kur'an: Kâbe imamlarından (Südeys, Muaykılî, Devserî, Cühenî, Şüreym, Ali Câbir) âyet âyet takipli tilavet; okunan âyet vurgulanır, ekranda tutulur; tekrar, hız, sûreyi indirme. Kayıtlar EveryAyah arşivinden dinlerken iner (depoya girmez).
+- Mealde kelime araması, "36:12" ile âyete gitme, âyet kaydetme.
+- Beyaz, pembe, kahverengi gürültü (cihazda üretilir). Kilit ekranından çal/durdur, önceki/sonraki âyet; kulaklık çıkınca durur.
+- Yedek: her gün telefondaki Yedekler klasörüne ve seçilen iCloud Drive klasörüne; dışa aktarma ve onaylı geri yükleme.
+- Seri: gün sınırı imsak, 7 günde bir rahmet yağmuru (en çok 2), 48 saatte 2 dikimle telafi, kilometre taşları. Seri hatırlatması ve Cuma özeti.
+- Kaza defteri, Esmâ'dan zikre geçiş, PDF ve Kur'an'ı odakla okuma, okuma temaları (Gündüz/Sepya/Gece/Siyah/Kendiliğinden), sıcak ışık, satır arası, ekranın açık kalması.
+- Diyanet ülke/şehir/ilçe seçimi.
+- Widget'lar (seri, namaz vakti), Odak Canlı Etkinliği (Dynamic Island), Denetim Merkezi düğmeleri.
+- Birim testleri (Tests/) CI'da simülatörde çalışır; sonuç test-logs dalında testler.txt.
+
 ## Arayüz düzeni (1.1)
 
 - Alt çubuk: Bugün · Bahçe · Kitaplık · Vakit; yanında yeşil yuvarlak Odak düğmesi (Odak tam ekran açılır).
@@ -54,5 +66,4 @@ Bu dosya işin nerede olduğunu gösterir. Her aşama bitince güncellenir.
 ## Bekleyenler
 
 - Tefsir: kullanıcının kararı bekleniyor.
-- Ana ekran araç takımı (widget) ve Canlı Etkinlik: A5'ten sonra.
 - ruflo: daha sonra (kredi tüketimi yüzünden şimdilik kurulmadı).
