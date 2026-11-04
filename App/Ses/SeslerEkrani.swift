@@ -17,8 +17,12 @@ struct SeslerEkrani: View {
                     .padding(.horizontal, 4)
                 oynatici
                 karisimlar
-                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                    ForEach(SesTuru.doga) { t in SesKaresi(tur: t) }
+                ForEach(SesTuru.Kume.allCases, id: \.self) { k in
+                    BolumBasligi(metin: k.ad, simge: k.simge)
+                        .padding(.top, 6)
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                        ForEach(SesTuru.kumedekiler(k)) { t in SesKaresi(tur: t) }
+                    }
                 }
                 BolumBasligi(metin: "Gürültüler", simge: "waveform")
                     .padding(.top, 6)

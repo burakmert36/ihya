@@ -337,7 +337,7 @@ struct AyarlarEkrani: View {
             Ayrac()
             Kaynak(ad: "Vakitler", deger: "Diyanet takvimi (ezanvakti.emushaf.net)")
             Ayrac()
-            Kaynak(ad: "Doğa sesleri", deger: "Moodist ve Blanket kayıtları (CC0 / Pixabay lisansı)")
+            Kaynak(ad: "Odak sesleri", deger: "Moodist ve Blanket kayıtları (CC0 / Pixabay lisansı), 41 döngü")
             Ayrac()
             Kaynak(ad: "Arapça yazı", deger: "Amiri yazı tipi (SIL Open Font License)")
             Ayrac()

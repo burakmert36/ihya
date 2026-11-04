@@ -11,26 +11,83 @@ struct SesTuru: Identifiable, Hashable {
     let bas: Double = 0.5   // döngünün başladığı yer (sn); öncesi döngünün sonunun kopyası
     /// Dosya yerine cihazda üretilen gürültü.
     var gurultu: Gurultu? = nil
+    var kume: Kume = .doga
+
+    enum Kume: String, CaseIterable {
+        case yagmur, doga, hayvan, mekan, ev, yolculuk
+        var ad: String {
+            switch self {
+            case .yagmur: "Yağmur"
+            case .doga: "Doğa"
+            case .hayvan: "Hayvanlar"
+            case .mekan: "Mekânlar"
+            case .ev: "Ev ve masa"
+            case .yolculuk: "Yolculuk"
+            }
+        }
+        var simge: String {
+            switch self {
+            case .yagmur: "cloud.rain"
+            case .doga: "leaf"
+            case .hayvan: "bird"
+            case .mekan: "building.columns"
+            case .ev: "house"
+            case .yolculuk: "sailboat"
+            }
+        }
+    }
     /// İkinci sürgünün adı: kayıtlarda uzaklık, gürültülerde yumuşaklık (ikisi de aynı süzgeci sürer).
     var ikinciAyar: String { gurultu == nil ? "Uzaklık" : "Yumuşak" }
 
     static let doga: [SesTuru] = [
-        SesTuru(id: "yagmur_hafif", ad: "Hafif yağmur", simge: "cloud.drizzle", uzunluk: 60.0, renk: Color(r: 120, g: 180, b: 255)),
-        SesTuru(id: "yagmur", ad: "Yağmur", simge: "cloud.rain", uzunluk: 34.719297, renk: Color(r: 100, g: 160, b: 255)),
-        SesTuru(id: "yagmur_cam", ad: "Cama vuran yağmur", simge: "drop", uzunluk: 25.642653, renk: Color(r: 140, g: 190, b: 255)),
-        SesTuru(id: "yagmur_siddetli", ad: "Sağanak", simge: "cloud.heavyrain", uzunluk: 14.288141, renk: Color(r: 90, g: 130, b: 240)),
-        SesTuru(id: "gokgurultusu", ad: "Gök gürültüsü", simge: "cloud.bolt.rain", uzunluk: 60.0, renk: Color(r: 190, g: 170, b: 255)),
-        SesTuru(id: "firtina", ad: "Fırtına rüzgârı", simge: "wind", uzunluk: 48.0, renk: Color(r: 150, g: 170, b: 210)),
-        SesTuru(id: "orman_ruzgar", ad: "Ağaçlarda rüzgâr", simge: "tree", uzunluk: 48.0, renk: Color(r: 90, g: 220, b: 140)),
-        SesTuru(id: "kuslar", ad: "Kuş cıvıltısı", simge: "bird", uzunluk: 70.0, renk: Color(r: 150, g: 230, b: 120)),
+        SesTuru(id: "yagmur_hafif", ad: "Hafif yağmur", simge: "cloud.drizzle", uzunluk: 60.0, renk: Color(r: 120, g: 180, b: 255), kume: .yagmur),
+        SesTuru(id: "yagmur", ad: "Yağmur", simge: "cloud.rain", uzunluk: 34.719297, renk: Color(r: 100, g: 160, b: 255), kume: .yagmur),
+        SesTuru(id: "yagmur_cam", ad: "Cama vuran yağmur", simge: "drop", uzunluk: 25.642653, renk: Color(r: 140, g: 190, b: 255), kume: .yagmur),
+        SesTuru(id: "yagmur_siddetli", ad: "Sağanak", simge: "cloud.heavyrain", uzunluk: 14.288141, renk: Color(r: 90, g: 130, b: 240), kume: .yagmur),
+        SesTuru(id: "cadir_yagmur", ad: "Çadıra yağmur", simge: "tent", uzunluk: 40.0, renk: Color(r: 130, g: 200, b: 170), kume: .yagmur),
+        SesTuru(id: "semsiye_yagmur", ad: "Şemsiyeye yağmur", simge: "umbrella", uzunluk: 21.254921, renk: Color(r: 150, g: 170, b: 255), kume: .yagmur),
+        SesTuru(id: "araba_yagmur", ad: "Arabada yağmur", simge: "car", uzunluk: 7.11585, renk: Color(r: 120, g: 150, b: 200), kume: .yagmur),
+        SesTuru(id: "gokgurultusu", ad: "Gök gürültüsü", simge: "cloud.bolt.rain", uzunluk: 60.0, renk: Color(r: 190, g: 170, b: 255), kume: .yagmur),
+
         SesTuru(id: "dere", ad: "Dere", simge: "humidity", uzunluk: 70.0, renk: Color(r: 90, g: 200, b: 230)),
+        SesTuru(id: "nehir", ad: "Nehir", simge: "drop.halffull", uzunluk: 40.0, renk: Color(r: 80, g: 185, b: 215)),
+        SesTuru(id: "selale", ad: "Şelale", simge: "mountain.2", uzunluk: 18.185918, renk: Color(r: 110, g: 210, b: 220)),
+        SesTuru(id: "damlalar", ad: "Damlalar", simge: "drop.circle", uzunluk: 40.0, renk: Color(r: 120, g: 205, b: 245)),
         SesTuru(id: "deniz", ad: "Deniz dalgaları", simge: "water.waves", uzunluk: 70.0, renk: Color(r: 70, g: 170, b: 230)),
-        SesTuru(id: "gece", ad: "Gece böcekleri", simge: "moon.stars", uzunluk: 70.0, renk: Color(r: 160, g: 150, b: 255)),
+        SesTuru(id: "orman_ruzgar", ad: "Ağaçlarda rüzgâr", simge: "tree", uzunluk: 48.0, renk: Color(r: 90, g: 220, b: 140)),
+        SesTuru(id: "ruzgar", ad: "Rüzgâr", simge: "wind", uzunluk: 40.0, renk: Color(r: 170, g: 195, b: 225)),
+        SesTuru(id: "firtina", ad: "Fırtına rüzgârı", simge: "tornado", uzunluk: 48.0, renk: Color(r: 150, g: 170, b: 210)),
+        SesTuru(id: "tropik", ad: "Tropik orman", simge: "leaf.fill", uzunluk: 45.0, renk: Color(r: 70, g: 205, b: 120)),
         SesTuru(id: "kamp_atesi", ad: "Kamp ateşi", simge: "flame", uzunluk: 60.0, renk: Color(r: 255, g: 140, b: 60)),
-        SesTuru(id: "somine", ad: "Şömine", simge: "fireplace", uzunluk: 18.0, renk: Color(r: 255, g: 170, b: 90)),
-        SesTuru(id: "kafe", ad: "Kafe", simge: "cup.and.saucer", uzunluk: 70.0, renk: Color(r: 210, g: 160, b: 110)),
-        SesTuru(id: "kutuphane", ad: "Kütüphane", simge: "books.vertical", uzunluk: 70.0, renk: Color(r: 200, g: 180, b: 140)),
+        SesTuru(id: "kar_yuruyus", ad: "Karda yürüyüş", simge: "snowflake", uzunluk: 31.367347, renk: Color(r: 200, g: 225, b: 255)),
+        SesTuru(id: "yaprak_yuruyus", ad: "Yapraklarda yürüyüş", simge: "leaf", uzunluk: 15.272585, renk: Color(r: 230, g: 170, b: 90)),
+
+        SesTuru(id: "kuslar", ad: "Kuş cıvıltısı", simge: "bird", uzunluk: 70.0, renk: Color(r: 150, g: 230, b: 120), kume: .hayvan),
+        SesTuru(id: "gece", ad: "Gece böcekleri", simge: "moon.stars", uzunluk: 70.0, renk: Color(r: 160, g: 150, b: 255), kume: .hayvan),
+        SesTuru(id: "baykus", ad: "Baykuş", simge: "moon", uzunluk: 10.0, renk: Color(r: 150, g: 135, b: 220), kume: .hayvan),
+        SesTuru(id: "kurbaga", ad: "Kurbağalar", simge: "leaf.circle", uzunluk: 40.0, renk: Color(r: 120, g: 210, b: 110), kume: .hayvan),
+        SesTuru(id: "marti", ad: "Martılar", simge: "bird.fill", uzunluk: 38.0, renk: Color(r: 150, g: 200, b: 240), kume: .hayvan),
+        SesTuru(id: "agackakan", ad: "Ağaçkakan", simge: "tree.fill", uzunluk: 12.0, renk: Color(r: 200, g: 150, b: 100), kume: .hayvan),
+        SesTuru(id: "ari", ad: "Arı kovanı", simge: "hexagon", uzunluk: 39.85483, renk: Color(r: 250, g: 200, b: 80), kume: .hayvan),
+        SesTuru(id: "kedi", ad: "Mırlayan kedi", simge: "cat", uzunluk: 33.362154, renk: Color(r: 240, g: 180, b: 150), kume: .hayvan),
+
+        SesTuru(id: "kafe", ad: "Kafe", simge: "cup.and.saucer", uzunluk: 70.0, renk: Color(r: 210, g: 160, b: 110), kume: .mekan),
+        SesTuru(id: "kutuphane", ad: "Kütüphane", simge: "books.vertical", uzunluk: 70.0, renk: Color(r: 200, g: 180, b: 140), kume: .mekan),
+        SesTuru(id: "gece_koy", ad: "Gece köyü", simge: "house.lodge", uzunluk: 45.0, renk: Color(r: 140, g: 140, b: 210), kume: .mekan),
+        SesTuru(id: "su_alti", ad: "Su altı", simge: "bubbles.and.sparkles", uzunluk: 37.948844, renk: Color(r: 60, g: 160, b: 210), kume: .mekan),
+
+        SesTuru(id: "somine", ad: "Şömine", simge: "fireplace", uzunluk: 18.0, renk: Color(r: 255, g: 170, b: 90), kume: .ev),
+        SesTuru(id: "saat", ad: "Saat tıkırtısı", simge: "clock", uzunluk: 12.0, renk: Color(r: 210, g: 200, b: 180), kume: .ev),
+        SesTuru(id: "sayfa", ad: "Sayfa çevirme", simge: "book.pages", uzunluk: 14.0, renk: Color(r: 235, g: 215, b: 170), kume: .ev),
+        SesTuru(id: "daktilo", ad: "Daktilo", simge: "keyboard", uzunluk: 16.480499, renk: Color(r: 190, g: 190, b: 200), kume: .ev),
+        SesTuru(id: "ruzgar_cani", ad: "Rüzgâr çanı", simge: "bell", uzunluk: 40.0, renk: Color(r: 240, g: 210, b: 130), kume: .ev),
+        SesTuru(id: "vantilator", ad: "Vantilatör", simge: "fan.ceiling", uzunluk: 12.0, renk: Color(r: 180, g: 210, b: 220), kume: .ev),
+
+        SesTuru(id: "tren", ad: "Trende", simge: "tram", uzunluk: 40.0, renk: Color(r: 170, g: 160, b: 200), kume: .yolculuk),
+        SesTuru(id: "yelkenli", ad: "Yelkenli", simge: "sailboat", uzunluk: 45.0, renk: Color(r: 100, g: 180, b: 230), kume: .yolculuk),
+        SesTuru(id: "kurek", ad: "Kayıkta kürek", simge: "oar.2.crossed", uzunluk: 20.234739, renk: Color(r: 120, g: 190, b: 190), kume: .yolculuk),
     ]
+    static func kumedekiler(_ k: Kume) -> [SesTuru] { doga.filter { $0.kume == k } }
     static let gurultuler: [SesTuru] = [
         SesTuru(id: "gurultu_beyaz", ad: "Beyaz gürültü", simge: "waveform", uzunluk: 16, renk: Color(r: 225, g: 230, b: 245), gurultu: .beyaz),
         SesTuru(id: "gurultu_pembe", ad: "Pembe gürültü", simge: "waveform.path", uzunluk: 16, renk: Color(r: 255, g: 150, b: 195), gurultu: .pembe),
