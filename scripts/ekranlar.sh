@@ -16,31 +16,31 @@ xcrun simctl ui "$UDID" appearance light || true
 # ısınma: ilk açılış yavaş (Intel simülatör); ekran görüntüsünden önce bir kez aç-kapat
 xcrun simctl launch "$UDID" "$APPID" -ekranGoruntusu 1 > /dev/null; sleep 25
 cek bugun 01-bugun 16
-cek odak 02-odak 15
-cek odak-calisiyor 03-odak-calisiyor 15
-cek odak-bitti 04-odak-bitti 15
-cek bahce 05-bahce 16
-cek istatistik 06-istatistik
-cek koleksiyon 07-koleksiyon 15
-cek sesler 08-sesler
-cek kitaplik 09-kitaplik
-cek hadis 10-hadis
-cek hadisler 11-hadisler
-cek dualar 12-dualar
-cek dua-defteri 13-dua-defteri
-cek esma 14-esma
-cek kible 15-kible
-cek dinigunler 16-dinigunler
-cek kitaplar 17-kitaplar
-cek zikir 18-zikir
-cek zikir-istatistik 19-zikir-istatistik
+cek kuran 02-kuran 30
+cek kuran-oku 03-kuran-oku 18
+cek odak 04-odak 15
+cek odak-calisiyor 05-odak-calisiyor 15
+cek odak-bitti 06-odak-bitti 15
+cek bahce 07-takip-bahce 16
+cek takip-namaz 08-takip-namaz
+cek takip-zikir 09-takip-zikir
+cek istatistik 10-istatistik
+cek koleksiyon 11-koleksiyon 15
+cek sesler 12-sesler
+cek kitaplik 13-kitaplik
+cek hadis 14-hadis
+cek dualar 15-dualar
+cek dua-defteri 16-dua-defteri
+cek esma 17-esma
+cek kible 18-kible
+cek zikir 19-zikir
 cek vakitler 20-vakitler
 cek ayarlar 21-ayarlar
-cek favoriler 22-favoriler
-cek tema-gece 23-tema-gece 15
-cek tema-fildisi-kitaplik 24-tema-fildisi 15
-cek tema-lacivert-vakitler 25-tema-lacivert 15
-cek tema-zumrut-bahce 26-tema-zumrut 16
+cek tema-gece 22-tema-gece 15
+cek tema-fildisi-kitaplik 23-tema-fildisi 15
+cek tema-okyanus-kuran 24-tema-okyanus 18
+cek tema-mor-bahce 25-tema-mor 16
+cek tema-gunbatimi-takip-namaz 26-tema-gunbatimi 15
 # ses sınaması: uygulama sınamayı bitirince kendini kapatır
 xcrun simctl terminate "$UDID" "$APPID" 2>/dev/null || true
 xcrun simctl launch --console-pty --terminate-running-process "$UDID" "$APPID" -ekranGoruntusu 1 -ekran bugun -sesSinama 1 > logs/ses.txt 2>&1 &

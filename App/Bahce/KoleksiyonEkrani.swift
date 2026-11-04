@@ -85,7 +85,7 @@ struct KoleksiyonHucresi: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity)
-        .glassEffect(acik ? Glass.regular : Glass.regular.tint(Color.secondary.opacity(0.08)), in: .rect(cornerRadius: 18))
+        .camYuzey(acik ? Glass.regular : Glass.regular.tint(Color.secondary.opacity(0.08)), in: .rect(cornerRadius: 18))
     }
 }
 

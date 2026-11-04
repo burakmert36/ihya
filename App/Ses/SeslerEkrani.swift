@@ -56,7 +56,7 @@ struct SeslerEkrani: View {
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .glassEffect(.regular.tint(Color(hex: "#1FB25A").opacity(0.9)).interactive(), in: .circle)
+                .camYuzey(.regular.tint(Color(hex: "#1FB25A").opacity(0.9)).interactive(), in: .circle)
                 .disabled(ses.katman.isEmpty)
                 .accessibilityLabel(ses.caliyor ? "Duraklat" : "Çal")
                 VStack(alignment: .leading, spacing: 3) {
@@ -119,7 +119,7 @@ struct SeslerEkrani: View {
                     Label("Kaydet", systemImage: "plus").font(.kalin(13)).padding(.horizontal, 14).frame(height: 38)
                 }
                 .buttonStyle(.plain)
-                .glassEffect(palet.cam(etkilesimli: true), in: .capsule)
+                .camYuzey(palet.cam(etkilesimli: true), in: .capsule)
                 .disabled(ses.katman.isEmpty)
                 .opacity(ses.katman.isEmpty ? 0.5 : 1)
                 ForEach(depo.kayit.karisimlar) { k in
@@ -138,7 +138,7 @@ struct SeslerEkrani: View {
                         .frame(height: 38)
                     }
                     .buttonStyle(.plain)
-                    .glassEffect(on ? Glass.regular.tint(Color(hex: "#1FB25A").opacity(0.85)).interactive() : palet.cam(etkilesimli: true), in: .capsule)
+                    .camYuzey(on ? Glass.regular.tint(Color(hex: "#1FB25A").opacity(0.85)).interactive() : palet.cam(etkilesimli: true), in: .capsule)
                     .contextMenu {
                         Button("Sil", systemImage: "trash", role: .destructive) {
                             depo.degistir { $0.karisimlar.removeAll { $0.id == k.id } }
@@ -150,7 +150,7 @@ struct SeslerEkrani: View {
                         Label("Hepsini kıs", systemImage: "speaker.slash").font(.kalin(13)).padding(.horizontal, 14).frame(height: 38)
                     }
                     .buttonStyle(.plain)
-                    .glassEffect(palet.cam(etkilesimli: true), in: .capsule)
+                    .camYuzey(palet.cam(etkilesimli: true), in: .capsule)
                 }
             }
             .padding(.vertical, 2)
@@ -165,7 +165,7 @@ struct SeslerEkrani: View {
             altDugme("Kur’an dinlerken kıs", \.kuranDinlerkenKis)
         }
         .padding(6)
-        .glassEffect(palet.cam(), in: .rect(cornerRadius: 28))
+        .camYuzey(palet.cam(), in: .rect(cornerRadius: 28))
         .padding(.horizontal, 12)
         .padding(.bottom, 4)
     }
@@ -231,7 +231,7 @@ struct SesKaresi: View {
         }
         .padding(12)
         .opacity(secili ? 1 : 0.72)
-        .glassEffect(.regular.tint(tur.renk.opacity(secili ? 0.42 : 0.16)).interactive(), in: .rect(cornerRadius: 24))
+        .camYuzey(.regular.tint(tur.renk.opacity(secili ? 0.42 : 0.16)).interactive(), in: .rect(cornerRadius: 24))
         .accessibilityAddTraits(secili ? .isSelected : [])
     }
 

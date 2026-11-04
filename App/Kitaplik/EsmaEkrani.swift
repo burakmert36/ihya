@@ -54,7 +54,7 @@ struct EsmaKaresi: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 18))
+        .camYuzey(.regular.interactive(), in: .rect(cornerRadius: 18))
     }
 }
 

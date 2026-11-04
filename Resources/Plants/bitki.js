@@ -692,6 +692,18 @@ function bitkiCiz(tur, dk, seed, opt) {
 }
 /* Uygulama köprüsü: JavaScriptCore'dan tek çağrıyla tür listesi ve çizim verisi */
 function bitkiKatalog() { return BITKI_SIRA.map(function (t) { var b = BITKI[t]; return { id: t, ad: b.ad, tur: b.tur, dk: b.dk, renk: b.renk, sinif: b.sinif, fiyat: b.fiyat, not: b.not, evre: b.evre, temel: b.temel }; }); }
-function bitkiJSON(tur, dk, seed, lod) { return JSON.stringify(bitkiCiz(tur, dk, seed, { lod: lod || 1 })); }
+/* 3B görünüm: her dolu şekle alttan-sağdan gölge, düz renkli şekillere üstten-soldan ışık katmanı */
+function hacimli(sh) {
+  var out = [];
+  sh.forEach(function (q) {
+    out.push(q);
+    if (!q.f || q.f === 'none' || /Golge|Hale|Kuru|Hacim/.test(q.f)) return;
+    var duz = q.f.charAt(0) === '#';
+    out.push({ d: q.d, f: 'url(#gHacimGolge)', s: 'none', w: 0, o: q.o * (duz ? 1 : 0.65) });
+    if (duz) out.push({ d: q.d, f: 'url(#gHacimIsik)', s: 'none', w: 0, o: q.o * 0.9 });
+  });
+  return out;
+}
+function bitkiJSON(tur, dk, seed, lod) { return JSON.stringify(hacimli(bitkiCiz(tur, dk, seed, { lod: lod || 1 }))); }
 
 function rnd(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }

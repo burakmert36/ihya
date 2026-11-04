@@ -44,14 +44,14 @@ struct DonemSecici: View {
             HStack {
                 Button { kaydir -= 1 } label: { Image(systemName: "chevron.left").font(.system(size: 14, weight: .bold)).frame(width: 36, height: 36) }
                     .buttonStyle(.plain)
-                    .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+                    .camYuzey(palet.cam(etkilesimli: true), in: .circle)
                     .accessibilityLabel("Önceki")
                 Spacer()
                 Text(donem.baslik(kaydir)).font(.kalin(16))
                 Spacer()
                 Button { kaydir += 1 } label: { Image(systemName: "chevron.right").font(.system(size: 14, weight: .bold)).frame(width: 36, height: 36) }
                     .buttonStyle(.plain)
-                    .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+                    .camYuzey(palet.cam(etkilesimli: true), in: .circle)
                     .disabled(kaydir >= 0)
                     .opacity(kaydir >= 0 ? 0.4 : 1)
                     .accessibilityLabel("Sonraki")
@@ -74,6 +74,7 @@ struct BahceEkrani: View {
         let liste = depo.kayit.oturumlar.filter { a.contains($0.baslangic) }.sorted { $0.baslangic < $1.baslangic }
         ScrollView {
             VStack(spacing: 12) {
+                TakipSecici()
                 SahneBasligi(ust: Tarihler.ustSatir(), baslik: "Bahçem") {
                     HStack(spacing: 8) {
                         hap(simge: "flame.fill", renk: Color(hex: "#22B35A"), metin: "\(depo.seri)", etiket: "Seri \(depo.seri) gün")
@@ -99,6 +100,7 @@ struct BahceEkrani: View {
                         .transition(.opacity)
                 }
                 DonemSecici(donem: $donem, kaydir: $kaydir)
+                HaftalikOdak()
                 GlassEffectContainer(spacing: 8) {
                     HStack(spacing: 8) {
                         NavigationLink(value: Rota.koleksiyon) {
@@ -125,6 +127,7 @@ struct BahceEkrani: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
+        .altCubukPayi()
         .background { BahceGokyuzu() }
         .toolbar(.hidden, for: .navigationBar)
         .onChange(of: donem) { _, _ in secili = nil }
@@ -138,7 +141,7 @@ struct BahceEkrani: View {
         }
         .padding(.horizontal, 12)
         .frame(height: 38)
-        .glassEffect(palet.cam(), in: .capsule)
+        .camYuzey(palet.cam(), in: .capsule)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(etiket)
     }
@@ -213,7 +216,7 @@ struct BitkiAyrintisi: View {
                     Image(systemName: "xmark").font(.system(size: 14, weight: .bold)).frame(width: 36, height: 36)
                 }
                 .buttonStyle(.plain)
-                .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+                .camYuzey(palet.cam(etkilesimli: true), in: .circle)
                 .accessibilityLabel("Kapat")
             }
             if let b {

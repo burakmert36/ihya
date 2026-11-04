@@ -207,43 +207,43 @@ struct AyarlarEkrani: View {
         }
     }
 
-    /// Tema önizlemeleri: saat, çubuk ve üç nokta.
+    /// Tema ızgarası: her kart temanın zemini üstünde Besmele'den bir parça gösterir.
     private var temalar: some View {
-        HStack(spacing: 8) {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
             ForEach(Tema.allCases) { t in
                 let on = depo.ayarlar.tema == t
-                let o = t.onizleme
+                let p = t.palet(.bugun)
                 Button {
                     withAnimation(.easeInOut(duration: 0.35)) { depo.degistir { $0.ayarlar.tema = t } }
                     Dokunsal.hafif(0.6)
                 } label: {
-                    VStack(spacing: 6) {
-                        VStack(spacing: 6) {
-                            Text("17:49").font(.kalin(15)).foregroundStyle(o.vurgu)
-                            Capsule().fill(o.cubuk).frame(width: 34, height: 4)
-                            HStack(spacing: 3) {
-                                Circle().fill(o.vurgu).frame(width: 6, height: 6)
-                                Circle().fill(o.vurgu).frame(width: 6, height: 6)
-                                Circle().strokeBorder(o.vurgu, lineWidth: 1.2).frame(width: 6, height: 6)
+                    VStack(alignment: .leading, spacing: 6) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Spacer(minLength: 0)
+                            Text("ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ").font(.arapca(15)).foregroundStyle(p.vurgu).lineLimit(1).minimumScaleFactor(0.6)
+                            Text("Rahman ve Rahim").font(.system(size: 12, weight: .medium, design: .serif)).foregroundStyle(p.metin).lineLimit(1).minimumScaleFactor(0.7)
+                        }
+                        .padding(10)
+                        .frame(maxWidth: .infinity, minHeight: 84, alignment: .leading)
+                        .background(SahneZemini(palet: p).clipShape(.rect(cornerRadius: 16)))
+                        .overlay(alignment: .topTrailing) {
+                            if on {
+                                Image(systemName: "checkmark.circle.fill").font(.system(size: 18)).foregroundStyle(.white, palet.vurgu).padding(6)
                             }
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 86)
-                        .background {
-                            RoundedRectangle(cornerRadius: 18)
-                                .fill(t == .ihya ? AnyShapeStyle(LinearGradient(colors: [Color(hex: "#8FD0F7"), Color(hex: "#F2F7FF"), Color(hex: "#FFF1DE")], startPoint: .top, endPoint: .bottom)) : AnyShapeStyle(o.taban))
-                        }
-                        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(on ? palet.vurgu : Color.primary.opacity(0.12), lineWidth: on ? 3 : 1))
-                        Text(t.ad).font(.kalin(12)).foregroundStyle(on ? palet.vurgu : Color.primary)
+                        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(on ? palet.vurgu : Color.white.opacity(0.18), lineWidth: on ? 2.5 : 1))
+                        Text(t.ad).font(.kalin(12.5)).foregroundStyle(on ? palet.vurgu : Color.primary).padding(.leading, 4)
                     }
+                    .padding(6)
+                    .background(RoundedRectangle(cornerRadius: 20).fill(on ? palet.vurgu.opacity(0.12) : Color.clear))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(t.ad) teması")
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
-        .padding(10)
-        .glassEffect(palet.cam(), in: .rect(cornerRadius: 26))
+        .padding(8)
+        .camYuzey(palet.cam(), in: .rect(cornerRadius: 26))
     }
 
     private func grup<I: View>(_ baslik: String, @ViewBuilder _ icerik: () -> I) -> some View {

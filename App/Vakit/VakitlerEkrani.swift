@@ -15,7 +15,7 @@ struct VakitlerEkrani: View {
                             .foregroundStyle(Color(hex: palet.koyu ? "#FFD08A" : "#6A3A00"))
                             .lineLimit(1).minimumScaleFactor(0.7)
                             .padding(.horizontal, 12).frame(height: 34)
-                            .glassEffect(palet.cam(), in: .capsule)
+                            .camYuzey(palet.cam(), in: .capsule)
                             .padding(.bottom, 4)
                 }
                 TimelineView(.periodic(from: .now, by: 1)) { an in
@@ -66,7 +66,7 @@ struct VakitlerEkrani: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func durumSatiri(_ simdi: Date) -> String {
@@ -115,6 +115,6 @@ struct VakitlerEkrani: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .clipShape(.rect(cornerRadius: 28))
-        .glassEffect(palet.cam(), in: .rect(cornerRadius: 28))
+        .camYuzey(palet.cam(), in: .rect(cornerRadius: 28))
     }
 }

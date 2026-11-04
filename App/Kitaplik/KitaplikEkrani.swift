@@ -55,7 +55,7 @@ struct KitaplikEkrani: View {
                                 .contentShape(RoundedRectangle(cornerRadius: 20))
                             }
                             .buttonStyle(.plain)
-                            .glassEffect(palet.cam(etkilesimli: true), in: .rect(cornerRadius: 20))
+                            .camYuzey(palet.cam(etkilesimli: true), in: .rect(cornerRadius: 20))
                         }
                     }
                     EsmaEzberKarti()
@@ -65,6 +65,7 @@ struct KitaplikEkrani: View {
             .padding(.bottom, 16)
         }
         .scrollDismissesKeyboard(.interactively)
+        .altCubukPayi()
         .toolbar(.hidden, for: .navigationBar)
     }
 
@@ -83,7 +84,7 @@ struct KitaplikEkrani: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 46)
-        .glassEffect(palet.cam(), in: .capsule)
+        .camYuzey(palet.cam(), in: .capsule)
     }
 }
 

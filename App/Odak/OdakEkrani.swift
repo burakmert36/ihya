@@ -70,7 +70,7 @@ struct CamKubbe<Icerik: View>: View {
                 .frame(width: 250, height: 270)
             Color.clear
                 .frame(width: 222, height: 254)
-                .glassEffect(.regular.tint(Color.white.opacity(0.05)), in: UnevenRoundedRectangle(topLeadingRadius: 111, bottomLeadingRadius: 30, bottomTrailingRadius: 30, topTrailingRadius: 111))
+                .camYuzey(.regular.tint(Color.white.opacity(0.05)), in: UnevenRoundedRectangle(topLeadingRadius: 111, bottomLeadingRadius: 30, bottomTrailingRadius: 30, topTrailingRadius: 111))
                 .padding(.top, 8)
             icerik()
                 .frame(width: 200, height: 240)
@@ -159,7 +159,7 @@ struct OdakKurulum: View {
                             .font(.system(size: 50, weight: .heavy)).monospacedDigit().tracking(-1.5)
                             .contentTransition(.numericText(value: Double(plan)))
                             .padding(.horizontal, 22)
-                            .glassEffect(palet.cam(), in: .capsule)
+                            .camYuzey(palet.cam(), in: .capsule)
                             .padding(.vertical, 4)
                         Text(altYazi(b)).font(.system(size: 13, weight: .semibold)).foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -172,7 +172,7 @@ struct OdakKurulum: View {
                     .font(.system(size: 15, weight: .semibold))
                     .padding(.horizontal, 18)
                     .frame(height: 44)
-                    .glassEffect(palet.cam(), in: .capsule)
+                    .camYuzey(palet.cam(), in: .capsule)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
@@ -211,7 +211,7 @@ struct OdakKurulum: View {
                 Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).frame(width: 44, height: 44).contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+            .camYuzey(palet.cam(etkilesimli: true), in: .circle)
             .accessibilityLabel("Kapat")
             let konular = depo.kayit.konular
             if konular.count <= 5, !konular.isEmpty {
@@ -241,7 +241,7 @@ struct OdakKurulum: View {
                 Image(systemName: "slider.horizontal.3").font(.system(size: 13, weight: .bold)).frame(width: 34, height: 34)
             }
             .buttonStyle(.plain)
-            .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+            .camYuzey(palet.cam(etkilesimli: true), in: .circle)
             .accessibilityLabel("Konuları düzenle")
             NavigationLink(value: Rota.sesler) {
                 HStack(spacing: 6) {
@@ -254,7 +254,7 @@ struct OdakKurulum: View {
                 .frame(height: 34)
             }
             .buttonStyle(.plain)
-            .glassEffect(palet.cam(etkilesimli: true), in: .capsule)
+            .camYuzey(palet.cam(etkilesimli: true), in: .capsule)
         }
     }
 
@@ -269,7 +269,7 @@ struct OdakKurulum: View {
                 Image(systemName: "minus").font(.system(size: 16, weight: .bold)).frame(width: 38, height: 38).contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+            .camYuzey(palet.cam(etkilesimli: true), in: .circle)
             .accessibilityLabel("Süreyi 5 dakika azalt")
             Slider(value: Binding(get: { Double(plan) }, set: { yeni in
                 let v = Int(yeni)
@@ -281,11 +281,11 @@ struct OdakKurulum: View {
                 Image(systemName: "plus").font(.system(size: 16, weight: .bold)).frame(width: 38, height: 38).contentShape(Circle())
             }
             .buttonStyle(.plain)
-            .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+            .camYuzey(palet.cam(etkilesimli: true), in: .circle)
             .accessibilityLabel("Süreyi 5 dakika artır")
         }
         .padding(6)
-        .glassEffect(palet.cam(), in: .capsule)
+        .camYuzey(palet.cam(), in: .capsule)
     }
 
     private func sureyiDegistir(_ d: Int) {
@@ -332,7 +332,7 @@ struct OdakKurulum: View {
             .padding(6)
         }
         .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
-        .glassEffect(palet.cam(), in: .rect(cornerRadius: 26))
+        .camYuzey(palet.cam(), in: .rect(cornerRadius: 26))
     }
 
     private func baslat() {
@@ -359,7 +359,7 @@ struct KonuCipi: View {
             .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .glassEffect(secili ? Glass.regular.tint(renk.opacity(0.45)).interactive() : palet.cam(etkilesimli: true), in: .capsule)
+        .camYuzey(secili ? Glass.regular.tint(renk.opacity(0.45)).interactive() : palet.cam(etkilesimli: true), in: .capsule)
         .accessibilityAddTraits(secili ? .isSelected : [])
     }
 }
@@ -446,9 +446,14 @@ struct OdakCalisiyor: View {
                     }
                     .padding(.horizontal, 14)
                     .frame(height: 36)
-                    .glassEffect(palet.cam(), in: .capsule)
+                    .camYuzey(palet.cam(), in: .capsule)
                 }
                 Spacer()
+                NavigationLink(value: Rota.sure(depo.kayit.kuranSon.first ?? 1, depo.kayit.kuranSon.count > 1 ? depo.kayit.kuranSon[1] : 1)) {
+                    Label("Kur'an oku", systemImage: "book").font(.kalin(13)).padding(.horizontal, 12).frame(height: 36)
+                }
+                .buttonStyle(.plain)
+                .camYuzey(palet.cam(etkilesimli: true), in: .capsule)
                 NavigationLink(value: Rota.sesler) {
                     Image(systemName: ses.caliyor ? "speaker.wave.2.fill" : "speaker.wave.2")
                         .symbolEffect(.variableColor.iterative, isActive: ses.caliyor)
@@ -456,7 +461,7 @@ struct OdakCalisiyor: View {
                         .frame(width: 36, height: 36)
                 }
                 .buttonStyle(.plain)
-                .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+                .camYuzey(palet.cam(etkilesimli: true), in: .circle)
                 .accessibilityLabel("Sesler")
             }
             if !d.ad.isEmpty {
@@ -526,7 +531,7 @@ struct OdakSonuc: View {
                     Image(systemName: "xmark").font(.system(size: 15, weight: .bold)).frame(width: 44, height: 44).contentShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+                .camYuzey(palet.cam(etkilesimli: true), in: .circle)
                 .accessibilityLabel("Kapat")
             }
             Spacer(minLength: 0)
@@ -548,7 +553,7 @@ struct OdakSonuc: View {
                     .font(.kalin(15))
                     .foregroundStyle(palet.vurgu)
                     .padding(.horizontal, 16).frame(height: 40)
-                    .glassEffect(.regular.tint(palet.dolgu.opacity(0.25)), in: .capsule)
+                    .camYuzey(.regular.tint(palet.dolgu.opacity(0.25)), in: .capsule)
                     .scaleEffect(goster ? 1 : 0.3)
                 if let siradaki = BitkiKatalogu.tumu.filter({ !depo.acikMi($0.id) && $0.fiyat <= depo.kayit.tohum }).min(by: { $0.fiyat < $1.fiyat }) {
                     Text("\(siradaki.ad) için yeterli tohumun var.").font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.secondary)
@@ -594,6 +599,6 @@ struct OdakSonuc: View {
     private func kapat(bahce: Bool = false) {
         odak.kapat()
         yon.odakAcik = false
-        if bahce { yon.sekme = .bahce; yon.bahceYol = [] }
+        if bahce { yon.sekme = .takip; yon.takipBolum = .bahce; yon.takipYol = [] }
     }
 }

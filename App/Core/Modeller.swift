@@ -106,7 +106,7 @@ enum EzanTuru: String, Codable, CaseIterable, Identifiable {
 }
 
 enum Tema: String, Codable, CaseIterable, Identifiable {
-    case ihya, gece, fildisi, lacivert, zumrut
+    case ihya, gece, fildisi, lacivert, zumrut, klasik, gunbatimi, okyanus, gul, mermer, mor
     var id: String { rawValue }
     var ad: String {
         switch self {
@@ -115,6 +115,12 @@ enum Tema: String, Codable, CaseIterable, Identifiable {
         case .fildisi: "Fildişi"
         case .lacivert: "Lacivert"
         case .zumrut: "Zümrüt"
+        case .klasik: "Klasik"
+        case .gunbatimi: "Gün batımı"
+        case .okyanus: "Okyanus"
+        case .gul: "Gül"
+        case .mermer: "Mermer"
+        case .mor: "Mor"
         }
     }
 }
@@ -147,10 +153,14 @@ struct Ayarlar: Codable, Equatable {
     var gunlukHedef: Int = 60
     var ezandaSustur: Bool = true
     var kuranDinlerkenKis: Bool = true
+    var kuranMeal: Bool = true
+    var kuranOkunus: Bool = false
+    var kuranPunto: Double = 28
 
     enum CodingKeys: String, CodingKey {
         case konumKipi, enlem, boylam, konumAdi, vakitBildirim, onceDakika, ezan, bildirimTonu, katiMod
         case sesOdakta, sesSondaAzalt, tesbihTitresim, tesbihSes, tesbihSesDuzeyi, okumaPunto, okumaKoyu, tema, gunlukHedef, ezandaSustur, kuranDinlerkenKis
+        case kuranMeal, kuranOkunus, kuranPunto
     }
 }
 
@@ -169,6 +179,7 @@ extension Ayarlar {
         okumaKoyu = (try? c.decodeIfPresent(Bool.self, forKey: .okumaKoyu)) ?? nil
         tema = v(.tema, tema); gunlukHedef = v(.gunlukHedef, gunlukHedef)
         ezandaSustur = v(.ezandaSustur, ezandaSustur); kuranDinlerkenKis = v(.kuranDinlerkenKis, kuranDinlerkenKis)
+        kuranMeal = v(.kuranMeal, kuranMeal); kuranOkunus = v(.kuranOkunus, kuranOkunus); kuranPunto = v(.kuranPunto, kuranPunto)
         let vb = v(.vakitBildirim, vakitBildirim)
         if vb.count == 6 { vakitBildirim = vb }
     }
@@ -193,9 +204,11 @@ struct Kayit: Codable {
     var sonPlan: Int = 25
     /// Ezberlenen Esmâ-i Hüsnâ numaraları.
     var ezber: [Int] = []
+    /// Kur'an'da kaldığın yer: [sûre, âyet].
+    var kuranSon: [Int] = []
 
     enum CodingKeys: String, CodingKey {
-        case ayarlar, oturumlar, devam, konular, zikirler, karisimlar, sonKatman, sonMesafe, favoriler, kitaplar, namaz, tohum, acik, sonTur, sonPlan, ezber
+        case ayarlar, oturumlar, devam, konular, zikirler, karisimlar, sonKatman, sonMesafe, favoriler, kitaplar, namaz, tohum, acik, sonTur, sonPlan, ezber, kuranSon
     }
 
     static let varsayilanKonular: [Konu] = [
@@ -217,6 +230,6 @@ extension Kayit {
         konular = v(.konular, konular); zikirler = v(.zikirler, zikirler); karisimlar = v(.karisimlar, karisimlar)
         sonKatman = v(.sonKatman, sonKatman); sonMesafe = v(.sonMesafe, sonMesafe); favoriler = v(.favoriler, favoriler); kitaplar = v(.kitaplar, kitaplar)
         namaz = v(.namaz, namaz); tohum = v(.tohum, tohum); acik = v(.acik, acik)
-        sonTur = v(.sonTur, sonTur); sonPlan = v(.sonPlan, sonPlan); ezber = v(.ezber, ezber)
+        sonTur = v(.sonTur, sonTur); sonPlan = v(.sonPlan, sonPlan); ezber = v(.ezber, ezber); kuranSon = v(.kuranSon, kuranSon)
     }
 }

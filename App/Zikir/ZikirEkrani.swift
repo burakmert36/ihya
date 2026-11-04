@@ -90,7 +90,7 @@ struct ZikirEkrani: View {
                 .submitLabel(.done)
                 .padding(.horizontal, 16)
                 .frame(height: 50)
-                .glassEffect(palet.cam(), in: .capsule)
+                .camYuzey(palet.cam(), in: .capsule)
                 .padding(.top, 10)
         }
     }
@@ -140,7 +140,7 @@ struct ZikirEkrani: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .glassEffect(on ? Glass.regular.tint(palet.vurgu.opacity(0.18)).interactive() : palet.cam(etkilesimli: true), in: .capsule)
+        .camYuzey(on ? Glass.regular.tint(palet.vurgu.opacity(0.18)).interactive() : palet.cam(etkilesimli: true), in: .capsule)
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 

@@ -33,7 +33,7 @@ extension Font {
 // MARK: Sahne ve palet
 
 /// Her ekranın tasarımdaki zemini. İhya temasında her sahnenin kendi rengi var; diğer temalar bütün sahnelere tek zemin verir.
-enum Sahne: Hashable { case bugun, odak, bahce, kitaplik, sesler, vakit, hadis, okuma, zikir, ayarlar }
+enum Sahne: Hashable { case bugun, odak, bahce, kitaplik, sesler, vakit, hadis, okuma, zikir, ayarlar, kuran }
 
 /// Zemindeki yumuşak ışık lekesi; x, y ekranın oranı, r nokta cinsinden yarıçap.
 struct Isik: Hashable {
@@ -138,6 +138,14 @@ struct Palet {
                                    Isik(renk: Color(r: 79, g: 70, b: 229, a: 0.32), x: 0.1, y: 0.05, r: 220)],
                          metin: Color(hex: "#F5F5F7"), vurgu: Color(hex: "#F4B04A"), dolgu: Color(hex: "#F4B04A"), dolguMetin: Color(hex: "#2A1600"),
                          cubuk: [Color(hex: "#FFD27A"), Color(hex: "#F4B04A")], yildiz: true)
+        case .kuran:
+            return Palet(koyu: true,
+                         duraklar: dur([("#1C1846", 0), ("#0E0C26", 0.5), ("#06060F", 1)]), merkez: UnitPoint(x: 0.2, y: 0), yaricap: 640,
+                         isiklar: [Isik(renk: Color(r: 244, g: 190, b: 90, a: 0.20), x: 0.85, y: 0.18, r: 170),
+                                   Isik(renk: Color(r: 79, g: 70, b: 229, a: 0.34), x: 0.12, y: 0.55, r: 190),
+                                   Isik(renk: Color(r: 120, g: 90, b: 255, a: 0.22), x: 0.8, y: 0.88, r: 170)],
+                         metin: Color(hex: "#F4F2FF"), vurgu: Color(hex: "#FFD66B"), dolgu: Color(hex: "#4F46E5"),
+                         cubuk: [Color(hex: "#FFE08A"), Color(hex: "#F4B04A")], yildiz: true)
         case .okuma:
             return Palet(koyu: true, duraklar: dur([("#282622", 0), ("#181715", 1)]),
                          isiklar: [Isik(renk: Color(r: 255, g: 200, b: 120, a: 0.10), x: 0.8, y: 0.1, r: 180)],
@@ -171,17 +179,24 @@ extension Tema {
         case .zumrut:
             return .tek(koyu: true, taban: "#04140F", isik1: Color(r: 52, g: 199, b: 89, a: 0.26), isik2: Color(r: 16, g: 120, b: 90, a: 0.30), isik3: Color(r: 52, g: 199, b: 89, a: 0.14),
                         metin: "#EFF7F3", vurgu: "#FFD60A", dolgu: "#FFD60A", dolguMetin: Color(hex: "#1A1500"), cubuk: "#34C759", kart: "#0B231C")
-        }
-    }
-
-    /// Ayarlar'daki küçük önizleme için taban ve vurgu.
-    var onizleme: (taban: Color, vurgu: Color, cubuk: Color, metin: Color) {
-        switch self {
-        case .ihya: (Color(hex: "#8FD0F7"), Color(hex: "#0E6A33"), Color(hex: "#1BA552"), Color(hex: "#12302A"))
-        case .gece: (Color(hex: "#08080F"), Color(hex: "#FFD60A"), Color(hex: "#4F46E5"), Color(hex: "#F5F5F7"))
-        case .fildisi: (Color(hex: "#F4EFE6"), Color(hex: "#A87B00"), Color(hex: "#4F46E5"), Color(hex: "#1C1A17"))
-        case .lacivert: (Color(hex: "#070D1F"), Color(hex: "#FFD60A"), Color(hex: "#3862FF"), Color(hex: "#F2F5FB"))
-        case .zumrut: (Color(hex: "#04140F"), Color(hex: "#FFD60A"), Color(hex: "#34C759"), Color(hex: "#EFF7F3"))
+        case .klasik:
+            return .tek(koyu: true, taban: "#050505", isik1: Color(r: 255, g: 255, b: 255, a: 0.07), isik2: Color(r: 140, g: 140, b: 150, a: 0.10), isik3: Color(r: 255, g: 255, b: 255, a: 0.05),
+                        metin: "#F2F2F2", vurgu: "#E9D8A6", dolgu: "#E9D8A6", dolguMetin: Color(hex: "#151208"), cubuk: "#C9B37A", kart: "#141414")
+        case .gunbatimi:
+            return .tek(koyu: true, taban: "#160A08", isik1: Color(r: 255, g: 120, b: 60, a: 0.30), isik2: Color(r: 170, g: 50, b: 60, a: 0.26), isik3: Color(r: 255, g: 180, b: 90, a: 0.16),
+                        metin: "#FFF3EC", vurgu: "#FFB36B", dolgu: "#FF8A3D", dolguMetin: Color(hex: "#2A1000"), cubuk: "#FF8A3D", kart: "#24120E")
+        case .okyanus:
+            return .tek(koyu: true, taban: "#03121C", isik1: Color(r: 40, g: 170, b: 230, a: 0.30), isik2: Color(r: 20, g: 90, b: 160, a: 0.30), isik3: Color(r: 60, g: 220, b: 210, a: 0.14),
+                        metin: "#EAF7FF", vurgu: "#7FD8FF", dolgu: "#2BB3E8", dolguMetin: Color(hex: "#001A26"), cubuk: "#2BB3E8", kart: "#0A2232")
+        case .gul:
+            return .tek(koyu: true, taban: "#170910", isik1: Color(r: 230, g: 90, b: 130, a: 0.30), isik2: Color(r: 140, g: 40, b: 80, a: 0.30), isik3: Color(r: 255, g: 160, b: 190, a: 0.14),
+                        metin: "#FFF0F5", vurgu: "#FF9DB8", dolgu: "#F0628F", dolguMetin: .white, cubuk: "#F0628F", kart: "#26101A")
+        case .mermer:
+            return .tek(koyu: false, taban: "#EEEEEC", isik1: Color(r: 170, g: 170, b: 185, a: 0.28), isik2: Color(r: 110, g: 110, b: 130, a: 0.14), isik3: Color(r: 255, g: 255, b: 255, a: 0.6),
+                        metin: "#1D1D22", vurgu: "#3E3E4C", dolgu: "#2E2E38", dolguMetin: .white, cubuk: "#5A5A6A", kart: "#FFFFFF")
+        case .mor:
+            return .tek(koyu: true, taban: "#0F0820", isik1: Color(r: 150, g: 90, b: 255, a: 0.32), isik2: Color(r: 90, g: 40, b: 180, a: 0.30), isik3: Color(r: 210, g: 160, b: 255, a: 0.14),
+                        metin: "#F5EEFF", vurgu: "#D6B4FF", dolgu: "#9B6BFF", dolguMetin: .white, cubuk: "#9B6BFF", kart: "#1C1233")
         }
     }
 }
@@ -265,8 +280,31 @@ struct CamKart: ViewModifier {
         content
             .padding(ic)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .glassEffect(palet.cam(renk.map { $0.opacity(0.18) }), in: .rect(cornerRadius: kose))
+            .camYuzey(palet.cam(renk.map { $0.opacity(0.18) }), in: .rect(cornerRadius: kose))
     }
+}
+
+/// Camın kenar ışığı: üstte parlak, altta hafif yansıyan ince çizgi; cam yüzeyi belirgin kılar.
+struct CamKenari<S: InsettableShape>: View {
+    let sekil: S
+    @Environment(\.palet) private var palet
+    var body: some View {
+        sekil
+            .strokeBorder(LinearGradient(stops: [.init(color: .white.opacity(palet.koyu ? 0.42 : 0.9), location: 0),
+                                                 .init(color: .white.opacity(palet.koyu ? 0.06 : 0.25), location: 0.45),
+                                                 .init(color: .white.opacity(palet.koyu ? 0.18 : 0.55), location: 1)],
+                                         startPoint: .top, endPoint: .bottom), lineWidth: 1)
+            .allowsHitTesting(false)
+    }
+}
+
+extension View {
+    /// Liquid Glass ve kenar ışığı birlikte.
+    func camYuzey<S: InsettableShape>(_ cam: Glass, in sekil: S) -> some View {
+        glassEffect(cam, in: sekil).overlay { CamKenari(sekil: sekil) }
+    }
+    /// Kök ekranlarda içerik alt çubuğun altında kalmasın.
+    func altCubukPayi() -> some View { safeAreaPadding(.bottom, 92) }
 }
 
 /// Krem okuma kartı (günün sözü, günün hadisi): koyu zeminde de açık okunur.
@@ -281,7 +319,7 @@ struct KremKart: ViewModifier {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(LinearGradient(colors: [Color(r: 255, g: 253, b: 246, a: 0.92), Color(r: 247, g: 240, b: 224, a: 0.86)], startPoint: .topLeading, endPoint: .bottomTrailing),
                         in: .rect(cornerRadius: kose))
-            .glassEffect(.regular.tint(Color.krem.opacity(0.35)), in: .rect(cornerRadius: kose))
+            .camYuzey(.regular.tint(Color.krem.opacity(0.35)), in: .rect(cornerRadius: kose))
     }
 }
 
@@ -416,7 +454,7 @@ struct CamSegment<T: Hashable>: View {
             }
         }
         .padding(4)
-        .glassEffect(palet.cam(), in: .capsule)
+        .camYuzey(palet.cam(), in: .capsule)
     }
 }
 

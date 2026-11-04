@@ -76,23 +76,44 @@ enum ArkaPlan {
 
 /// Alt çubuktaki dört sekme; Odak ayrı yuvarlak düğmeyle tam ekran açılır.
 enum Sekme: Hashable, CaseIterable {
-    case bugun, bahce, kitaplik, vakit
+    case bugun, kuran, takip, kitaplik
 
     var ad: String {
         switch self {
         case .bugun: "Bugün"
-        case .bahce: "Bahçe"
+        case .kuran: "Kur'an"
+        case .takip: "Takip"
         case .kitaplik: "Kitaplık"
-        case .vakit: "Vakit"
+        }
+    }
+
+    var simge: String {
+        switch self {
+        case .bugun: "sun.max"
+        case .kuran: "book"
+        case .takip: "checkmark.circle"
+        case .kitaplik: "books.vertical"
         }
     }
 
     var sahne: Sahne {
         switch self {
         case .bugun: .bugun
-        case .bahce: .bahce
+        case .kuran: .kuran
+        case .takip: .bahce
         case .kitaplik: .kitaplik
-        case .vakit: .vakit
+        }
+    }
+}
+
+/// Takip sekmesinin bölümleri.
+enum TakipBolumu: String, CaseIterable, Hashable {
+    case bahce = "Bahçe", namaz = "Namaz", zikir = "Zikir"
+    var sahne: Sahne {
+        switch self {
+        case .bahce: .bahce
+        case .namaz: .vakit
+        case .zikir: .zikir
         }
     }
 }
@@ -101,6 +122,8 @@ enum Rota: Hashable {
     case vakitler, ayarlar, konular, kible, gununHadisi, hadisler, sozler, dualar, duaDefteri, esma, diniGunler, kitaplar, favoriler
     case kitap(UUID)
     case istatistik, koleksiyon, sesler, zikir, zikirIstatistik
+    /// Kur'an okuyucu: sûre, âyet.
+    case sure(Int, Int)
 
     var sahne: Sahne {
         switch self {
@@ -112,6 +135,7 @@ enum Rota: Hashable {
         case .istatistik, .koleksiyon: .bahce
         case .sesler: .sesler
         case .zikir, .zikirIstatistik: .zikir
+        case .sure: .kuran
         }
     }
 }
@@ -121,27 +145,28 @@ enum Rota: Hashable {
 final class Yonlendirici {
     var sekme: Sekme = .bugun
     var odakAcik = false
+    var takipBolum: TakipBolumu = .bahce
     var bugunYol: [Rota] = []
-    var bahceYol: [Rota] = []
+    var kuranYol: [Rota] = []
+    var takipYol: [Rota] = []
     var kitaplikYol: [Rota] = []
-    var vakitYol: [Rota] = []
     var odakYol: [Rota] = []
 
     var yol: [Rota] {
         get {
             switch sekme {
             case .bugun: bugunYol
-            case .bahce: bahceYol
+            case .kuran: kuranYol
+            case .takip: takipYol
             case .kitaplik: kitaplikYol
-            case .vakit: vakitYol
             }
         }
         set {
             switch sekme {
             case .bugun: bugunYol = newValue
-            case .bahce: bahceYol = newValue
+            case .kuran: kuranYol = newValue
+            case .takip: takipYol = newValue
             case .kitaplik: kitaplikYol = newValue
-            case .vakit: vakitYol = newValue
             }
         }
     }
@@ -149,7 +174,7 @@ final class Yonlendirici {
     /// Şu an görünen ekranın sahnesi (durum çubuğu ve alt çubuk rengi için).
     var aktifSahne: Sahne {
         if odakAcik { return odakYol.last?.sahne ?? .odak }
-        return yol.last?.sahne ?? sekme.sahne
+        return yol.last?.sahne ?? (sekme == .takip ? takipBolum.sahne : sekme.sahne)
     }
 
     /// Alt çubuk yalnız kök ekranlarda görünür (alt ekranlar kendi düğmelerini alta koyar).
@@ -182,9 +207,13 @@ final class Yonlendirici {
         case "odak": odakAcik = true
         case "odak-calisiyor": odak.ornekBaslat(); odakAcik = true
         case "odak-bitti": odak.ornekBitir(); odakAcik = true
-        case "bahce": sekme = .bahce
-        case "istatistik": sekme = .bahce; bahceYol = [.istatistik]
-        case "koleksiyon": sekme = .bahce; bahceYol = [.koleksiyon]
+        case "bahce": sekme = .takip; takipBolum = .bahce
+        case "istatistik": sekme = .takip; takipYol = [.istatistik]
+        case "koleksiyon": sekme = .takip; takipYol = [.koleksiyon]
+        case "takip-namaz": sekme = .takip; takipBolum = .namaz
+        case "takip-zikir": sekme = .takip; takipBolum = .zikir
+        case "kuran": sekme = .kuran
+        case "kuran-oku": sekme = .kuran; kuranYol = [.sure(36, 1)]
         case "sesler": sekme = .bugun; bugunYol = [.sesler]
         case "kitaplik": sekme = .kitaplik
         case "hadis": sekme = .kitaplik; kitaplikYol = [.gununHadisi]
@@ -199,7 +228,7 @@ final class Yonlendirici {
         case "okuma", "favoriler": sekme = .kitaplik; kitaplikYol = [.favoriler]
         case "zikir": sekme = .kitaplik; kitaplikYol = [.zikir]
         case "zikir-istatistik": sekme = .kitaplik; kitaplikYol = [.zikir, .zikirIstatistik]
-        case "vakitler": sekme = .vakit
+        case "vakitler": bugunYol = [.vakitler]
         case "ayarlar": bugunYol = [.ayarlar]
         case let t where t.hasPrefix("tema-"):
             // "tema-gece" ya da "tema-gece-kitaplik": temayı seçer, varsa ekranı açar.
@@ -287,9 +316,9 @@ struct KokGorunum: View {
         @Bindable var yon = yon
         switch s {
         case .bugun: NavigationStack(path: $yon.bugunYol) { BugunEkrani().sahne(.bugun).rotalar() }
-        case .bahce: NavigationStack(path: $yon.bahceYol) { BahceEkrani().sahne(.bahce).rotalar() }
+        case .kuran: NavigationStack(path: $yon.kuranYol) { KuranEkrani().sahne(.kuran).rotalar() }
+        case .takip: NavigationStack(path: $yon.takipYol) { TakipEkrani().rotalar() }
         case .kitaplik: NavigationStack(path: $yon.kitaplikYol) { KitaplikEkrani().sahne(.kitaplik).rotalar() }
-        case .vakit: NavigationStack(path: $yon.vakitYol) { VakitlerEkrani().sahne(.vakit).rotalar() }
         }
     }
 
@@ -363,48 +392,42 @@ struct RotaGorunumu: View {
         case .sesler: SeslerEkrani()
         case .zikir: ZikirEkrani()
         case .zikirIstatistik: ZikirIstatistikEkrani()
+        case .sure(let n, let a): KuranOkuyucu(sure: n, ayet: a)
         }
     }
 }
 
 // MARK: Alt çubuk
 
-/// Tasarımdaki alt çubuk: dört sekmeli cam kapsül ve yanında yeşil yuvarlak Odak düğmesi. Ses seçiliyse üstünde ince ses şeridi.
+/// Tasarımdaki alt çubuk: dört sekmeli cam kapsül ve yanında yeşil yuvarlak Odak düğmesi.
 struct AltCubuk: View {
     @Environment(Yonlendirici.self) private var yon
-    @Environment(SesMotoru.self) private var ses
     @Environment(\.palet) private var palet
     @Namespace private var alan
 
     var body: some View {
-        VStack(spacing: 8) {
-            if !ses.katman.isEmpty, yon.yol.last != .sesler {
-                SesSeridi().transition(.move(edge: .bottom).combined(with: .opacity))
-            }
-            GlassEffectContainer(spacing: 14) {
-                HStack(spacing: 12) {
-                    HStack(spacing: 0) {
-                        ForEach(Sekme.allCases, id: \.self) { s in sekmeDugmesi(s) }
-                    }
-                    .padding(6)
-                    .glassEffect(palet.cam(etkilesimli: true), in: .capsule)
-
-                    Button { yon.odakAc(); Dokunsal.orta() } label: {
-                        FilizSimgesi()
-                            .fill(palet.dolguMetin)
-                            .frame(width: 30, height: 30)
-                            .frame(width: 64, height: 64)
-                            .contentShape(Circle())
-                    }
-                    .buttonStyle(.plain)
-                    .glassEffect(.regular.tint(palet.dolgu.opacity(0.9)).interactive(), in: .circle)
-                    .accessibilityLabel("Odaklan, yeni oturum")
+        GlassEffectContainer(spacing: 14) {
+            HStack(spacing: 12) {
+                HStack(spacing: 0) {
+                    ForEach(Sekme.allCases, id: \.self) { s in sekmeDugmesi(s) }
                 }
+                .padding(6)
+                .camYuzey(palet.cam(etkilesimli: true), in: .capsule)
+
+                Button { yon.odakAc(); Dokunsal.orta() } label: {
+                    FilizSimgesi()
+                        .fill(palet.dolguMetin)
+                        .frame(width: 30, height: 30)
+                        .frame(width: 64, height: 64)
+                        .contentShape(Circle())
+                }
+                .buttonStyle(.plain)
+                .camYuzey(.regular.tint(palet.dolgu.opacity(0.9)).interactive(), in: .circle)
+                .accessibilityLabel("Odaklan, yeni oturum")
             }
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 2)
-        .animation(.spring(response: 0.4, dampingFraction: 0.85), value: ses.katman.isEmpty)
     }
 
     private func sekmeDugmesi(_ s: Sekme) -> some View {
@@ -414,14 +437,7 @@ struct AltCubuk: View {
             Dokunsal.hafif(0.5)
         } label: {
             VStack(spacing: 2) {
-                Group {
-                    switch s {
-                    case .bugun: Image(systemName: "sun.max")
-                    case .bahce: FilizSimgesi().frame(width: 22, height: 22)
-                    case .kitaplik: Image(systemName: "book")
-                    case .vakit: Image(systemName: "clock")
-                    }
-                }
+                Image(systemName: s.simge)
                 .font(.system(size: 19, weight: .semibold))
                 .frame(height: 24)
                 Text(s.ad).font(.system(size: 10.5, weight: .bold))
@@ -439,38 +455,5 @@ struct AltCubuk: View {
         .buttonStyle(.plain)
         .accessibilityLabel(s.ad)
         .accessibilityAddTraits(on ? .isSelected : [])
-    }
-}
-
-/// Alt çubuğun üstündeki ses şeridi: dokununca Sesler açılır.
-struct SesSeridi: View {
-    @Environment(SesMotoru.self) private var ses
-    @Environment(Yonlendirici.self) private var yon
-    @Environment(\.palet) private var palet
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "waveform")
-                .symbolEffect(.variableColor.iterative, isActive: ses.caliyor)
-                .foregroundStyle(ses.caliyor ? palet.vurgu : Color.secondary)
-            Text(ses.seciliAdlar)
-                .font(.system(size: 13, weight: .semibold))
-                .lineLimit(1)
-            Spacer(minLength: 4)
-            Button { ses.degistirOynat() } label: {
-                Image(systemName: ses.caliyor ? "pause.fill" : "play.fill")
-                    .contentTransition(.symbolEffect(.replace))
-                    .frame(width: 32, height: 32)
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel(ses.caliyor ? "Duraklat" : "Çal")
-        }
-        .padding(.leading, 16)
-        .padding(.trailing, 8)
-        .frame(height: 42)
-        .glassEffect(palet.cam(etkilesimli: true), in: .capsule)
-        .contentShape(Capsule())
-        .onTapGesture { yon.sesleriAc() }
     }
 }

@@ -20,14 +20,14 @@ struct BugunEkrani: View {
                             .foregroundStyle(palet.vurgu)
                             .padding(.horizontal, 12)
                             .frame(height: 32)
-                            .glassEffect(palet.cam(), in: .capsule)
+                            .camYuzey(palet.cam(), in: .capsule)
                             .accessibilityElement(children: .combine)
                         }
                         NavigationLink(value: Rota.ayarlar) {
                             Image(systemName: "gearshape").font(.system(size: 15, weight: .semibold)).frame(width: 32, height: 32)
                         }
                         .buttonStyle(.plain)
-                        .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+                        .camYuzey(palet.cam(etkilesimli: true), in: .circle)
                         .accessibilityLabel("Ayarlar")
                     }
                     .padding(.bottom, 4)
@@ -41,6 +41,7 @@ struct BugunEkrani: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
+        .altCubukPayi()
         .toolbar(.hidden, for: .navigationBar)
     }
 
@@ -58,12 +59,9 @@ struct BugunEkrani: View {
                 CamDugme(baslik: "Odaklan", renk: Color(hex: k ? "#7CF0A4" : "#0E6A33")) { yon.odakAc() }
                 CamDugme(baslik: "Sesler", renk: Color(hex: k ? "#9CC8FF" : "#1F4E8C")) { yon.ac(.sesler) }
                 CamDugme(baslik: "Zikir", renk: Color(hex: k ? "#D3B5FF" : "#5B2E91")) { yon.ac(.zikir) }
-                CamDugme(baslik: "Oku", renk: Color(hex: k ? "#F2C98A" : "#5A3A10")) {
-                    if let son = depo.kayit.kitaplar.filter({ $0.son != nil }).max(by: { ($0.son ?? .distantPast) < ($1.son ?? .distantPast) }) {
-                        yon.ac(.kitap(son.id))
-                    } else {
-                        yon.ac(.gununHadisi)
-                    }
+                CamDugme(baslik: "Kur'an", renk: Color(hex: k ? "#F2C98A" : "#5A3A10")) {
+                    let s = depo.kayit.kuranSon
+                    yon.ac(.sure(s.first ?? 1, s.count > 1 ? s[1] : 1))
                 }
             }
         }
@@ -82,7 +80,7 @@ struct SonrakiVakitKarti: View {
             let bugun = vakit.vakitler(an.date)
             let k = bugun.firstIndex { $0 > an.date }
             let kalan = max(0, Int(d.sonrakiZaman.timeIntervalSince(an.date)))
-            Button { yon.sec(.vakit) } label: {
+            Button { yon.ac(.vakitler) } label: {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .firstTextBaseline) {
                         (Text("Sıradaki vakit · ").foregroundStyle(.secondary) + Text(k.map { VakitAdi.adlar[$0] } ?? "İmsak (yarın)").foregroundStyle(palet.vurgu))
@@ -194,7 +192,7 @@ struct BugunkuBahce: View {
         let tamam = bugun.filter { $0.durum == .tamam }
         let dk = Int(tamam.reduce(0) { $0 + $1.sure }.rounded())
         let hedef = max(10, depo.ayarlar.gunlukHedef)
-        Button { yon.sec(.bahce) } label: {
+        Button { yon.takipBolum = .bahce; yon.sec(.takip) } label: {
             HStack(spacing: 12) {
                 HStack(alignment: .bottom, spacing: 2) {
                     if tamam.isEmpty {
