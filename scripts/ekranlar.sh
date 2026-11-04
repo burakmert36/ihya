@@ -32,6 +32,7 @@ cek hadis 14-hadis
 cek dualar 15-dualar
 cek dua-defteri 16-dua-defteri
 cek esma 17-esma
+cek esma-9 17b-esma-dua
 cek kible 18-kible
 cek zikir 19-zikir
 cek vakitler 20-vakitler

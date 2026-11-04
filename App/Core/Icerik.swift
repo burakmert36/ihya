@@ -76,6 +76,19 @@ struct EsmaIsmi: Codable, Identifiable, Hashable {
     var id: Int { no }
 }
 
+/// Bir isme özel dua ya da âyet (Tasarim/uretim/esma_dualar.py üretir ve kaynağına karşı doğrular).
+struct EsmaDuasi: Codable, Hashable {
+    let baslik: String
+    let tur: String
+    let arapca: String
+    let okunus: String
+    let anlam: String
+    let kaynak: String
+    let not: String?
+}
+
+private struct EsmaDualariDosyasi: Codable { let dualar: [String: EsmaDuasi]; let isimler: [String: [String]] }
+
 struct DiniGun: Codable, Identifiable, Hashable {
     let tarih: String
     let ad: String
@@ -104,6 +117,13 @@ enum Icerik {
     static let duaDefteri: DuaDefteri? = dualarDosyasi?.defter
     static let esma: [EsmaIsmi] = oku("esma", [EsmaIsmi].self) ?? []
     static let diniGunler: [DiniGun] = oku("dinigunler", DiniGunDosyasi.self)?.gunler ?? []
+    private static let esmaDualari = oku("esma_dualar", EsmaDualariDosyasi.self)
+
+    /// İsmin dualarının sırası: önce Buhârî duaları, sonra Kur'an duaları, sonra âyetler.
+    static func esmaDualari(_ no: Int) -> [EsmaDuasi] {
+        guard let d = esmaDualari else { return [] }
+        return (d.isimler[String(no)] ?? []).compactMap { d.dualar[$0] }
+    }
 
     static var hadisKonulari: [String] {
         var gorulen = Set<String>(), sira: [String] = []

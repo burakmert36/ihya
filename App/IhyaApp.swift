@@ -146,6 +146,8 @@ final class Yonlendirici {
     var sekme: Sekme = .bugun
     var odakAcik = false
     var takipBolum: TakipBolumu = .bahce
+    /// Esmâ ekranı açılınca doğrudan gösterilecek isim (ekran görüntüsü için).
+    var esmaAc: Int?
     var bugunYol: [Rota] = []
     var kuranYol: [Rota] = []
     var takipYol: [Rota] = []
@@ -222,6 +224,7 @@ final class Yonlendirici {
         case "dualar": sekme = .kitaplik; kitaplikYol = [.dualar]
         case "dua-defteri": sekme = .kitaplik; kitaplikYol = [.dualar, .duaDefteri]
         case "esma": sekme = .kitaplik; kitaplikYol = [.esma]
+        case let t where t.hasPrefix("esma-"): sekme = .kitaplik; kitaplikYol = [.esma]; esmaAc = Int(t.dropFirst(5))
         case "kible": sekme = .kitaplik; kitaplikYol = [.kible]
         case "dinigunler": sekme = .kitaplik; kitaplikYol = [.diniGunler]
         case "kitaplar": sekme = .kitaplik; kitaplikYol = [.kitaplar]

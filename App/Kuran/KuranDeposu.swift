@@ -13,7 +13,10 @@ struct Sure: Identifiable, Hashable {
 struct Ayet: Hashable {
     let no: Int
     let arapca: String
+    /// Diyanet meali bazı âyetleri birlikte çevirir; ortak meal yalnız grubun son âyetinde durur, öncekilerde boştur.
     let meal: String
+    /// Mealin kapsadığı ilk âyet (tek âyetse kendisi).
+    let mealBas: Int
     let okunus: String
     let cuz: Int
 }
@@ -137,10 +140,13 @@ final class KuranDeposu {
             let n = ar[i].count
             guard n > 0, ml[i].count == n else { return nil }
             var liste: [Ayet] = []
+            var bas = 0
             for j in 0..<n {
-                liste.append(Ayet(no: j + 1, arapca: ar[i][j], meal: ml[i][j],
+                let ortak = j + 1 < n && ml[i][j + 1] == ml[i][j]
+                liste.append(Ayet(no: j + 1, arapca: ar[i][j], meal: ortak ? "" : ml[i][j], mealBas: bas + 1,
                                   okunus: (ok?[i].indices.contains(j) ?? false) ? ok![i][j] : "",
                                   cuz: cuzler.indices.contains(j) ? cuzler[j] : 0))
+                if !ortak { bas = j + 1 }
             }
             ayetler.append(liste)
             sureler.append(Sure(no: i + 1, ad: KuranDeposu.adlar[i], arapca: b["arabicname"] as? String ?? "",

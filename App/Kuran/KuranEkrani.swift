@@ -253,8 +253,8 @@ struct KuranOkuyucu: View {
             if a.kuranOkunus, !v.okunus.isEmpty {
                 Text(v.okunus).font(.system(size: 15, design: .serif).italic()).foregroundStyle(palet.vurgu.opacity(0.9))
             }
-            if a.kuranMeal {
-                (Text("\(v.no). ").font(.kalin(13)).foregroundStyle(palet.vurgu) + Text(v.meal).font(.okuma(a.okumaPunto - 1)))
+            if a.kuranMeal, !v.meal.isEmpty {
+                (Text(v.mealBas < v.no ? "\(v.mealBas)-\(v.no). " : "\(v.no). ").font(.kalin(13)).foregroundStyle(palet.vurgu) + Text(v.meal).font(.okuma(a.okumaPunto - 1)))
                     .lineSpacing(3)
                     .textSelection(.enabled)
             }
