@@ -190,6 +190,8 @@ struct OdakKurulum: View {
                 plan = depo.kayit.sonPlan
                 konu = konu ?? depo.kayit.konular.first?.id
             }
+            if let ad = yon.odakKonu, let k = depo.kayit.konular.first(where: { $0.ad == ad }) { konu = k.id }
+            yon.odakKonu = nil
         }
         .task(id: "\(tur)-\(plan)") {
             guard !tur.isEmpty else { return }
@@ -370,6 +372,7 @@ struct OdakCalisiyor: View {
     @Environment(OdakMotoru.self) private var odak
     @Environment(Depo.self) private var depo
     @Environment(SesMotoru.self) private var ses
+    @Environment(Yonlendirici.self) private var yon
     @Environment(\.palet) private var palet
     @State private var bitirSor = false
     @State private var belir = false
@@ -433,6 +436,36 @@ struct OdakCalisiyor: View {
         }
     }
 
+    /// Konuya göre okuma/dinleme kısayolu: Kitap → son kitap, Dinle → tilavet, öbürleri → Kur'an.
+    @ViewBuilder
+    private func okumaBaglantisi(_ konu: String) -> some View {
+        let son = depo.kayit.kuranSon
+        let s = son.first ?? 1, a = son.count > 1 ? son[1] : 1
+        switch konu {
+        case "Kitap":
+            let kitap = yon.odakKitap.flatMap { id in depo.kayit.kitaplar.first { $0.id == id } }
+                ?? depo.kayit.kitaplar.max { ($0.son ?? $0.eklenme) < ($1.son ?? $1.eklenme) }
+            NavigationLink(value: kitap.map { Rota.kitap($0.id) } ?? Rota.kitaplar) {
+                Label("Kitap oku", systemImage: "book.pages").font(.kalin(13)).padding(.horizontal, 12).frame(height: 36)
+            }
+            .buttonStyle(.plain)
+        case "Dinle":
+            Button {
+                let t = TilavetMotoru.ortak
+                if !t.etkin { t.cal(sure: s, ayet: a) }
+                yon.ac(.sure(t.etkin ? t.sure : s, t.etkin ? max(1, t.ayet) : a))
+            } label: {
+                Label("Kur'an dinle", systemImage: "headphones").font(.kalin(13)).padding(.horizontal, 12).frame(height: 36)
+            }
+            .buttonStyle(.plain)
+        default:
+            NavigationLink(value: Rota.sure(s, a)) {
+                Label("Kur'an oku", systemImage: "book").font(.kalin(13)).padding(.horizontal, 12).frame(height: 36)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     /// Odak sırasında gösterilen kısa âyet (kaynağı doğrulanmış sözlerden).
     static let ayet: Soz? = Icerik.gunun(Icerik.sozler.filter { $0.ayetMi && $0.soz.count <= 90 })
 
@@ -449,11 +482,8 @@ struct OdakCalisiyor: View {
                     .camYuzey(palet.cam(), in: .capsule)
                 }
                 Spacer()
-                NavigationLink(value: Rota.sure(depo.kayit.kuranSon.first ?? 1, depo.kayit.kuranSon.count > 1 ? depo.kayit.kuranSon[1] : 1)) {
-                    Label("Kur'an oku", systemImage: "book").font(.kalin(13)).padding(.horizontal, 12).frame(height: 36)
-                }
-                .buttonStyle(.plain)
-                .camYuzey(palet.cam(etkilesimli: true), in: .capsule)
+                okumaBaglantisi(depo.konu(d.konu)?.ad ?? "")
+                    .camYuzey(palet.cam(etkilesimli: true), in: .capsule)
                 NavigationLink(value: Rota.sesler) {
                     Image(systemName: ses.caliyor ? "speaker.wave.2.fill" : "speaker.wave.2")
                         .symbolEffect(.variableColor.iterative, isActive: ses.caliyor)

@@ -10,6 +10,11 @@ struct Sure: Identifiable, Hashable {
     var id: Int { no }
 }
 
+struct AyetYeri: Hashable {
+    let sure: Int
+    let ayet: Int
+}
+
 struct Ayet: Hashable {
     let no: Int
     let arapca: String
@@ -98,6 +103,34 @@ final class KuranDeposu {
     func oran(sure: Int, ayet: Int) -> Double {
         guard baslangic.indices.contains(sure - 1) else { return 0 }
         return Double(baslangic[sure - 1] + ayet) / Double(KuranDeposu.toplamAyet)
+    }
+
+    /// Mealde arama için büyük-küçük harf ve şapka farkı silinmiş metinler (ilk aramada bir kez hazırlanır).
+    @ObservationIgnored private var katlanmis: [[String]] = []
+
+    nonisolated static func katla(_ s: String) -> String {
+        s.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "tr_TR"))
+            .replacingOccurrences(of: "ı", with: "i")
+    }
+
+    /// Mealde geçen âyetler (Mushaf sırasıyla, en çok 'enFazla').
+    func ara(_ q: String, enFazla: Int = 80) -> [AyetYeri] {
+        let k = KuranDeposu.katla(q.trimmingCharacters(in: .whitespaces))
+        guard k.count >= 3, hazir else { return [] }
+        if katlanmis.isEmpty { katlanmis = ayetler.map { $0.map { KuranDeposu.katla($0.meal) } } }
+        var sonuc: [AyetYeri] = []
+        for (i, liste) in katlanmis.enumerated() {
+            for (j, m) in liste.enumerated() where m.contains(k) {
+                sonuc.append(AyetYeri(sure: i + 1, ayet: j + 1))
+                if sonuc.count >= enFazla { return sonuc }
+            }
+        }
+        return sonuc
+    }
+
+    func ayet(_ y: AyetYeri) -> Ayet? {
+        let l = ayetleri(y.sure)
+        return l.indices.contains(y.ayet - 1) ? l[y.ayet - 1] : nil
     }
 
     /// Cüzlerin başladığı yerler: (cüz, sûre, âyet).

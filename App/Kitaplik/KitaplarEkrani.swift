@@ -47,6 +47,7 @@ enum KitapDeposu {
 
 struct KitaplarEkrani: View {
     @Environment(Depo.self) private var depo
+    @Environment(Yonlendirici.self) private var yon
     @State private var ice = false
     @State private var hata: String?
 
@@ -61,6 +62,18 @@ struct KitaplarEkrani: View {
                     Button("PDF ekle") { ice = true }.buttonStyle(.glassProminent)
                 }
                 .listRowBackground(Color.clear)
+            }
+            if !depo.kayit.kitaplar.isEmpty {
+                Section {
+                    Button { yon.odakAc(konu: "Kitap") } label: {
+                        Label {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Odakla oku").font(.kalin(15))
+                                Text("Odak başlar; kitap okudukça fidanın büyür").font(.system(size: 12.5, weight: .medium)).foregroundStyle(.secondary)
+                            }
+                        } icon: { Image(systemName: "leaf.fill").foregroundStyle(Color(hex: "#1FB25A")) }
+                    }
+                }
             }
             ForEach(depo.kayit.kitaplar) { k in
                 NavigationLink(value: Rota.kitap(k.id)) { KitapSatiri(kitap: k) }
@@ -138,6 +151,8 @@ private struct KitapSatiri: View {
 struct OkumaEkrani: View {
     let kitapID: UUID
     @Environment(Depo.self) private var depo
+    @Environment(Yonlendirici.self) private var yon
+    @Environment(OdakMotoru.self) private var odak
     @Environment(\.colorScheme) private var sistem
 
     var body: some View {
@@ -156,7 +171,14 @@ struct OkumaEkrani: View {
             .navigationTitle(k.ad)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
+            .uyanikTut()
             .toolbar {
+                if odak.hal == .bos {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { yon.odakAc(konu: "Kitap", kitap: kitapID) } label: { Image(systemName: "leaf") }
+                            .accessibilityLabel("Odakla oku: okuma süresi bahçene sayılsın")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         depo.degistir { $0.ayarlar.okumaKoyu = !koyu }

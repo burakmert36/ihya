@@ -46,6 +46,7 @@ struct KoleksiyonEkrani: View {
                     kutlanan = acilan
                 }
             }
+            .sahne(.bahce)
             .presentationDetents([.large])
         }
         .overlay {

@@ -528,9 +528,20 @@ enum Dokunsal {
 /// Uygulamanın ses oturumu: sessiz kipte de duyulur, başka uygulamaların sesini kesmez.
 @MainActor
 enum SesOturumu {
+    /// Tilavet etkinken ya da (ayar açıksa) odak sesleri çalarken uygulama kilit ekranında "şimdi çalan" olur;
+    /// bunun için oturum başka uygulamaların sesiyle karışmamalıdır. Öbür durumlarda karışır, müziği kesmez.
+    static var tilavet = false
+    static var odakKilitEkrani = false
+
     static func hazirla() {
         let o = AVAudioSession.sharedInstance()
-        try? o.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        if tilavet {
+            try? o.setCategory(.playback, mode: .spokenAudio, options: [])
+        } else if odakKilitEkrani {
+            try? o.setCategory(.playback, mode: .default, options: [])
+        } else {
+            try? o.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        }
         try? o.setActive(true)
     }
 }

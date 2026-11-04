@@ -408,17 +408,25 @@ struct FavorilerEkrani: View {
         let hadisler = f.filter { $0.tur == .hadis }.compactMap { k in Icerik.hadisler.first { String($0.no) == k.anahtar } }
         let sozler = f.filter { $0.tur == .soz }.compactMap { k in Icerik.sozler.first { $0.id == k.anahtar } }
         let dualar = f.filter { $0.tur == .dua }.compactMap { Icerik.dua($0.anahtar) }
+        let ayetler = f.filter { $0.tur == .ayet }.compactMap { k -> AyetYeri? in
+            let p = k.anahtar.split(separator: ":").compactMap { Int($0) }
+            return p.count == 2 ? AyetYeri(sure: p[0], ayet: p[1]) : nil
+        }
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 14) {
                 if f.isEmpty {
                     VStack(spacing: 10) {
                         Image(systemName: "heart").font(.system(size: 34, weight: .semibold)).foregroundStyle(.secondary)
                         Text("Henüz kayıt yok").font(.kalin(17))
-                        Text("Hadis, söz ve dualardaki kalbe dokununca burada toplanır.").font(.system(size: 14, weight: .medium)).foregroundStyle(.secondary)
+                        Text("Âyet, hadis, söz ve dualardaki kalbe dokununca burada toplanır.").font(.system(size: 14, weight: .medium)).foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.top, 60)
+                }
+                if !ayetler.isEmpty {
+                    BolumBasligi(metin: "Âyetler", simge: "book")
+                    ForEach(ayetler, id: \.self) { KayitliAyetKarti(yer: $0) }
                 }
                 if !hadisler.isEmpty {
                     BolumBasligi(metin: "Hadisler", simge: "text.book.closed")
@@ -439,5 +447,42 @@ struct FavorilerEkrani: View {
         .okumaAlani()
         .navigationTitle("Kaydettiklerim")
         .navigationBarTitleDisplayMode(.inline)
+        .task { await KuranDeposu.ortak.hazirla() }
+    }
+}
+
+/// Kaydedilen âyet: Arapçası, meali; dokununca okuyucuda açılır.
+struct KayitliAyetKarti: View {
+    let yer: AyetYeri
+    @Environment(Depo.self) private var depo
+    @Environment(Yonlendirici.self) private var yon
+    @State private var kuran = KuranDeposu.ortak
+
+    var body: some View {
+        let p = depo.ayarlar.okumaPunto
+        let v = kuran.ayet(yer)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("\(kuran.sure(yer.sure)?.ad ?? "Sûre \(yer.sure)") \(yer.sure):\(yer.ayet)").font(.headline)
+                Spacer()
+                BegenDugmesi(tur: .ayet, anahtar: "\(yer.sure):\(yer.ayet)")
+            }
+            if let v {
+                Text(v.arapca)
+                    .font(.arapca(p + 8))
+                    .lineSpacing(p * 0.5)
+                    .multilineTextAlignment(.trailing)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                let meal = v.meal.isEmpty ? (kuran.ayetleri(yer.sure).dropFirst(yer.ayet).first { !$0.meal.isEmpty }?.meal ?? "") : v.meal
+                Text(meal).font(.okuma(p)).lineSpacing(p * 0.25)
+            } else {
+                ProgressView().frame(maxWidth: .infinity)
+            }
+            Button { yon.ac(.sure(yer.sure, yer.ayet)) } label: {
+                Label("Okuyucuda aç", systemImage: "book").font(.kalin(13))
+            }
+            .buttonStyle(.glass)
+        }
+        .okumaKarti()
     }
 }

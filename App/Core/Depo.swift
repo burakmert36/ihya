@@ -148,7 +148,7 @@ enum Ornek {
             }
         }
         k.namaz[Depo.gunAnahtari(.now)] = [0, 1]
-        k.favoriler = [Favori(tur: .hadis, anahtar: "1"), Favori(tur: .dua, anahtar: "istihare")]
+        k.favoriler = [Favori(tur: .ayet, anahtar: "2:255"), Favori(tur: .hadis, anahtar: "1"), Favori(tur: .dua, anahtar: "istihare")]
         k.sonKatman = ["yagmur": 0.7, "kuslar": 0.4]
         k.kuranSon = [36, 12]
         k.ezber = Array(1...12)

@@ -18,6 +18,9 @@ xcrun simctl launch "$UDID" "$APPID" -ekranGoruntusu 1 > /dev/null; sleep 25
 cek bugun 01-bugun 16
 cek kuran 02-kuran 30
 cek kuran-oku 03-kuran-oku 18
+cek kuran-dinle 03b-kuran-dinle 25
+cek kuran-ara 03c-kuran-ara 30
+cek favoriler 03d-kaydedilenler 25
 cek odak 04-odak 15
 cek odak-calisiyor 05-odak-calisiyor 15
 cek odak-bitti 06-odak-bitti 15

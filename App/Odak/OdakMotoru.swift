@@ -181,10 +181,15 @@ final class OdakMotoru {
 
     // MARK: Arka plan
 
+    /// Dinleme oturumunda (ya da tilavet çalarken) uygulamadan çıkmak serbesttir.
+    private func dinleme(_ d: DevamEdenOdak) -> Bool {
+        TilavetMotoru.ortak.caliyor || depo.kayit.konular.first { $0.id == d.konu }?.ad == "Dinle"
+    }
+
     func arkaPlanaGecti() {
         guard let d = devam, !d.molada else { return }
         arkaPlanGiris = Date()
-        guard d.kati else { return }
+        guard d.kati, !dinleme(d) else { return }
         arkaGorev = UIApplication.shared.beginBackgroundTask(withName: "odak") { [weak self] in Task { @MainActor in self?.arkaGorevBitti() } }
         Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 1_500_000_000)
@@ -203,7 +208,7 @@ final class OdakMotoru {
             return
         }
         if Date() >= d.bitis { tamamla(); return }
-        if d.kati, let giris = arkaPlanGiris, !kilitlendi, Date().timeIntervalSince(giris) > OdakMotoru.tolerans {
+        if d.kati, !dinleme(d), let giris = arkaPlanGiris, !kilitlendi, Date().timeIntervalSince(giris) > OdakMotoru.tolerans {
             vazgec()
             return
         }

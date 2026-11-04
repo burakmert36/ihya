@@ -18,7 +18,15 @@ struct SeslerEkrani: View {
                 oynatici
                 karisimlar
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                    ForEach(SesTuru.tumu) { t in SesKaresi(tur: t) }
+                    ForEach(SesTuru.doga) { t in SesKaresi(tur: t) }
+                }
+                BolumBasligi(metin: "Gürültüler", simge: "waveform")
+                    .padding(.top, 6)
+                Text("Beyaz gürültü düz ve parlaktır; pembe daha yumuşaktır; kahverengi derin ve alçaktır. Telefonda üretilir, internet gerekmez.")
+                    .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                    ForEach(SesTuru.gurultuler) { t in SesKaresi(tur: t) }
                 }
             }
             .padding(.horizontal, 16)
@@ -224,7 +232,7 @@ struct SesKaresi: View {
                 if ses.katman[tur.id] == nil { ses.degistir(tur.id) }
                 ses.duzey(tur.id, max(0.05, v))
             }))
-            satir("Uzaklık", renk: Color(hex: "#FFB45C"), deger: Binding(get: { ses.mesafe[tur.id] ?? 0 }, set: { v in
+            satir(tur.ikinciAyar, renk: Color(hex: "#FFB45C"), deger: Binding(get: { ses.mesafe[tur.id] ?? 0 }, set: { v in
                 if ses.katman[tur.id] == nil { ses.degistir(tur.id) }
                 ses.mesafeAyarla(tur.id, v)
             }))

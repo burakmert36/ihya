@@ -67,7 +67,8 @@ struct Karisim: Codable, Identifiable, Hashable {
 }
 
 struct Favori: Codable, Identifiable, Hashable {
-    enum Tur: String, Codable { case hadis, soz, dua }
+    /// ayet anahtarı "sûre:âyet" biçimindedir.
+    enum Tur: String, Codable { case hadis, soz, dua, ayet }
     var tur: Tur
     var anahtar: String
     var tarih = Date()
@@ -126,8 +127,41 @@ enum Tema: String, Codable, CaseIterable, Identifiable {
 }
 
 enum KonumKipi: String, Codable, CaseIterable, Identifiable {
+    /// "bursa" adı eski kayıtlarla uyum için kaldı: Diyanet'in seçilen ilçe cetveli.
     case bursa, cihaz
     var id: String { rawValue }
+}
+
+/// Okuma ekranlarının zemini ve yazı rengi (kontrast 7:1 ile 13:1 arası; saf siyah üstüne saf beyaz yok).
+enum OkumaTemasi: String, Codable, CaseIterable, Identifiable {
+    case otomatik, gunduz, sepya, gece, siyah
+    var id: String { rawValue }
+    var ad: String {
+        switch self {
+        case .otomatik: "Kendiliğinden"
+        case .gunduz: "Gündüz"
+        case .sepya: "Sepya"
+        case .gece: "Gece"
+        case .siyah: "Siyah"
+        }
+    }
+    var zemin: String {
+        switch self {
+        case .otomatik, .gunduz: "#F6F0E2"
+        case .sepya: "#1F1A13"
+        case .gece: "#161512"
+        case .siyah: "#000000"
+        }
+    }
+    var yazi: String {
+        switch self {
+        case .otomatik, .gunduz: "#2B261D"
+        case .sepya: "#E6D3B0"
+        case .gece: "#E4DED2"
+        case .siyah: "#C9C4BA"
+        }
+    }
+    var koyu: Bool { self != .gunduz && self != .otomatik }
 }
 
 struct Ayarlar: Codable, Equatable {
@@ -156,12 +190,35 @@ struct Ayarlar: Codable, Equatable {
     var kuranMeal: Bool = true
     var kuranOkunus: Bool = false
     var kuranPunto: Double = 28
+    /// Diyanet ilçe numarası (ezanvakti.emushaf.net); 9335 Bursa merkez.
+    var ilceKodu: Int = 9335
+    var tilavetHafiz: String = Hafiz.tumu[0].id
+    var tilavetHiz: Double = 1
+    var tilavetTakip: Bool = true
+    var tilavetDevam: Bool = false
+    /// Odak sesleri kilit ekranında görünsün (başka uygulamaların sesiyle karışmaz).
+    var sesKilitEkrani: Bool = true
+    var okumaTemasi: OkumaTemasi = .otomatik
+    /// 0…1: mavi ışığı azaltan amber katman.
+    var sicakIsik: Double = 0.3
+    /// 0 sık, 1 rahat, 2 geniş
+    var satirAraligi: Int = 1
+    var ekranAcik: Bool = true
+    var seriHatirlatma: Bool = true
+    /// Gün içindeki dakika (20.30)
+    var seriHatirlatmaDk: Int = 20 * 60 + 30
+    var cumaOzeti: Bool = true
 
     enum CodingKeys: String, CodingKey {
         case konumKipi, enlem, boylam, konumAdi, vakitBildirim, onceDakika, ezan, bildirimTonu, katiMod
         case sesOdakta, sesSondaAzalt, tesbihTitresim, tesbihSes, tesbihSesDuzeyi, okumaPunto, okumaKoyu, tema, gunlukHedef, ezandaSustur, kuranDinlerkenKis
-        case kuranMeal, kuranOkunus, kuranPunto
+        case kuranMeal, kuranOkunus, kuranPunto, ilceKodu, tilavetHafiz, tilavetHiz, tilavetTakip, tilavetDevam, sesKilitEkrani
+        case okumaTemasi, sicakIsik, satirAraligi, ekranAcik, seriHatirlatma, seriHatirlatmaDk, cumaOzeti
     }
+
+    /// Okuma teması: "kendiliğinden" akşamdan imsaka gece, öbür saatlerde gündüz.
+    func etkinOkumaTemasi(gece: Bool) -> OkumaTemasi { okumaTemasi == .otomatik ? (gece ? .gece : .gunduz) : okumaTemasi }
+    var satirCarpani: Double { [1.45, 1.7, 1.95][max(0, min(2, satirAraligi))] }
 }
 
 extension Ayarlar {
@@ -180,6 +237,12 @@ extension Ayarlar {
         tema = v(.tema, tema); gunlukHedef = v(.gunlukHedef, gunlukHedef)
         ezandaSustur = v(.ezandaSustur, ezandaSustur); kuranDinlerkenKis = v(.kuranDinlerkenKis, kuranDinlerkenKis)
         kuranMeal = v(.kuranMeal, kuranMeal); kuranOkunus = v(.kuranOkunus, kuranOkunus); kuranPunto = v(.kuranPunto, kuranPunto)
+        ilceKodu = v(.ilceKodu, ilceKodu); tilavetHafiz = v(.tilavetHafiz, tilavetHafiz); tilavetHiz = v(.tilavetHiz, tilavetHiz)
+        tilavetTakip = v(.tilavetTakip, tilavetTakip); tilavetDevam = v(.tilavetDevam, tilavetDevam); sesKilitEkrani = v(.sesKilitEkrani, sesKilitEkrani)
+        // Eski "koyu okuma" anahtarı yeni temaya taşınır.
+        okumaTemasi = v(.okumaTemasi, okumaKoyu.map { $0 ? OkumaTemasi.gece : .gunduz } ?? okumaTemasi)
+        sicakIsik = v(.sicakIsik, sicakIsik); satirAraligi = v(.satirAraligi, satirAraligi); ekranAcik = v(.ekranAcik, ekranAcik)
+        seriHatirlatma = v(.seriHatirlatma, seriHatirlatma); seriHatirlatmaDk = v(.seriHatirlatmaDk, seriHatirlatmaDk); cumaOzeti = v(.cumaOzeti, cumaOzeti)
         let vb = v(.vakitBildirim, vakitBildirim)
         if vb.count == 6 { vakitBildirim = vb }
     }
@@ -206,9 +269,19 @@ struct Kayit: Codable {
     var ezber: [Int] = []
     /// Kur'an'da kaldığın yer: [sûre, âyet].
     var kuranSon: [Int] = []
+    /// Kaza borcu: vakit anahtarı (sabah, ogle, ikindi, aksam, yatsi, vitir) → adet.
+    var kaza: [String: Int] = [:]
+    /// Kutlaması gösterilen son seri kilometre taşı.
+    var kutlananSeri: Int = 0
+    /// Kendiliğinden yedek klasörü (güvenlik kapsamlı yer imi) ve son yedeğin zamanı.
+    var yedekYeri: Data? = nil
+    var sonYedek: Date? = nil
+    /// Kaza önerisine bakılan son gün ("yyyy-MM-dd"); aynı öneri bir kez sorulur.
+    var kazaBakilan: String = ""
 
     enum CodingKeys: String, CodingKey {
         case ayarlar, oturumlar, devam, konular, zikirler, karisimlar, sonKatman, sonMesafe, favoriler, kitaplar, namaz, tohum, acik, sonTur, sonPlan, ezber, kuranSon
+        case kaza, kutlananSeri, yedekYeri, sonYedek, kazaBakilan
     }
 
     static let varsayilanKonular: [Konu] = [
@@ -231,5 +304,9 @@ extension Kayit {
         sonKatman = v(.sonKatman, sonKatman); sonMesafe = v(.sonMesafe, sonMesafe); favoriler = v(.favoriler, favoriler); kitaplar = v(.kitaplar, kitaplar)
         namaz = v(.namaz, namaz); tohum = v(.tohum, tohum); acik = v(.acik, acik)
         sonTur = v(.sonTur, sonTur); sonPlan = v(.sonPlan, sonPlan); ezber = v(.ezber, ezber); kuranSon = v(.kuranSon, kuranSon)
+        kaza = v(.kaza, kaza); kutlananSeri = v(.kutlananSeri, kutlananSeri)
+        yedekYeri = (try? c.decodeIfPresent(Data.self, forKey: .yedekYeri)) ?? nil
+        sonYedek = (try? c.decodeIfPresent(Date.self, forKey: .sonYedek)) ?? nil
+        kazaBakilan = v(.kazaBakilan, kazaBakilan)
     }
 }

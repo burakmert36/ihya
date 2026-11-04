@@ -148,6 +148,8 @@ final class Yonlendirici {
     var takipBolum: TakipBolumu = .bahce
     /// Esmâ ekranı açılınca doğrudan gösterilecek isim (ekran görüntüsü için).
     var esmaAc: Int?
+    /// Kur'an aramasının örnek sözcüğü (ekran görüntüsü için).
+    var kuranAramaOrnegi: String?
     var bugunYol: [Rota] = []
     var kuranYol: [Rota] = []
     var takipYol: [Rota] = []
@@ -182,7 +184,13 @@ final class Yonlendirici {
     /// Alt çubuk yalnız kök ekranlarda görünür (alt ekranlar kendi düğmelerini alta koyar).
     var okumada: Bool { !yol.isEmpty }
 
-    func odakAc() {
+    /// Odak kurulumunda seçili gelecek konu (ad) ve okunacak kitap.
+    var odakKonu: String?
+    var odakKitap: UUID?
+
+    func odakAc(konu: String? = nil, kitap: UUID? = nil) {
+        odakKonu = konu
+        if let kitap { odakKitap = kitap }
         odakYol = []
         odakAcik = true
     }
@@ -216,6 +224,8 @@ final class Yonlendirici {
         case "takip-zikir": sekme = .takip; takipBolum = .zikir
         case "kuran": sekme = .kuran
         case "kuran-oku": sekme = .kuran; kuranYol = [.sure(36, 1)]
+        case "kuran-dinle": sekme = .kuran; kuranYol = [.sure(1, 1)]; TilavetMotoru.ortak.cal(sure: 1, ayet: 2)
+        case "kuran-ara": sekme = .kuran; kuranAramaOrnegi = "sabır"
         case "sesler": sekme = .bugun; bugunYol = [.sesler]
         case "kitaplik": sekme = .kitaplik
         case "hadis": sekme = .kitaplik; kitaplikYol = [.gununHadisi]
@@ -299,6 +309,10 @@ struct KokGorunum: View {
         }
         .onChange(of: Set(ses.katman.keys)) { _, _ in sesSeciminiSakla() }
         .onChange(of: depo.ayarlar.kuranDinlerkenKis, initial: true) { _, yeni in ses.kuranKis = yeni }
+        .onChange(of: depo.ayarlar, initial: true) { _, a in
+            TilavetMotoru.ortak.ayarla(a)
+            ses.kilitEkrani = a.sesKilitEkrani
+        }
         .task { await ezandaSustur() }
     }
 
@@ -309,7 +323,10 @@ struct KokGorunum: View {
             let bekle = max(1, d.sonrakiZaman.timeIntervalSinceNow)
             try? await Task.sleep(nanoseconds: UInt64(min(bekle, 6 * 3600) * 1_000_000_000))
             if Task.isCancelled { return }
-            if bekle <= 6 * 3600, d.sonraki != 1, depo.ayarlar.ezandaSustur, ses.caliyor { ses.duraklat() }
+            if bekle <= 6 * 3600, d.sonraki != 1, depo.ayarlar.ezandaSustur {
+                if ses.caliyor { ses.duraklat() }
+                if TilavetMotoru.ortak.caliyor { TilavetMotoru.ortak.duraklat() }
+            }
             try? await Task.sleep(nanoseconds: 2_000_000_000)
         }
     }
@@ -332,6 +349,8 @@ struct KokGorunum: View {
     }
 
     private func baslangic() async {
+        SimdiCalan.kur(ses: ses)
+        TilavetMotoru.ortak.degisti = { [ses] c in ses.tilavetCaliyor(c) }
         if EkranGoruntusu.etkin {
             yon.ekranAc(EkranGoruntusu.ekran, depo: depo, odak: odak)
             ziyaret.insert(yon.sekme)

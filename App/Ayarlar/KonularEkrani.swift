@@ -39,6 +39,7 @@ struct KonularEkrani: View {
                     if let i = kayit.konular.firstIndex(where: { $0.id == yeni.id }) { kayit.konular[i] = yeni } else { kayit.konular.append(yeni) }
                 }
             }
+            .sahne(.ayarlar)
             .presentationDetents([.medium, .large])
         }
     }

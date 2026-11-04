@@ -8,6 +8,7 @@ struct KuranEkrani: View {
     @State private var kuran = KuranDeposu.ortak
     @State private var cuzler = false
     @State private var arama = ""
+    @State private var bulunan: [AyetYeri] = []
 
     var body: some View {
         ScrollView {
@@ -17,6 +18,7 @@ struct KuranEkrani: View {
                 }
                 if kuran.hazir {
                     kaldigin
+                    DinleKarti()
                     huzur
                     CamSegment(secenekler: [false, true], secili: $cuzler, ad: { $0 ? "Cüzler" : "Sûreler" })
                     if cuzler {
@@ -28,11 +30,27 @@ struct KuranEkrani: View {
                         }
                     } else {
                         aramaAlani
+                        if let y = dogrudan {
+                            NavigationLink(value: Rota.sure(y.sure, y.ayet)) {
+                                satir(no: y.sure, ad: "\(kuran.sure(y.sure)?.ad ?? "") \(y.ayet). âyet", alt: "Âyete git", arapca: kuran.sure(y.sure)?.arapca)
+                            }
+                            .buttonStyle(.plain)
+                        }
                         ForEach(suzulmus) { s in
                             NavigationLink(value: Rota.sure(s.no, 1)) {
                                 satir(no: s.no, ad: s.ad, alt: "\(s.mekki ? "Mekkî" : "Medenî") · \(s.ayetSayisi) âyet", arapca: s.arapca)
                             }
                             .buttonStyle(.plain)
+                        }
+                        if !bulunan.isEmpty {
+                            BolumBasligi(metin: "Mealde · \(bulunan.count >= 80 ? "80+" : "\(bulunan.count)") âyet", simge: "text.magnifyingglass")
+                                .padding(.top, 8)
+                            ForEach(bulunan, id: \.self) { y in
+                                NavigationLink(value: Rota.sure(y.sure, y.ayet)) { AyetSonucu(yer: y, arama: arama) }
+                                    .buttonStyle(.plain)
+                            }
+                        } else if arama.trimmingCharacters(in: .whitespaces).count >= 3, suzulmus.isEmpty, dogrudan == nil {
+                            Text("“\(arama)” mealde geçmiyor.").font(.system(size: 14, weight: .semibold)).foregroundStyle(.secondary).padding(.top, 20)
                         }
                     }
                 } else {
@@ -45,7 +63,24 @@ struct KuranEkrani: View {
         .scrollDismissesKeyboard(.interactively)
         .altCubukPayi()
         .toolbar(.hidden, for: .navigationBar)
-        .task { await kuran.hazirla() }
+        .task {
+            await kuran.hazirla()
+            if let o = yon.kuranAramaOrnegi { arama = o; yon.kuranAramaOrnegi = nil }
+        }
+        .task(id: arama) {
+            let q = arama
+            guard q.trimmingCharacters(in: .whitespaces).count >= 3, Int(q) == nil else { bulunan = []; return }
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            guard !Task.isCancelled else { return }
+            bulunan = kuran.ara(q)
+        }
+    }
+
+    /// "36:12", "36 12" ya da "36.12" yazınca doğrudan âyete gider.
+    private var dogrudan: AyetYeri? {
+        let p = arama.split(whereSeparator: { ":. ".contains($0) }).compactMap { Int($0) }
+        guard p.count == 2, (1...114).contains(p[0]), let s = kuran.sure(p[0]), (1...s.ayetSayisi).contains(p[1]) else { return nil }
+        return AyetYeri(sure: p[0], ayet: p[1])
     }
 
     private var suzulmus: [Sure] {
@@ -58,9 +93,15 @@ struct KuranEkrani: View {
     private var aramaAlani: some View {
         HStack(spacing: 10) {
             Image(systemName: "magnifyingglass").font(.system(size: 15, weight: .semibold)).foregroundStyle(.secondary)
-            TextField("Sûre adı ya da numarası", text: $arama)
+            TextField("Sûre, 36:12 ya da mealde kelime", text: $arama)
                 .font(.system(size: 15, weight: .semibold))
                 .autocorrectionDisabled()
+                .submitLabel(.search)
+            if !arama.isEmpty {
+                Button { arama = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Aramayı temizle")
+            }
         }
         .padding(.horizontal, 16)
         .frame(height: 44)
@@ -91,7 +132,7 @@ struct KuranEkrani: View {
     }
 
     private var huzur: some View {
-        Button { yon.odakAc() } label: {
+        Button { yon.odakAc(konu: "Kur'an") } label: {
             HStack(spacing: 12) {
                 FilizSimgesi().fill(Color(hex: "#7CF0A4")).frame(width: 22, height: 22)
                     .frame(width: 40, height: 40)
@@ -131,6 +172,39 @@ struct KuranEkrani: View {
     }
 }
 
+/// Mealde bulunan bir âyet: yeri, Arapçası (kısaltılmış) ve aranan kelimesi vurgulanmış meali.
+struct AyetSonucu: View {
+    let yer: AyetYeri
+    let arama: String
+    @Environment(\.palet) private var palet
+    @State private var kuran = KuranDeposu.ortak
+
+    var body: some View {
+        let v = kuran.ayet(yer)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("\(kuran.sure(yer.sure)?.ad ?? "") \(yer.sure):\(v.map { $0.mealBas < $0.no ? "\($0.mealBas)-\($0.no)" : "\($0.no)" } ?? "\(yer.ayet)")")
+                    .font(.kalin(13)).foregroundStyle(palet.vurgu)
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundStyle(.secondary)
+            }
+            Text(vurgulu(v?.meal ?? "")).font(.okuma(15)).lineLimit(4).multilineTextAlignment(.leading)
+        }
+        .camKart(kose: 20, ic: 14)
+    }
+
+    private func vurgulu(_ m: String) -> AttributedString {
+        var a = AttributedString(m)
+        let q = arama.trimmingCharacters(in: .whitespaces)
+        if let r = m.range(of: q, options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "tr_TR")),
+           let ar = Range(r, in: a) {
+            a[ar].foregroundColor = palet.vurgu
+            a[ar].font = Font.okuma(15).bold()
+        }
+        return a
+    }
+}
+
 /// İlk açılışta metnin indirilmesi.
 struct KuranIndirme: View {
     let kuran: KuranDeposu
@@ -162,6 +236,7 @@ struct KuranIndirme: View {
 // MARK: Okuyucu
 
 /// Sûre okuyucu: Arapça, isteğe bağlı okunuş ve meal; kaldığın yeri kendiliğinden saklar.
+/// Tilavet çalarken okunan âyet vurgulanır ve ekranda tutulur.
 struct KuranOkuyucu: View {
     let sure: Int
     var ayet: Int = 1
@@ -169,7 +244,11 @@ struct KuranOkuyucu: View {
     @Environment(Yonlendirici.self) private var yon
     @Environment(\.palet) private var palet
     @State private var kuran = KuranDeposu.ortak
+    @State private var t = TilavetMotoru.ortak
     @State private var kaydirildi = false
+    @State private var sonGorunen = 1
+
+    private var buSure: Bool { t.etkin && t.sure == sure }
 
     var body: some View {
         let a = depo.ayarlar
@@ -180,8 +259,14 @@ struct KuranOkuyucu: View {
                         LazyVStack(spacing: 12) {
                             baslik(s)
                             if sure != 1 && sure != 9 {
+                                let okunuyor = buSure && t.ayet == 0
                                 Text("بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ").font(.arapca(a.kuranPunto)).foregroundStyle(palet.vurgu)
-                                    .frame(maxWidth: .infinity).padding(.vertical, 6)
+                                    .frame(maxWidth: .infinity).padding(.vertical, 8)
+                                    .background {
+                                        if okunuyor { RoundedRectangle(cornerRadius: 20).fill(palet.vurgu.opacity(0.14)) }
+                                    }
+                                    .animation(.easeInOut(duration: 0.3), value: okunuyor)
+                                    .id(0)
                             }
                             ForEach(kuran.ayetleri(sure), id: \.no) { v in
                                 ayetGorunumu(v, a)
@@ -195,22 +280,34 @@ struct KuranOkuyucu: View {
                                 .buttonStyle(.glass).controlSize(.large)
                                 .padding(.top, 8)
                             }
-                            Text("Arapça metin: Kral Fahd Mushafı (Hafs). Meal: Diyanet İşleri Başkanlığı. Okunuş yaklaşık telaffuzdur.")
+                            Text("Arapça metin: Kral Fahd Mushafı (Hafs). Meal: Diyanet İşleri Başkanlığı. Okunuş yaklaşık telaffuzdur. Tilavet kayıtları: EveryAyah arşivi.")
                                 .font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                         }
                         .padding(.horizontal, 16)
                         .padding(.bottom, 24)
                     }
                     .onAppear {
-                        guard !kaydirildi, ayet > 1 else { return }
+                        guard !kaydirildi else { return }
                         kaydirildi = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { okuyucu.scrollTo(ayet, anchor: .top) }
+                        let hedef = buSure ? t.ayet : ayet
+                        guard hedef > 1 else { return }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { okuyucu.scrollTo(hedef, anchor: .top) }
                     }
+                    .onChange(of: t.ayet) { _, yeni in
+                        guard buSure, t.takip else { return }
+                        withAnimation(.easeInOut(duration: 0.45)) { okuyucu.scrollTo(yeni, anchor: .center) }
+                    }
+                }
+                .safeAreaInset(edge: .bottom) {
+                    TilavetCubugu(sure: sure, baslangic: { sonGorunen })
+                        .padding(.horizontal, 12)
+                        .padding(.bottom, 6)
                 }
             } else {
                 ScrollView { KuranIndirme(kuran: kuran).padding(.horizontal, 16) }
             }
         }
+        .uyanikTut()
         .navigationTitle(kuran.sure(sure)?.ad ?? "Kur'an")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -225,6 +322,7 @@ struct KuranOkuyucu: View {
             }
         }
         .task { await kuran.hazirla() }
+        .onAppear { sonGorunen = max(1, ayet) }
     }
 
     private func baslik(_ s: Sure) -> some View {
@@ -243,27 +341,66 @@ struct KuranOkuyucu: View {
     }
 
     private func ayetGorunumu(_ v: Ayet, _ a: Ayarlar) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let okunuyor = buSure && t.ayet == v.no
+        let anahtar = "\(sure):\(v.no)"
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Text("\(sure):\(v.no)")
+                    .font(.kalin(11)).monospacedDigit().foregroundStyle(okunuyor ? palet.dolguMetin : .secondary)
+                    .padding(.horizontal, 9).frame(height: 22)
+                    .background(Capsule().fill(okunuyor ? palet.vurgu : palet.vurgu.opacity(0.12)))
+                if okunuyor, t.caliyor {
+                    Image(systemName: "waveform").font(.system(size: 12, weight: .bold)).foregroundStyle(palet.vurgu)
+                        .symbolEffect(.variableColor.iterative, isActive: true)
+                        .accessibilityHidden(true)
+                }
+                Spacer()
+                Button { dinle(v.no) } label: {
+                    Image(systemName: okunuyor && t.caliyor ? "pause.circle.fill" : "play.circle")
+                        .font(.system(size: 20, weight: .medium))
+                        .foregroundStyle(okunuyor ? palet.vurgu : .secondary)
+                        .frame(width: 32, height: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(okunuyor && t.caliyor ? "Durdur" : "\(v.no). âyetten dinle")
+                BegenDugmesi(tur: .ayet, anahtar: anahtar)
+            }
             Text("\(v.arapca) ﴿\(v.no.arapcaRakam)﴾")
                 .font(.arapca(a.kuranPunto))
                 .lineSpacing(a.kuranPunto * 0.45)
                 .multilineTextAlignment(.trailing)
                 .frame(maxWidth: .infinity, alignment: .trailing)
-                .textSelection(.enabled)
+                .foregroundStyle(okunuyor ? palet.vurgu : .primary)
             if a.kuranOkunus, !v.okunus.isEmpty {
                 Text(v.okunus).font(.system(size: 15, design: .serif).italic()).foregroundStyle(palet.vurgu.opacity(0.9))
             }
             if a.kuranMeal, !v.meal.isEmpty {
                 (Text(v.mealBas < v.no ? "\(v.mealBas)-\(v.no). " : "\(v.no). ").font(.kalin(13)).foregroundStyle(palet.vurgu) + Text(v.meal).font(.okuma(a.okumaPunto - 1)))
                     .lineSpacing(3)
-                    .textSelection(.enabled)
             }
         }
-        .camKart(kose: 22, ic: 14)
+        .camKart(okunuyor ? palet.vurgu : nil, kose: 22, ic: 14)
+        .overlay(RoundedRectangle(cornerRadius: 22).strokeBorder(palet.vurgu.opacity(okunuyor ? 0.85 : 0), lineWidth: 1.5))
+        .scaleEffect(okunuyor ? 1.01 : 1)
+        .animation(.easeInOut(duration: 0.3), value: okunuyor)
+        .contextMenu {
+            Button("Buradan dinle", systemImage: "play") { t.cal(sure: sure, ayet: v.no) }
+            Button(depo.begenildi(.ayet, anahtar) ? "Kaydedilenlerden çıkar" : "Kaydet", systemImage: "heart") { depo.begen(.ayet, anahtar) }
+            Button("Kopyala", systemImage: "doc.on.doc") {
+                UIPasteboard.general.string = "\(v.arapca)\n\n\(v.meal.isEmpty ? "" : v.meal + " ")(\(kuran.sure(sure)?.ad ?? "") \(sure):\(v.no))"
+            }
+        }
+    }
+
+    private func dinle(_ no: Int) {
+        if buSure, t.ayet == no { t.degistirOynat() } else if buSure { t.atla(ayet: no) } else { t.cal(sure: sure, ayet: no) }
+        Dokunsal.hafif(0.5)
     }
 
     /// Görünen en son âyeti kaldığın yer olarak saklar.
     private func kaydet(_ no: Int) {
+        sonGorunen = no
         let yeni = [sure, no]
         guard depo.kayit.kuranSon != yeni else { return }
         depo.degistir { $0.kuranSon = yeni }

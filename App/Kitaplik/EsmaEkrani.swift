@@ -29,7 +29,7 @@ struct EsmaEkrani: View {
         .navigationTitle("Esmâ-ül Hüsnâ")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $secili) { e in
-            EsmaDetay(baslangic: e).presentationDetents([.large]).presentationDragIndicator(.visible)
+            EsmaDetay(baslangic: e).sahne(.kitaplik).presentationDetents([.large]).presentationDragIndicator(.visible)
         }
         .onAppear {
             if let n = yon.esmaAc, Icerik.esma.indices.contains(n - 1) { secili = Icerik.esma[n - 1] }
@@ -67,7 +67,12 @@ struct EsmaKaresi: View {
 struct EsmaDetay: View {
     @Environment(\.palet) private var palet
     let baslangic: EsmaIsmi
-    @State private var sira = 0
+    @State private var sira: Int
+
+    init(baslangic: EsmaIsmi) {
+        self.baslangic = baslangic
+        _sira = State(initialValue: max(0, baslangic.no - 1))
+    }
 
     var body: some View {
         let liste = Icerik.esma
@@ -105,7 +110,6 @@ struct EsmaDetay: View {
             .padding(.bottom, 16)
         }
         .id(e.no)
-        .transition(.opacity)
         .safeAreaInset(edge: .bottom) {
             HStack {
                 Button { withAnimation { sira = max(0, sira - 1) } } label: { Label("Önceki", systemImage: "chevron.left") }
@@ -120,7 +124,6 @@ struct EsmaDetay: View {
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
         }
-        .onAppear { sira = max(0, baslangic.no - 1) }
     }
 }
 

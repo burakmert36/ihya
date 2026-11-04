@@ -9,8 +9,12 @@ struct SesTuru: Identifiable, Hashable {
     let uzunluk: Double     // döngü uzunluğu (sn)
     let renk: Color         // kartın cam tonu (tasarımdan)
     let bas: Double = 0.5   // döngünün başladığı yer (sn); öncesi döngünün sonunun kopyası
+    /// Dosya yerine cihazda üretilen gürültü.
+    var gurultu: Gurultu? = nil
+    /// İkinci sürgünün adı: kayıtlarda uzaklık, gürültülerde yumuşaklık (ikisi de aynı süzgeci sürer).
+    var ikinciAyar: String { gurultu == nil ? "Uzaklık" : "Yumuşak" }
 
-    static let tumu: [SesTuru] = [
+    static let doga: [SesTuru] = [
         SesTuru(id: "yagmur_hafif", ad: "Hafif yağmur", simge: "cloud.drizzle", uzunluk: 60.0, renk: Color(r: 120, g: 180, b: 255)),
         SesTuru(id: "yagmur", ad: "Yağmur", simge: "cloud.rain", uzunluk: 34.719297, renk: Color(r: 100, g: 160, b: 255)),
         SesTuru(id: "yagmur_cam", ad: "Cama vuran yağmur", simge: "drop", uzunluk: 25.642653, renk: Color(r: 140, g: 190, b: 255)),
@@ -27,6 +31,12 @@ struct SesTuru: Identifiable, Hashable {
         SesTuru(id: "kafe", ad: "Kafe", simge: "cup.and.saucer", uzunluk: 70.0, renk: Color(r: 210, g: 160, b: 110)),
         SesTuru(id: "kutuphane", ad: "Kütüphane", simge: "books.vertical", uzunluk: 70.0, renk: Color(r: 200, g: 180, b: 140)),
     ]
+    static let gurultuler: [SesTuru] = [
+        SesTuru(id: "gurultu_beyaz", ad: "Beyaz gürültü", simge: "waveform", uzunluk: 16, renk: Color(r: 225, g: 230, b: 245), gurultu: .beyaz),
+        SesTuru(id: "gurultu_pembe", ad: "Pembe gürültü", simge: "waveform.path", uzunluk: 16, renk: Color(r: 255, g: 150, b: 195), gurultu: .pembe),
+        SesTuru(id: "gurultu_kahve", ad: "Kahverengi gürültü", simge: "wave.3.right", uzunluk: 16, renk: Color(r: 190, g: 135, b: 90), gurultu: .kahverengi),
+    ]
+    static let tumu: [SesTuru] = doga + gurultuler
     static func bul(_ id: String) -> SesTuru? { tumu.first { $0.id == id } }
 }
 
@@ -40,6 +50,7 @@ private final class Yuva {
     let yanki = AVAudioUnitReverb()
     private(set) var tur: String?
     private var dosya: AVAudioFile?
+    private var tampon: AVAudioPCMBuffer?
     private var bas: AVAudioFramePosition = 0
     private var uzunluk: AVAudioFrameCount = 0
     /// Her atama ve durdurmada artar; eski kuyruk geri çağrıları yok sayılır.
@@ -62,6 +73,12 @@ private final class Yuva {
     /// Yuvaya ses atar. Biçim yuva biçimiyle aynı değilse atamaz.
     func ata(_ t: SesTuru, bicim: AVAudioFormat) -> Bool {
         bosalt()
+        if let g = t.gurultu {
+            guard let b = Gurultu.tampon(g, bicim: bicim) else { return false }
+            tampon = b
+            tur = t.id
+            return true
+        }
         guard let url = Bundle.main.url(forResource: t.id, withExtension: "mp3"), let f = try? AVAudioFile(forReading: url) else {
             print("SES: dosya açılamadı \(t.id)")
             return false
@@ -90,12 +107,16 @@ private final class Yuva {
     }
 
     func baslat() {
-        guard dosya != nil else { return }
+        guard dosya != nil || tampon != nil else { return }
         if !aktif {
             aktif = true
             nesil += 1
-            kuyruga(nesil)
-            kuyruga(nesil)
+            if let tampon {
+                oynatici.scheduleBuffer(tampon, at: nil, options: .loops)
+            } else {
+                kuyruga(nesil)
+                kuyruga(nesil)
+            }
         }
         if !oynatici.isPlaying { oynatici.play() }
     }
@@ -125,6 +146,7 @@ private final class Yuva {
         nesil += 1
         oynatici.stop()
         dosya = nil
+        tampon = nil
         tur = nil
     }
 }
@@ -145,6 +167,10 @@ final class SesMotoru {
     /// Başka uygulama (ör. Kur'an tilaveti) ses çalarken kısılsın mı.
     @ObservationIgnored var kuranKis = true
     @ObservationIgnored private var kisik = false
+    /// Uygulama içinde tilavet çalarken odak sesleri 12 dB kısılır.
+    @ObservationIgnored private var tilavetKisik = false
+    /// Açıksa odak sesleri kilit ekranında görünür (başka uygulamaların sesiyle karışmaz).
+    @ObservationIgnored var kilitEkrani = true
 
     private let motor = AVAudioEngine()
     private let bicim = AVAudioFormat(standardFormatWithSampleRate: 44100, channels: 2)!
@@ -174,6 +200,12 @@ final class SesMotoru {
             Task { @MainActor in
                 if tip == .ended, self?.caliyor == true { self?.yenidenBaslat() }
             }
+        })
+        gozlemciler.append(m.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] not in
+            guard let ham = not.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+                  AVAudioSession.RouteChangeReason(rawValue: ham) == .oldDeviceUnavailable else { return }
+            // Kulaklık çıkınca ses hoparlörden devam etmesin.
+            Task { @MainActor in self?.duraklat() }
         })
         gozlemciler.append(m.addObserver(forName: .AVAudioEngineConfigurationChange, object: motor, queue: .main) { [weak self] _ in
             Task { @MainActor in if self?.caliyor == true { self?.yenidenBaslat() } }
@@ -226,7 +258,15 @@ final class SesMotoru {
         uygula()
     }
 
-    private func uygula() { motor.mainMixerNode.outputVolume = Float(anaDuzey * gecisCarpani * (kisik ? 0.25 : 1)) }
+    private func uygula() { motor.mainMixerNode.outputVolume = Float(anaDuzey * gecisCarpani * (kisik ? 0.25 : 1) * (tilavetKisik ? 0.25 : 1)) }
+
+    /// Tilavet başlayınca/bitince çağrılır.
+    func tilavetCaliyor(_ evet: Bool) {
+        let yeni = evet && kuranKis
+        guard yeni != tilavetKisik else { return }
+        tilavetKisik = yeni
+        uygula()
+    }
 
     /// Uyku zamanlayıcısı: dk sonra sesi yavaşça kısıp durdurur; nil kapatır.
     func uyku(_ dk: Int?) {
@@ -265,6 +305,7 @@ final class SesMotoru {
             self.motor.pause()
             self.gecisCarpani = 1
             self.uygula()
+            SimdiCalan.guncelle()
         }
     }
 
@@ -272,12 +313,14 @@ final class SesMotoru {
 
     func oynat() {
         guard !katman.isEmpty else { return }
+        SesOturumu.odakKilitEkrani = kilitEkrani
         guard motoruBaslat() else { return }
         for id in katman.keys { ac(id) }
         caliyor = true
         gecisCarpani = 0
         uygula()
         gecisle(hedef: 1, sure: 1.2)
+        SimdiCalan.guncelle()
     }
 
     func duraklat() {
@@ -285,6 +328,7 @@ final class SesMotoru {
         uykuBitis = nil
         guard caliyor else { return }
         caliyor = false
+        SimdiCalan.guncelle()
         gecisle(hedef: 0, sure: 0.6) { [weak self] in
             guard let self, !self.caliyor else { return }
             for y in self.yuvalar where y.aktif { y.duraklat() }
@@ -372,7 +416,7 @@ final class SesMotoru {
     /// oynatıcının ilerlediğini denetler. Sonuç konsola "SES-SINAMA" satırlarıyla yazılır.
     static func sina() async {
         print("SES-SINAMA başladı")
-        for t in SesTuru.tumu {
+        for t in SesTuru.doga {
             let var1 = Bundle.main.url(forResource: t.id, withExtension: "mp3") != nil
             if !var1 { print("SES-SINAMA eksik dosya \(t.id)") }
         }
@@ -421,6 +465,9 @@ final class SesMotoru {
         try? await Task.sleep(nanoseconds: 600_000_000)
         m.degistir("deniz")
         try? await Task.sleep(nanoseconds: 1_200_000_000)
+        m.degistir("gurultu_pembe")
+        try? await Task.sleep(nanoseconds: 800_000_000)
+        print("SES-SINAMA gürültü çalan=\(m.yuvalar.filter { $0.oynatici.isPlaying }.count) seçili=\(m.katman.keys.sorted())")
         print("SES-SINAMA değişim sonrası çalan=\(m.yuvalar.filter { $0.oynatici.isPlaying }.count) seçili=\(m.katman.keys.sorted())")
         m.hepsiniKis()
         try? await Task.sleep(nanoseconds: 1_200_000_000)
