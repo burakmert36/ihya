@@ -7,6 +7,7 @@ struct AyarlarEkrani: View {
     @Environment(VakitServisi.self) private var vakit
     @Environment(\.palet) private var palet
     @State private var ezanDurum = 0
+    @State private var muezzinAc = false
     @State private var mesaj: String?
     @State private var konum = KonumAlici()
     /// Tek dosya seçici: ezan kaydı, yedek klasörü ya da geri yüklenecek yedek.
@@ -122,6 +123,25 @@ struct AyarlarEkrani: View {
                         }
                         .pickerStyle(.menu)
                     }
+                    if depo.ayarlar.ezan == .muezzin {
+                        let a = depo.ayarlar
+                        let m = Muezzin.bul(a.muezzin)
+                        Ayrac()
+                        Button { muezzinAc = true } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "speaker.wave.2.circle.fill").font(.system(size: 26)).foregroundStyle(Color(hex: "#1FB25A"))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(a.vakitMuezzin.count == 6 ? "Her vakte ayrı müezzin" : m.ad).font(.kalin(15))
+                                    Text(EzanCalar.hazir(m) || a.vakitMuezzin.count == 6 ? "Dinle, değiştir ya da vakitlere ayır" : "Kayıt inmedi; dokun ve seç")
+                                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
+                            }
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
                     if let kayit = depo.ayarlar.ezan.kayitAdi {
                         let hazir = EzanKaydi.mevcut(kayit) && ezanDurum >= 0
                         Ayrac()
@@ -166,7 +186,7 @@ struct AyarlarEkrani: View {
                         Label("Deneme bildirimi gönder", systemImage: "bell.badge").font(.kalin(14)).frame(maxWidth: .infinity, minHeight: 30)
                     }
                     .buttonStyle(.glass)
-                    Text("Tona dokununca telefon sessizde de duyulur. Bildirim sesini ise iOS, telefon sessiz kipteyken çalmaz. iOS bildirim sesini 30 saniyeyle sınırlar; makamlı ezan için kendi kaydını ekle, ilk 29 saniyesi çalar.")
+                    Text("Tona dokununca telefon sessizde de duyulur. Bildirim sesini ise iOS, telefon sessiz kipteyken çalmaz. iOS bildirim sesini 30 saniyeyle sınırlar: ezanın ilk 29 saniyesi çalar; uygulama açıksa ezanın tamamı okunur. Makamlı ezan için kendi kaydını da ekleyebilirsin.")
                         .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
                 }
                 grup("Odak") {
@@ -202,7 +222,9 @@ struct AyarlarEkrani: View {
                 grup("Tilavet") {
                     secimSatiri("Hafız", alt: Hafiz.bul(depo.ayarlar.tilavetHafiz).unvan) {
                         Picker("", selection: depo.ayar(\.tilavetHafiz)) {
-                            ForEach(Hafiz.tumu) { Text($0.ad).tag($0.id) }
+                            ForEach(Hafiz.Grup.allCases, id: \.self) { g in
+                                Section(g.ad) { ForEach(Hafiz.grup(g)) { Text($0.ad).tag($0.id) } }
+                            }
                         }
                         .pickerStyle(.menu)
                     }
@@ -305,6 +327,10 @@ struct AyarlarEkrani: View {
         }
         .navigationTitle("Ayarlar")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $muezzinAc) { MuezzinSecici().presentationDetents([.large]) }
+        .onChange(of: depo.ayarlar.ezan) { _, yeni in
+            if yeni == .muezzin { Task { await EzanCalar.ortak.gerekenleriIndir(depo.ayarlar); await Bildirim.vakitleriKur(vakit, depo.ayarlar) } }
+        }
         .fileImporter(isPresented: Binding(get: { secici != nil }, set: { if !$0 { secici = nil } }), allowedContentTypes: secici?.turler ?? [.data]) { sonuc in
             guard let s = secici else { return }
             secici = nil

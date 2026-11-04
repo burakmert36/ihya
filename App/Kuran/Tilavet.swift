@@ -3,9 +3,20 @@ import MediaPlayer
 import Observation
 import SwiftUI
 
-/// Mescid-i Harâm (Kâbe) imamları. Âyet âyet kayıtlar EveryAyah arşivinden indirilir; depoya konmaz.
+/// Hafızlar. EveryAyah'takiler âyet âyet, mp3quran'dakiler bütün sûre kaydı ve âyet zamanlarıyla çalınır; kayıtlar depoya konmaz.
 struct Hafiz: Identifiable, Hashable {
-    let id: String        // arşivdeki klasör adı
+    enum Grup: String, CaseIterable {
+        case kabe, nebevi, huzur
+        var ad: String {
+            switch self {
+            case .kabe: "Mescid-i Harâm (Kâbe)"
+            case .nebevi: "Mescid-i Nebevî"
+            case .huzur: "Huzur veren sesler"
+            }
+        }
+    }
+
+    let id: String        // EveryAyah klasör adı ya da "mp3quran-<no>"
     let ad: String
     let arapca: String
     /// Rozette görünen kısa Arapça ad.
@@ -13,25 +24,64 @@ struct Hafiz: Identifiable, Hashable {
     let unvan: String
     /// Rozet rengi
     let renk: String
+    var grup: Grup = .kabe
+    /// mp3quran okuyucu numarası ve ses klasörü (bütün sûre kaydı)
+    var okuyucu: Int? = nil
+    var klasor: String? = nil
+
+    var tamSure: Bool { okuyucu != nil }
+
+    private static func m(_ no: Int, _ yol: String, _ ad: String, _ arapca: String, _ kisa: String, _ unvan: String, _ renk: String, _ g: Grup) -> Hafiz {
+        Hafiz(id: "mp3quran-\(no)", ad: ad, arapca: arapca, kisa: kisa, unvan: unvan, renk: renk, grup: g, okuyucu: no,
+              klasor: "https://cdn.mp3quran.net/audio/\(yol)/r1/")
+    }
 
     static let tumu: [Hafiz] = [
         Hafiz(id: "Abdurrahmaan_As-Sudais_192kbps", ad: "Abdurrahman es-Südeys", arapca: "عبد الرحمن السديس", kisa: "السديس", unvan: "Kâbe imamı", renk: "#E9C46A"),
         Hafiz(id: "MaherAlMuaiqly128kbps", ad: "Mâhir el-Muaykılî", arapca: "ماهر المعيقلي", kisa: "المعيقلي", unvan: "Kâbe imamı", renk: "#7CC8FF"),
         Hafiz(id: "Yasser_Ad-Dussary_128kbps", ad: "Yâsir ed-Devserî", arapca: "ياسر الدوسري", kisa: "الدوسري", unvan: "Kâbe imamı", renk: "#9BE38F"),
         Hafiz(id: "Abdullaah_3awwaad_Al-Juhaynee_128kbps", ad: "Abdullah el-Cühenî", arapca: "عبد الله الجهني", kisa: "الجهني", unvan: "Kâbe imamı", renk: "#F4A3C4"),
+        m(217, "bandar-baleela", "Bender Belîle", "بندر بليلة", "بليلة", "Kâbe imamı", "#8FD3C7", .kabe),
         Hafiz(id: "Saood_ash-Shuraym_128kbps", ad: "Suûd eş-Şüreym", arapca: "سعود الشريم", kisa: "الشريم", unvan: "Kâbe'nin eski imamı", renk: "#C9B6FF"),
         Hafiz(id: "Ali_Jaber_64kbps", ad: "Ali Câbir", arapca: "علي جابر", kisa: "جابر", unvan: "Kâbe'nin eski imamı", renk: "#FFB677"),
+        m(61, "abdullah-khayyat", "Abdullah Hayyât", "عبد الله خياط", "خياط", "Kâbe'nin eski imamı", "#D9C49A", .kabe),
+
+        Hafiz(id: "Hudhaify_128kbps", ad: "Ali el-Huzeyfî", arapca: "علي الحذيفي", kisa: "الحذيفي", unvan: "Mescid-i Nebevî imamı", renk: "#A7D8A0", grup: .nebevi),
+        Hafiz(id: "Salah_Al_Budair_128kbps", ad: "Salâh el-Büdeyr", arapca: "صلاح البدير", kisa: "البدير", unvan: "Mescid-i Nebevî imamı", renk: "#9CC9F5", grup: .nebevi),
+        m(49, "abdulbari-thubaiti", "Abdulbârî es-Subeytî", "عبد الباري الثبيتي", "الثبيتي", "Mescid-i Nebevî imamı", "#F2B5A0", .nebevi),
+        m(58, "abdullah-buaijan", "Abdullah el-Buaycân", "عبد الله البعيجان", "البعيجان", "Mescid-i Nebevî imamı", "#B9B2F0", .nebevi),
+        m(67, "abdulmohsen-qasim", "Abdulmuhsin el-Kâsım", "عبد المحسن القاسم", "القاسم", "Mescid-i Nebevî imamı", "#E8D17F", .nebevi),
+        Hafiz(id: "Muhammad_Ayyoub_128kbps", ad: "Muhammed Eyyûb", arapca: "محمد أيوب", kisa: "أيوب", unvan: "Mescid-i Nebevî'nin eski imamı", renk: "#F7A8B8", grup: .nebevi),
+
+        m(225, "abdulrahman-oosi", "Abdurrahman el-Ussî", "عبد الرحمن العوسي", "العوسي", "Huzur veren tilavet", "#9FE0D0", .huzur),
+        m(86, "nasser-qatami", "Nâsır el-Katâmî", "ناصر القطامي", "القطامي", "Huzur veren tilavet", "#C4E38F", .huzur),
+        m(12, "idrees-abkar", "İdrîs Ebker", "إدريس أبكر", "أبكر", "Huzur veren tilavet", "#F5C78E", .huzur),
+        m(236, "abdulrahman-majed", "Abdurrahman el-Mâcid", "عبد الرحمن الماجد", "الماجد", "Huzur veren tilavet", "#A9C8FF", .huzur),
+        m(259, "ahmad-nufais", "Ahmed en-Nüfeys", "أحمد النفيس", "النفيس", "Huzur veren tilavet", "#E7B3F0", .huzur),
+        m(221, "raad-kurdi", "Raad el-Kürdî", "رعد الكردي", "الكردي", "Huzur veren tilavet", "#FFD39A", .huzur),
+        m(245, "mansour-salimi", "Mansûr es-Sâlimî", "منصور السالمي", "السالمي", "Huzur veren tilavet", "#B7E4F5", .huzur),
+        m(273, "haitham-dukhain", "Heysem ed-Dühayn", "هيثم الدخين", "الدخين", "Huzur veren tilavet", "#D7E8A6", .huzur),
     ]
     static func bul(_ id: String) -> Hafiz { tumu.first { $0.id == id } ?? tumu[0] }
+    static func grup(_ g: Grup) -> [Hafiz] { tumu.filter { $0.grup == g } }
 }
 
-/// Âyet takipli tilavet: her âyetin kaydı ayrı çalınır; okunan âyet bilinir, okuyucu onu vurgular ve ekranda tutar.
-/// Kayıtlar dinlendikçe telefona iner; bir sûre bütünüyle indirilirse internetsiz dinlenir.
+/// mp3quran âyet zamanı (milisaniye).
+struct AyetZamani: Codable, Equatable {
+    let ayah: Int
+    let start_time: Double
+    let end_time: Double
+}
+
+/// Âyet takipli tilavet. Okunan âyet bilinir; okuyucu onu vurgular ve ekranda tutar.
+/// EveryAyah hafızlarında her âyetin kaydı ayrı çalınır; mp3quran hafızlarında bütün sûre akar, âyet zaman cetvelinden bulunur.
+/// Kayıtlar dinlendikçe (ya da "indir"le) telefona iner; inen sûre internetsiz dinlenir.
 @MainActor
 @Observable
 final class TilavetMotoru {
     static let ortak = TilavetMotoru()
     nonisolated static let kaynak = "https://everyayah.com/data/"
+    nonisolated static let zamanKaynagi = "https://mp3quran.net/api/v3/ayat_timing"
     nonisolated static let ayetSayilari = [7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12, 30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6]
 
     private(set) var hafiz = Hafiz.tumu[0]
@@ -40,7 +90,7 @@ final class TilavetMotoru {
     /// 0: besmele.
     private(set) var ayet = 0
     private(set) var caliyor = false
-    /// Âyetin kaydı iniyor.
+    /// Kayıt iniyor ya da akış dolmayı bekliyor.
     private(set) var bekliyor = false
     private(set) var hata: String?
     /// Her âyet kaç kez okunsun; 0 sürekli (ezber için).
@@ -58,8 +108,18 @@ final class TilavetMotoru {
     /// Çalma durumu değişince (odak seslerini kısmak için).
     @ObservationIgnored var degisti: ((Bool) -> Void)?
 
+    // Âyet âyet (EveryAyah)
     @ObservationIgnored private var oynatici: AVAudioPlayer?
     @ObservationIgnored private let bitis = BitisTemsilcisi()
+    // Bütün sûre (mp3quran)
+    @ObservationIgnored private var akis: AVPlayer?
+    @ObservationIgnored private var akisAnahtari = ""
+    @ObservationIgnored private var zamanlar: [AyetZamani] = []
+    @ObservationIgnored private var akisGozlemi: Any?
+    @ObservationIgnored private var akisBitisi: NSObjectProtocol?
+    @ObservationIgnored private var akisDurumlari: [NSKeyValueObservation] = []
+    @ObservationIgnored private var araniyor = false
+
     @ObservationIgnored private var tekrarSayac = 0
     @ObservationIgnored private var nesil = 0
     @ObservationIgnored private var inenler: [String: Task<URL?, Never>] = [:]
@@ -75,7 +135,7 @@ final class TilavetMotoru {
             Task { @MainActor in
                 guard let self, self.etkin else { return }
                 if tip == .began, self.caliyor { self.durumYaz(false) }
-                if tip == .ended, devamEt, self.oynatici != nil { self.devamEt() }
+                if tip == .ended, devamEt, self.oynatici != nil || self.akis != nil { self.devamEt() }
             }
         })
         gozlemciler.append(m.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] not in
@@ -110,7 +170,12 @@ final class TilavetMotoru {
 
     func devamEt() {
         guard etkin else { return }
-        if let o = oynatici, !bekliyor {
+        if let p = akis {
+            SesOturumu.tilavet = true
+            SesOturumu.hazirla()
+            p.playImmediately(atRate: hiz)
+            durumYaz(true)
+        } else if let o = oynatici, !bekliyor {
             SesOturumu.tilavet = true
             SesOturumu.hazirla()
             o.play()
@@ -123,6 +188,7 @@ final class TilavetMotoru {
     func duraklat() {
         guard etkin else { return }
         oynatici?.pause()
+        akis?.pause()
         durumYaz(false)
     }
 
@@ -131,6 +197,7 @@ final class TilavetMotoru {
         nesil += 1
         oynatici?.stop()
         oynatici = nil
+        akisKapat()
         sure = 0
         ayet = 0
         bekliyor = false
@@ -150,6 +217,7 @@ final class TilavetMotoru {
         tekrarSayac = 0
         // Âyetin başından 3 sn geçtiyse önce âyetin başına döner.
         if let o = oynatici, o.currentTime > 3 { o.currentTime = 0; SimdiCalan.guncelle(); return }
+        if akis != nil, gecen - kesinBaslangic(ayet) > 3 { akisAra(kesinBaslangic(ayet)); return }
         let ilk = (sure != 1 && sure != 9) ? 0 : 1
         ayet = max(ilk, ayet - 1)
         oynat()
@@ -177,10 +245,14 @@ final class TilavetMotoru {
     func hizAyarla(_ v: Float) {
         hiz = max(0.5, min(2, v))
         oynatici?.rate = hiz
+        akis?.defaultRate = hiz
+        if let p = akis, p.rate > 0 { p.rate = hiz }
         SimdiCalan.guncelle()
     }
 
     private func oynat() {
+        if hafiz.tamSure { akisOynat(); return }
+        akisKapat()
         nesil += 1
         let n = nesil, s = sure, a = ayet, h = hafiz
         oynatici?.stop()
@@ -228,6 +300,7 @@ final class TilavetMotoru {
         } else {
             oynatici?.stop()
             oynatici = nil
+            akisKapat()
             durumYaz(false)
             Dokunsal.basari()
         }
@@ -238,14 +311,158 @@ final class TilavetMotoru {
         SimdiCalan.guncelle()
     }
 
-    var gecen: TimeInterval { oynatici?.currentTime ?? 0 }
-    var uzunluk: TimeInterval { oynatici?.duration ?? 0 }
+    var gecen: TimeInterval {
+        if let p = akis { let t = p.currentTime().seconds; return t.isFinite ? t : 0 }
+        return oynatici?.currentTime ?? 0
+    }
+    var uzunluk: TimeInterval {
+        if let d = akis?.currentItem?.duration.seconds { return d.isFinite ? d : 0 }
+        return oynatici?.duration ?? 0
+    }
+
+    // MARK: Bütün sûre akışı (mp3quran)
+
+    /// Zamana göre okunan âyet. Cetvelin ilk âyetinden önceki kısım besmeledir (Fâtiha ve Tevbe'de istiâze; 1. âyet sayılır).
+    nonisolated static func ayetBul(_ sn: Double, _ z: [AyetZamani], sure: Int) -> Int? {
+        guard let ilk = z.first else { return nil }
+        let ms = sn * 1000
+        if ms < ilk.start_time { return (sure == 1 || sure == 9) ? ilk.ayah : 0 }
+        var lo = 0, hi = z.count - 1
+        while lo < hi {
+            let m = (lo + hi + 1) / 2
+            if z[m].start_time <= ms { lo = m } else { hi = m - 1 }
+        }
+        return z[lo].ayah
+    }
+
+    /// Âyetin başladığı an (sn). 1. âyet ya da besmele için baştan (besmele de okunsun).
+    private func baslangic(_ a: Int) -> Double { a <= 1 ? 0 : kesinBaslangic(a) }
+    private func kesinBaslangic(_ a: Int) -> Double {
+        guard a > 0, let z = zamanlar.first(where: { $0.ayah == a }) else { return 0 }
+        return z.start_time / 1000
+    }
+
+    private func akisOynat() {
+        oynatici?.stop()
+        oynatici = nil
+        let anahtar = hafiz.id + "|" + String(sure)
+        // Aynı sûre açıksa yalnız yerini değiştirir (besmele: baştan; âyet: tam başı).
+        if let p = akis, anahtar == akisAnahtari {
+            akisAra(ayet <= 0 ? 0 : kesinBaslangic(ayet))
+            if p.rate == 0 { SesOturumu.tilavet = true; SesOturumu.hazirla(); p.playImmediately(atRate: hiz) }
+            durumYaz(true)
+            return
+        }
+        akisKapat()
+        nesil += 1
+        let n = nesil, s = sure, h = hafiz
+        bekliyor = true
+        durumYaz(true)
+        Task { @MainActor in
+            let z = await TilavetMotoru.zamanlar(h, s) ?? []
+            guard n == self.nesil, let uzak = TilavetMotoru.uzakSure(h, s) else { return }
+            let yerel = TilavetMotoru.yerelSure(h, s)
+            let varMi = FileManager.default.fileExists(atPath: yerel.path)
+            let secenek: [String: Any]? = varMi ? [AVURLAssetPreferPreciseDurationAndTimingKey: true] : nil
+            let varlik = AVURLAsset(url: varMi ? yerel : uzak, options: secenek)
+            let oge = AVPlayerItem(asset: varlik)
+            oge.audioTimePitchAlgorithm = .timeDomain
+            let p = AVPlayer(playerItem: oge)
+            p.defaultRate = self.hiz
+            self.akis = p
+            self.akisAnahtari = h.id + "|" + String(s)
+            self.zamanlar = z
+            self.akisGozlemi = p.addPeriodicTimeObserver(forInterval: CMTime(value: 1, timescale: 8), queue: .main) { [weak self] t in
+                MainActor.assumeIsolated { self?.zamanIlerledi(t.seconds) }
+            }
+            self.akisBitisi = NotificationCenter.default.addObserver(forName: AVPlayerItem.didPlayToEndTimeNotification, object: oge, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.akisBitti() }
+            }
+            self.akisDurumlari = [
+                p.observe(\.timeControlStatus) { [weak self] o, _ in
+                    let bekle = o.timeControlStatus == .waitingToPlayAtSpecifiedRate
+                    Task { @MainActor in self?.bekliyor = bekle }
+                },
+                oge.observe(\.status) { [weak self] o, _ in
+                    guard o.status == .failed else { return }
+                    Task { @MainActor in
+                        guard let self, n == self.nesil else { return }
+                        self.hata = "Kayıt açılamadı. İnternet bağlantını kontrol edip tekrar dene."
+                        self.akisKapat()
+                        self.durumYaz(false)
+                    }
+                },
+            ]
+            let bas = self.baslangic(self.ayet)
+            if bas > 0 { _ = await p.seek(to: CMTime(seconds: bas, preferredTimescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero) }
+            guard n == self.nesil else { return }
+            self.hata = z.isEmpty ? "Bu kayıtta âyet takibi yok; sûre baştan sona okunur." : nil
+            SesOturumu.tilavet = true
+            SesOturumu.hazirla()
+            p.playImmediately(atRate: self.hiz)
+            self.durumYaz(true)
+        }
+    }
+
+    private func akisAra(_ sn: Double) {
+        guard let p = akis else { return }
+        araniyor = true
+        p.seek(to: CMTime(seconds: sn, preferredTimescale: 1000), toleranceBefore: .zero, toleranceAfter: .zero) { [weak self] _ in
+            Task { @MainActor in self?.araniyor = false; SimdiCalan.guncelle() }
+        }
+    }
+
+    private func zamanIlerledi(_ sn: Double) {
+        guard etkin, akis != nil, !araniyor, let a = TilavetMotoru.ayetBul(sn, zamanlar, sure: sure), a != ayet else { return }
+        // Bir sonraki âyete geçerken tekrar sırası bitmediyse âyetin başına döner.
+        if a == ayet + 1, ayet > 0, tekrar != 1, tekrar == 0 || tekrarSayac + 1 < tekrar {
+            tekrarSayac += 1
+            akisAra(kesinBaslangic(ayet))
+            return
+        }
+        tekrarSayac = 0
+        ayet = a
+        SimdiCalan.guncelle()
+    }
+
+    private func akisBitti() {
+        guard etkin, akis != nil else { return }
+        if ayet > 0, tekrar != 1, tekrar == 0 || tekrarSayac + 1 < tekrar {
+            tekrarSayac += 1
+            akisAra(kesinBaslangic(ayet))
+            akis?.playImmediately(atRate: hiz)
+            return
+        }
+        tekrarSayac = 0
+        sureBitti()
+    }
+
+    private func akisKapat() {
+        if let g = akisGozlemi { akis?.removeTimeObserver(g) }
+        if let b = akisBitisi { NotificationCenter.default.removeObserver(b) }
+        akisDurumlari.forEach { $0.invalidate() }
+        akisDurumlari = []
+        akisGozlemi = nil
+        akisBitisi = nil
+        akis?.pause()
+        akis = nil
+        akisAnahtari = ""
+        araniyor = false
+    }
 
     // MARK: Dosyalar
 
+    /// Uygulama Desteği/Tilavet: yeniden indirilebilir kayıtlar iCloud yedeğine girmez.
     nonisolated static var klasor: URL {
-        let u = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Tilavet")
-        try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true)
+        var u = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Tilavet")
+        if !FileManager.default.fileExists(atPath: u.path) {
+            try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true)
+        }
+        if (try? u.resourceValues(forKeys: [.isExcludedFromBackupKey]))?.isExcludedFromBackup != true {
+            var d = URLResourceValues()
+            d.isExcludedFromBackup = true
+            try? u.setResourceValues(d)
+        }
         return u
     }
 
@@ -256,6 +473,35 @@ final class TilavetMotoru {
         let k = klasor.appendingPathComponent(h.id)
         try? FileManager.default.createDirectory(at: k, withIntermediateDirectories: true)
         return k.appendingPathComponent(ad(s, a) + ".mp3")
+    }
+
+    nonisolated static func yerelSure(_ h: Hafiz, _ s: Int) -> URL {
+        let k = klasor.appendingPathComponent(h.id)
+        try? FileManager.default.createDirectory(at: k, withIntermediateDirectories: true)
+        return k.appendingPathComponent(String(format: "%03d.mp3", s))
+    }
+
+    nonisolated static func uzakSure(_ h: Hafiz, _ s: Int) -> URL? {
+        h.klasor.flatMap { URL(string: $0 + String(format: "%03d.mp3", s)) }
+    }
+
+    /// Sûrenin âyet zamanları: önce telefondan, yoksa mp3quran'dan (inince saklanır).
+    nonisolated static func zamanlar(_ h: Hafiz, _ s: Int) async -> [AyetZamani]? {
+        guard let no = h.okuyucu else { return nil }
+        let k = klasor.appendingPathComponent(h.id)
+        try? FileManager.default.createDirectory(at: k, withIntermediateDirectories: true)
+        let dosya = k.appendingPathComponent(String(format: "%03d.json", s))
+        if let d = try? Data(contentsOf: dosya), let z = try? JSONDecoder().decode([AyetZamani].self, from: d), !z.isEmpty { return z }
+        guard let url = URL(string: zamanKaynagi + "?surah=\(s)&read=\(no)") else { return nil }
+        for _ in 0..<2 {
+            if let (d, y) = try? await URLSession.shared.data(from: url), (y as? HTTPURLResponse)?.statusCode == 200,
+               let z = try? JSONDecoder().decode([AyetZamani].self, from: d), !z.isEmpty {
+                let sirali = z.filter { $0.ayah > 0 }.sorted { $0.start_time < $1.start_time }
+                if let j = try? JSONEncoder().encode(sirali) { try? j.write(to: dosya, options: .atomic) }
+                return sirali
+            }
+        }
+        return nil
     }
 
     private func dosya(_ h: Hafiz, _ s: Int, _ a: Int?) async -> URL? {
@@ -291,16 +537,31 @@ final class TilavetMotoru {
     func indirmeAnahtari(_ s: Int) -> String { hafiz.id + "|" + String(s) }
 
     func indirildi(_ s: Int) -> Bool {
+        if hafiz.tamSure { return FileManager.default.fileExists(atPath: TilavetMotoru.yerelSure(hafiz, s).path) }
         let k = TilavetMotoru.klasor.appendingPathComponent(hafiz.id)
         let adlar = Set((try? FileManager.default.contentsOfDirectory(atPath: k.path)) ?? [])
         return (1...TilavetMotoru.ayetSayilari[s - 1]).allSatisfy { adlar.contains(TilavetMotoru.ad(s, $0) + ".mp3") }
     }
 
-    /// Sûrenin bütün âyetlerini (ve besmeleyi) indirir.
+    /// Sûrenin bütün âyetlerini (ve besmeleyi) ya da bütün sûre kaydını indirir.
     func sureyiIndir(_ s: Int) {
         let h = hafiz, anahtar = indirmeAnahtari(s)
         guard indirmeler[anahtar] == nil else { return }
         indirmeler[anahtar] = 0
+        if h.tamSure {
+            surIndirme = Task { @MainActor in
+                _ = await TilavetMotoru.zamanlar(h, s)
+                var tamam = false
+                if let uzak = TilavetMotoru.uzakSure(h, s) {
+                    tamam = await Indirici.indir(uzak, TilavetMotoru.yerelSure(h, s)) { o in
+                        Task { @MainActor in if self.indirmeler[anahtar] != nil { self.indirmeler[anahtar] = o } }
+                    }
+                }
+                self.indirmeler[anahtar] = nil
+                if !tamam, !Task.isCancelled { self.hata = "Sûre indirilemedi; sonra tekrar dene." }
+            }
+            return
+        }
         surIndirme = Task { @MainActor in
             let son = TilavetMotoru.ayetSayilari[s - 1]
             var liste: [Int?] = (s != 1 && s != 9) ? [nil] : []
@@ -334,6 +595,36 @@ final class TilavetMotoru {
     func kayitlariSil() {
         dur()
         try? FileManager.default.removeItem(at: TilavetMotoru.klasor)
+    }
+}
+
+/// Büyük dosyaları ilerlemesini bildirerek indirir; görev iptal edilirse indirme de durur.
+enum Indirici {
+    private final class Kutu: @unchecked Sendable {
+        var gorev: URLSessionDownloadTask?
+        var gozlem: NSKeyValueObservation?
+    }
+
+    nonisolated static func indir(_ kaynak: URL, _ hedef: URL, ilerleme: @escaping @Sendable (Double) -> Void) async -> Bool {
+        let k = Kutu()
+        return await withTaskCancellationHandler {
+            await withCheckedContinuation { (devam: CheckedContinuation<Bool, Never>) in
+                let g = URLSession.shared.downloadTask(with: kaynak) { gecici, yanit, _ in
+                    var tamam = false
+                    if let gecici, (yanit as? HTTPURLResponse)?.statusCode == 200 {
+                        try? FileManager.default.removeItem(at: hedef)
+                        tamam = (try? FileManager.default.moveItem(at: gecici, to: hedef)) != nil
+                    }
+                    k.gozlem?.invalidate()
+                    devam.resume(returning: tamam)
+                }
+                k.gozlem = g.progress.observe(\.fractionCompleted) { p, _ in ilerleme(p.fractionCompleted) }
+                k.gorev = g
+                g.resume()
+            }
+        } onCancel: {
+            k.gorev?.cancel()
+        }
     }
 }
 

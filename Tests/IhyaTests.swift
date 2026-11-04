@@ -147,7 +147,30 @@ final class IhyaTests: XCTestCase {
         XCTAssertEqual(TilavetMotoru.ayetSayilari.reduce(0, +), KuranDeposu.toplamAyet)
         XCTAssertEqual(TilavetMotoru.ad(36, 12), "036012")
         XCTAssertEqual(TilavetMotoru.ad(9, nil), "001001")
-        XCTAssertEqual(Hafiz.tumu.count, 6)
+        XCTAssertEqual(Hafiz.tumu.count, 22)
+        XCTAssertEqual(Set(Hafiz.tumu.map(\.id)).count, Hafiz.tumu.count, "hafız kimlikleri tekil olmalı")
+        XCTAssertEqual(Hafiz.tumu[0].id, "Abdurrahmaan_As-Sudais_192kbps", "varsayılan hafız değişmemeli")
+        XCTAssertEqual(TilavetMotoru.uzakSure(Hafiz.bul("mp3quran-225"), 36)?.absoluteString, "https://cdn.mp3quran.net/audio/abdulrahman-oosi/r1/036.mp3")
+    }
+
+    func testZamanCetvelindenAyet() {
+        let z = [AyetZamani(ayah: 1, start_time: 5380, end_time: 8480), AyetZamani(ayah: 2, start_time: 8480, end_time: 14440),
+                 AyetZamani(ayah: 3, start_time: 14440, end_time: 18720)]
+        XCTAssertEqual(TilavetMotoru.ayetBul(2, z, sure: 2), 0, "ilk âyetten önce besmele")
+        XCTAssertEqual(TilavetMotoru.ayetBul(2, z, sure: 1), 1, "Fâtiha'da istiâze 1. âyet sayılır")
+        XCTAssertEqual(TilavetMotoru.ayetBul(8.48, z, sure: 2), 2)
+        XCTAssertEqual(TilavetMotoru.ayetBul(100, z, sure: 2), 3)
+        XCTAssertNil(TilavetMotoru.ayetBul(1, [], sure: 2))
+    }
+
+    func testMuezzinSecimi() {
+        var a = Ayarlar()
+        XCTAssertEqual(a.vaktinMuezzini(4), "mekke")
+        a.vakitMuezzin = ["sabah", "", "afasi", "katami", "", "zehrani"]
+        XCTAssertEqual(a.vaktinMuezzini(0), "sabah")
+        XCTAssertEqual(a.vaktinMuezzini(4), "mekke", "boş vakit genel seçime düşer")
+        XCTAssertEqual(Set(Muezzin.tumu.map(\.id)).count, Muezzin.tumu.count)
+        XCTAssertTrue(Muezzin.tumu.allSatisfy { $0.url != nil })
     }
 
     func testMealAramaKatlamasi() {

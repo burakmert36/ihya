@@ -137,7 +137,9 @@ struct TilavetCubugu: View {
                 t.hafizSec(Hafiz.bul(v))
                 depo.degistir { $0.ayarlar.tilavetHafiz = v }
             })) {
-                ForEach(Hafiz.tumu) { h in Text(h.ad).tag(h.id) }
+                ForEach(Hafiz.Grup.allCases, id: \.self) { g in
+                    Section(g.ad) { ForEach(Hafiz.grup(g)) { h in Text(h.ad).tag(h.id) } }
+                }
             }
             .pickerStyle(.menu)
             Picker("Tekrar", selection: Binding(get: { t.tekrar }, set: { t.tekrarAyarla($0) })) {
@@ -187,37 +189,40 @@ struct HafizSecici: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 10) {
-                    Text("Mescid-i Harâm imamlarından âyet âyet tilavet. Dinledikçe telefona iner; bir sûreyi indirirsen internetsiz dinlersin.")
+                    Text("Kâbe ve Mescid-i Nebevî imamlarından, bir de huzur veren seslerden tilavet. Okunan âyet ekranda vurgulanır. Dinledikçe telefona iner; bir sûreyi indirirsen internetsiz dinlersin.")
                         .font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.bottom, 4)
-                    ForEach(Hafiz.tumu) { h in
-                        let secili = h == t.hafiz
-                        Button {
-                            t.hafizSec(h)
-                            depo.degistir { $0.ayarlar.tilavetHafiz = h.id }
-                            Dokunsal.hafif(0.6)
-                            kapat()
-                        } label: {
-                            HStack(spacing: 12) {
-                                HafizRozeti(hafiz: h, boyut: 50)
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(h.ad).font(.kalin(16))
-                                    Text(h.unvan).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.secondary)
+                    ForEach(Hafiz.Grup.allCases, id: \.self) { g in
+                        BolumBasligi(metin: g.ad).frame(maxWidth: .infinity, alignment: .leading).padding(.top, 6)
+                        ForEach(Hafiz.grup(g)) { h in
+                            let secili = h == t.hafiz
+                            Button {
+                                t.hafizSec(h)
+                                depo.degistir { $0.ayarlar.tilavetHafiz = h.id }
+                                Dokunsal.hafif(0.6)
+                                kapat()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    HafizRozeti(hafiz: h, boyut: 50)
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(h.ad).font(.kalin(16))
+                                        Text(h.unvan).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.secondary)
+                                    }
+                                    Spacer(minLength: 4)
+                                    Text(h.arapca).font(.arapca(17)).foregroundStyle(palet.vurgu).lineLimit(1).minimumScaleFactor(0.6)
+                                    Image(systemName: secili ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 20)).foregroundStyle(secili ? palet.vurgu : .secondary)
                                 }
-                                Spacer(minLength: 4)
-                                Text(h.arapca).font(.arapca(17)).foregroundStyle(palet.vurgu).lineLimit(1).minimumScaleFactor(0.6)
-                                Image(systemName: secili ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: 20)).foregroundStyle(secili ? palet.vurgu : .secondary)
+                                .padding(12)
+                                .contentShape(Rectangle())
+                                .camYuzey(palet.cam(secili ? palet.vurgu.opacity(0.2) : nil, etkilesimli: true), in: .rect(cornerRadius: 22))
                             }
-                            .padding(12)
-                            .contentShape(Rectangle())
-                            .camYuzey(palet.cam(secili ? palet.vurgu.opacity(0.2) : nil, etkilesimli: true), in: .rect(cornerRadius: 22))
+                            .buttonStyle(.plain)
+                            .accessibilityAddTraits(secili ? .isSelected : [])
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityAddTraits(secili ? .isSelected : [])
                     }
-                    Text("Kayıtlar: EveryAyah âyet âyet tilavet arşivi.")
+                    Text("Kayıtlar: EveryAyah ve mp3quran arşivleri.")
                         .font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
                         .padding(.top, 6)
                 }

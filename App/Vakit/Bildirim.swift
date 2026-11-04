@@ -54,6 +54,10 @@ enum Bildirim {
 
     private static func ses(_ i: Int, _ a: Ayarlar) -> UNNotificationSound? {
         if a.ezan == .sessiz { return nil }
+        if a.ezan == .muezzin, i != 1, a.onceDakika == 0 {
+            let m = Muezzin.bul(a.vaktinMuezzini(i))
+            if EzanKaydi.mevcut(m.kayitAdi) { return UNNotificationSound(named: UNNotificationSoundName(m.kayitAdi + ".caf")) }
+        }
         if i != 1, a.onceDakika == 0, let kayit = a.ezan.kayitAdi, EzanKaydi.mevcut(kayit) {
             return UNNotificationSound(named: UNNotificationSoundName(kayit + ".caf"))
         }

@@ -86,10 +86,11 @@ struct Kitap: Codable, Identifiable, Hashable {
 }
 
 enum EzanTuru: String, Codable, CaseIterable, Identifiable {
-    case makamli, tekMuezzin, kisa, sessiz
+    case muezzin, makamli, tekMuezzin, kisa, sessiz
     var id: String { rawValue }
     var ad: String {
         switch self {
+        case .muezzin: "Müezzin ezanı"
         case .makamli: "Makamlı ezan"
         case .tekMuezzin: "Tek müezzin"
         case .kisa: "Kısa bildirim"
@@ -209,12 +210,21 @@ struct Ayarlar: Codable, Equatable {
     /// Gün içindeki dakika (20.30)
     var seriHatirlatmaDk: Int = 20 * 60 + 30
     var cumaOzeti: Bool = true
+    /// İndirilen müezzin ezanı (Muezzin.id)
+    var muezzin: String = "mekke"
+    /// Vakte göre müezzin (imsak, güneş, öğle, ikindi, akşam, yatsı); boşsa hepsinde "muezzin".
+    var vakitMuezzin: [String] = []
 
     enum CodingKeys: String, CodingKey {
         case konumKipi, enlem, boylam, konumAdi, vakitBildirim, onceDakika, ezan, bildirimTonu, katiMod
         case sesOdakta, sesSondaAzalt, tesbihTitresim, tesbihSes, tesbihSesDuzeyi, okumaPunto, okumaKoyu, tema, gunlukHedef, ezandaSustur, kuranDinlerkenKis
         case kuranMeal, kuranOkunus, kuranPunto, ilceKodu, ilceAdi, tilavetHafiz, tilavetHiz, tilavetTakip, tilavetDevam, sesKilitEkrani
-        case okumaTemasi, sicakIsik, satirAraligi, ekranAcik, seriHatirlatma, seriHatirlatmaDk, cumaOzeti
+        case okumaTemasi, sicakIsik, satirAraligi, ekranAcik, seriHatirlatma, seriHatirlatmaDk, cumaOzeti, muezzin, vakitMuezzin
+    }
+
+    /// Vaktin müezzini (Muezzin.id).
+    func vaktinMuezzini(_ i: Int) -> String {
+        vakitMuezzin.count == 6 && vakitMuezzin.indices.contains(i) && !vakitMuezzin[i].isEmpty ? vakitMuezzin[i] : muezzin
     }
 
     /// Okuma teması: "kendiliğinden" akşamdan imsaka gece, öbür saatlerde gündüz.
@@ -246,6 +256,7 @@ extension Ayarlar {
         okumaTemasi = v(.okumaTemasi, okumaKoyu.map { $0 ? OkumaTemasi.gece : .gunduz } ?? okumaTemasi)
         sicakIsik = v(.sicakIsik, sicakIsik); satirAraligi = v(.satirAraligi, satirAraligi); ekranAcik = v(.ekranAcik, ekranAcik)
         seriHatirlatma = v(.seriHatirlatma, seriHatirlatma); seriHatirlatmaDk = v(.seriHatirlatmaDk, seriHatirlatmaDk); cumaOzeti = v(.cumaOzeti, cumaOzeti)
+        muezzin = v(.muezzin, muezzin); vakitMuezzin = v(.vakitMuezzin, vakitMuezzin)
         let vb = v(.vakitBildirim, vakitBildirim)
         if vb.count == 6 { vakitBildirim = vb }
     }

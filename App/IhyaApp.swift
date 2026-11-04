@@ -49,7 +49,14 @@ final class BildirimTemsilcisi: NSObject, UNUserNotificationCenterDelegate {
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler(notification.request.identifier.hasPrefix("odak-") ? [] : [.banner, .list, .sound])
+        let id = notification.request.identifier
+        // Uygulama açıkken vakit girerse ezanın tamamı okunur; bildirim sessiz gelir.
+        if id.hasPrefix("vakit-"), let i = id.split(separator: "-").last.flatMap({ Int($0) }), let m = EzanCalar.tamOkunacak(vakit: i) {
+            DispatchQueue.main.async { MainActor.assumeIsolated { EzanCalar.ortak.vaktiOku(m) } }
+            completionHandler([.banner, .list])
+            return
+        }
+        completionHandler(id.hasPrefix("odak-") ? [] : [.banner, .list, .sound])
     }
 }
 
@@ -336,6 +343,7 @@ struct KokGorunum: View {
         .onChange(of: depo.ayarlar, initial: true) { _, a in
             TilavetMotoru.ortak.ayarla(a)
             ses.kilitEkrani = a.sesKilitEkrani
+            EzanCalar.ayarlar = a
         }
         .task { await ezandaSustur() }
     }
