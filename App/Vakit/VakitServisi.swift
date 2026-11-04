@@ -9,9 +9,11 @@ struct GunVakti: Codable, Hashable {
 }
 
 enum VakitSabit {
-    static let ilceKodu = 9335 // Bursa merkez
-    static var onbellekDosyasi: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("vakitler.json")
+    static let bursaMerkez = 9335
+    /// İlçenin indirilen cetveli (Bursa merkez için eski adı korunur).
+    static func onbellekDosyasi(_ ilce: Int) -> URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent(ilce == bursaMerkez ? "vakitler.json" : "vakitler-\(ilce).json")
     }
 }
 
@@ -33,11 +35,16 @@ final class VakitServisi {
     private(set) var enlem = 40.1826
     private(set) var boylam = 29.0665
     private(set) var konumAdi = "Bursa"
-
+    private(set) var ilce = VakitSabit.bursaMerkez
 
     init() {
-        for g in VakitServisi.gomulu() { takvim[g.gun] = g }
-        if let veri = try? Data(contentsOf: VakitSabit.onbellekDosyasi), let liste = try? JSONDecoder().decode([GunVakti].self, from: veri) {
+        takvimiYukle()
+    }
+
+    private func takvimiYukle() {
+        takvim = [:]
+        if ilce == VakitSabit.bursaMerkez { for g in VakitServisi.gomulu() { takvim[g.gun] = g } }
+        if let veri = try? Data(contentsOf: VakitSabit.onbellekDosyasi(ilce)), let liste = try? JSONDecoder().decode([GunVakti].self, from: veri) {
             for g in liste { takvim[g.gun] = g }
         }
     }
@@ -46,7 +53,27 @@ final class VakitServisi {
         kip = a.konumKipi
         enlem = a.enlem
         boylam = a.boylam
-        konumAdi = a.konumKipi == .bursa ? "Bursa" : a.konumAdi
+        konumAdi = a.konumKipi == .bursa ? a.ilceAdi : a.konumAdi
+        if a.ilceKodu != ilce {
+            ilce = a.ilceKodu
+            takvimiYukle()
+            Task { await gerekirseYenile() }
+        }
+    }
+
+    /// Bir anın ait olduğu gün: gün sınırı imsaktır (imsaktan önceki saatler önceki güne sayılır). Gün başı döner.
+    func imsakGunu(_ t: Date) -> Date {
+        let c = Calendar.current
+        let g = c.startOfDay(for: t)
+        return t < imsak(g) ? c.date(byAdding: .day, value: -1, to: g)! : g
+    }
+
+    func imsak(_ gun: Date) -> Date { vakitler(gun)[0] }
+
+    /// Akşam ezanından imsaka kadar.
+    func geceMi(_ t: Date = .now) -> Bool {
+        let v = vakitler(t)
+        return t >= v[4] || t < v[0]
     }
 
     // MARK: Sorgular
@@ -60,7 +87,8 @@ final class VakitServisi {
             let s = g.saatler.compactMap { VakitServisi.saatten($0, gun: gun) }
             if s.count == 6 { return s }
         }
-        return GunesHesabi.vakitler(gun: gun, enlem: kip == .bursa ? 40.1826 : enlem, boylam: kip == .bursa ? 29.0665 : boylam)
+        let bursa = kip == .bursa && ilce == VakitSabit.bursaMerkez
+        return GunesHesabi.vakitler(gun: gun, enlem: bursa ? 40.1826 : enlem, boylam: bursa ? 29.0665 : boylam)
     }
 
     func hicri(_ tarih: Date) -> String {
@@ -95,14 +123,15 @@ final class VakitServisi {
         guard kip == .bursa, !EkranGoruntusu.etkin else { return }
         let ileri = (0..<12).filter { takvim[Depo.gunAnahtari(Calendar.current.date(byAdding: .day, value: $0, to: .now)!)] != nil }.count
         guard ileri < 10 else { return }
-        if let yeni = await VakitServisi.indir() {
+        let hedef = ilce
+        if let yeni = await VakitServisi.indir(hedef), hedef == ilce {
             for g in yeni { takvim[g.gun] = g }
-            VakitServisi.onbellegeYaz(Array(takvim.values))
+            VakitServisi.onbellegeYaz(Array(takvim.values), ilce: hedef)
         }
     }
 
-    nonisolated static func indir() async -> [GunVakti]? {
-        guard let url = URL(string: "https://ezanvakti.emushaf.net/vakitler/\(VakitSabit.ilceKodu)") else { return nil }
+    nonisolated static func indir(_ ilce: Int) async -> [GunVakti]? {
+        guard let url = URL(string: "https://ezanvakti.emushaf.net/vakitler/\(ilce)") else { return nil }
         var istek = URLRequest(url: url, timeoutInterval: 20)
         istek.setValue("application/json", forHTTPHeaderField: "Accept")
         guard let (veri, yanit) = try? await URLSession.shared.data(for: istek),
@@ -119,10 +148,34 @@ final class VakitServisi {
         return sonuc.isEmpty ? nil : sonuc
     }
 
-    nonisolated static func onbellegeYaz(_ liste: [GunVakti]) {
+    nonisolated static func onbellegeYaz(_ liste: [GunVakti], ilce: Int) {
         let esik = Depo.gunAnahtariBagimsiz(Calendar.current.date(byAdding: .day, value: -3, to: .now)!)
         let tut = liste.filter { $0.gun >= esik }.sorted { $0.gun < $1.gun }
-        if let veri = try? JSONEncoder().encode(tut) { try? veri.write(to: VakitSabit.onbellekDosyasi, options: .atomic) }
+        if let veri = try? JSONEncoder().encode(tut) { try? veri.write(to: VakitSabit.onbellekDosyasi(ilce), options: .atomic) }
+    }
+
+    // MARK: Ülke, şehir, ilçe listeleri (ezanvakti.emushaf.net)
+
+    struct Yer: Identifiable, Hashable {
+        let id: Int
+        let ad: String
+    }
+
+    /// yol: "ulkeler", "sehirler/2", "ilceler/539"
+    nonisolated static func liste(_ yol: String, adAnahtari: String, idAnahtari: String) async -> [Yer]? {
+        guard let url = URL(string: "https://ezanvakti.emushaf.net/" + yol) else { return nil }
+        var istek = URLRequest(url: url, timeoutInterval: 20)
+        istek.setValue("application/json", forHTTPHeaderField: "Accept")
+        guard let (veri, yanit) = try? await URLSession.shared.data(for: istek), (yanit as? HTTPURLResponse)?.statusCode == 200,
+              let dizi = try? JSONSerialization.jsonObject(with: veri) as? [[String: Any]] else { return nil }
+        let tr = Locale(identifier: "tr_TR")
+        let sonuc = dizi.compactMap { d -> Yer? in
+            guard let ad = d[adAnahtari] as? String else { return nil }
+            let id = (d[idAnahtari] as? Int) ?? Int((d[idAnahtari] as? String) ?? "")
+            guard let id else { return nil }
+            return Yer(id: id, ad: ad.lowercased(with: tr).capitalized(with: tr))
+        }
+        return sonuc.isEmpty ? nil : sonuc
     }
 
     /// Pakete gömülü 30 günlük Diyanet cetveli.

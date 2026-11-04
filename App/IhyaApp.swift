@@ -64,6 +64,8 @@ enum ArkaPlan {
         v.ayarla(d.ayarlar)
         await v.gerekirseYenile()
         await Bildirim.vakitleriKur(v, d.ayarlar)
+        await Bildirim.gunlukleriKur(d, v)
+        Yedek.gunlukYedek(d, isaretle: false)
         planla()
     }
 
@@ -119,7 +121,7 @@ enum TakipBolumu: String, CaseIterable, Hashable {
 }
 
 enum Rota: Hashable {
-    case vakitler, ayarlar, konular, kible, gununHadisi, hadisler, sozler, dualar, duaDefteri, esma, diniGunler, kitaplar, favoriler
+    case vakitler, ayarlar, konular, ilce, kible, gununHadisi, hadisler, sozler, dualar, duaDefteri, esma, diniGunler, kitaplar, favoriler
     case kitap(UUID)
     case istatistik, koleksiyon, sesler, zikir, zikirIstatistik
     /// Kur'an okuyucu: sûre, âyet.
@@ -128,7 +130,7 @@ enum Rota: Hashable {
     var sahne: Sahne {
         switch self {
         case .vakitler: .vakit
-        case .ayarlar, .konular: .ayarlar
+        case .ayarlar, .konular, .ilce: .ayarlar
         case .gununHadisi, .hadisler, .sozler, .favoriler: .hadis
         case .kible, .dualar, .duaDefteri, .esma, .diniGunler, .kitaplar: .kitaplik
         case .kitap: .okuma
@@ -150,6 +152,9 @@ final class Yonlendirici {
     var esmaAc: Int?
     /// Kur'an aramasının örnek sözcüğü (ekran görüntüsü için).
     var kuranAramaOrnegi: String?
+    /// Seri sayfası ve okuma ayarları doğrudan açılsın (ekran görüntüsü için).
+    var seriAc = false
+    var okumaAyarAc = false
     var bugunYol: [Rota] = []
     var kuranYol: [Rota] = []
     var takipYol: [Rota] = []
@@ -230,7 +235,7 @@ final class Yonlendirici {
         case "kitaplik": sekme = .kitaplik
         case "hadis": sekme = .kitaplik; kitaplikYol = [.gununHadisi]
         case "hadisler": sekme = .kitaplik; kitaplikYol = [.hadisler]
-        case "hadis-koyu": depo.degistir { $0.ayarlar.okumaKoyu = true }; sekme = .kitaplik; kitaplikYol = [.hadisler]
+        case "hadis-koyu": depo.degistir { $0.ayarlar.okumaTemasi = .sepya }; sekme = .kitaplik; kitaplikYol = [.hadisler]
         case "dualar": sekme = .kitaplik; kitaplikYol = [.dualar]
         case "dua-defteri": sekme = .kitaplik; kitaplikYol = [.dualar, .duaDefteri]
         case "esma": sekme = .kitaplik; kitaplikYol = [.esma]
@@ -243,6 +248,9 @@ final class Yonlendirici {
         case "zikir-istatistik": sekme = .kitaplik; kitaplikYol = [.zikir, .zikirIstatistik]
         case "vakitler": bugunYol = [.vakitler]
         case "ayarlar": bugunYol = [.ayarlar]
+        case "ilce": bugunYol = [.ayarlar, .ilce]
+        case "seri": sekme = .bugun; seriAc = true
+        case "okuma-ayar": sekme = .kitaplik; kitaplikYol = [.hadisler]; okumaAyarAc = true
         case let t where t.hasPrefix("tema-"):
             // "tema-gece" ya da "tema-gece-kitaplik": temayı seçer, varsa ekranı açar.
             let p = t.split(separator: "-").map(String.init)
@@ -294,6 +302,7 @@ struct KokGorunum: View {
             case .background:
                 odak.arkaPlanaGecti()
                 sesSeciminiSakla()
+                Yedek.gunlukYedek(depo)
                 depo.hemenKaydet()
                 ArkaPlan.planla()
             case .active:
@@ -305,7 +314,13 @@ struct KokGorunum: View {
         }
         .onChange(of: depo.ayarlar) { _, yeni in
             vakit.ayarla(yeni)
-            Task { await Bildirim.vakitleriKur(vakit, yeni) }
+            Task {
+                await Bildirim.vakitleriKur(vakit, yeni)
+                await Bildirim.gunlukleriKur(depo, vakit)
+            }
+        }
+        .onChange(of: depo.kayit.oturumlar.count) { _, _ in
+            Task { await Bildirim.gunlukleriKur(depo, vakit) }
         }
         .onChange(of: Set(ses.katman.keys)) { _, _ in sesSeciminiSakla() }
         .onChange(of: depo.ayarlar.kuranDinlerkenKis, initial: true) { _, yeni in ses.kuranKis = yeni }
@@ -361,6 +376,8 @@ struct KokGorunum: View {
         await Bildirim.izinIste()
         await vakit.gerekirseYenile()
         await Bildirim.vakitleriKur(vakit, depo.ayarlar)
+        await Bildirim.gunlukleriKur(depo, vakit)
+        Yedek.gunlukYedek(depo)
         ArkaPlan.planla()
     }
 }
@@ -398,6 +415,7 @@ struct RotaGorunumu: View {
         case .vakitler: VakitlerEkrani()
         case .ayarlar: AyarlarEkrani()
         case .konular: KonularEkrani()
+        case .ilce: IlceSecici()
         case .kible: KibleEkrani()
         case .gununHadisi: HadislerEkrani(bolum: .gunun)
         case .hadisler: HadislerEkrani(bolum: .hadisler)

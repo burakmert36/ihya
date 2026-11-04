@@ -62,6 +62,7 @@ struct DonemSecici: View {
 
 struct BahceEkrani: View {
     @Environment(Depo.self) private var depo
+    @Environment(VakitServisi.self) private var vakit
     @Environment(OdakMotoru.self) private var odak
     @Environment(Yonlendirici.self) private var yon
     @Environment(\.palet) private var palet
@@ -77,7 +78,7 @@ struct BahceEkrani: View {
                 TakipSecici()
                 SahneBasligi(ust: Tarihler.ustSatir(), baslik: "Bahçem") {
                     HStack(spacing: 8) {
-                        hap(simge: "flame.fill", renk: Color(hex: "#22B35A"), metin: "\(depo.seri)", etiket: "Seri \(depo.seri) gün")
+                        hap(simge: "flame.fill", renk: Color(hex: "#22B35A"), metin: "\(depo.seri(vakit))", etiket: "Seri \(depo.seri(vakit)) gün")
                         hap(simge: "leaf.fill", renk: Color(hex: "#2E9BEA"), metin: "\(depo.kayit.tohum)", etiket: "\(depo.kayit.tohum) tohum")
                     }
                     .padding(.bottom, 4)
@@ -264,6 +265,7 @@ struct AkisDuzeni: Layout {
 /// İhya temasında Bahçe'nin göğü: bulutlar, tepeler ve çim.
 struct BahceGokyuzu: View {
     @Environment(Depo.self) private var depo
+    @Environment(\.accessibilityReduceMotion) private var hareketiAzalt
     @State private var kay = false
 
     var body: some View {
@@ -294,7 +296,7 @@ struct BahceGokyuzu: View {
             .ignoresSafeArea()
             .allowsHitTesting(false)
             .accessibilityHidden(true)
-            .onAppear { withAnimation(.easeInOut(duration: 16).repeatForever(autoreverses: true)) { kay = true } }
+            .onAppear { if !hareketiAzalt { withAnimation(.easeInOut(duration: 16).repeatForever(autoreverses: true)) { kay = true } } }
         }
     }
 
@@ -447,6 +449,7 @@ struct ElmasZemin: View {
 
 struct IstatistikEkrani: View {
     @Environment(Depo.self) private var depo
+    @Environment(VakitServisi.self) private var vakit
     @State private var donem: Donem = .hafta
     @State private var kaydir = 0
 
@@ -506,7 +509,7 @@ struct IstatistikEkrani: View {
                 VStack(alignment: .leading, spacing: 12) {
                     BolumBasligi(metin: "Seriler", simge: "flame")
                     HStack {
-                        Ozet(baslik: "Şimdiki seri", deger: "\(depo.seri) gün", simge: "calendar")
+                        Ozet(baslik: "Şimdiki seri", deger: "\(depo.seri(vakit)) gün", simge: "calendar")
                         Ozet(baslik: "Toplam bitki", deger: "\(depo.kayit.oturumlar.filter { $0.durum == .tamam }.count)", simge: "tree")
                     }
                 }

@@ -175,48 +175,44 @@ struct EsmaEzberKarti: View {
     }
 }
 
-/// Okuma alanı: punto düğmeleri ve okuma kartlarının açık/koyu kipi.
+/// Okuma alanı: "Aa" ile okuma ayarları (tema, boyut, satır arası, sıcak ışık), sıcak ışık katmanı, ekranın açık kalması.
 struct OkumaAlani: ViewModifier {
     @Environment(Depo.self) private var depo
+    @Environment(Yonlendirici.self) private var yon
+    @State private var ayarlar = false
 
     func body(content: Content) -> some View {
-        let koyu = depo.ayarlar.okumaKoyu ?? false
         content
+            .sicakIsik()
+            .uyanikTut()
             .toolbar {
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Button { puntoDegistir(-1) } label: { Image(systemName: "textformat.size.smaller") }
-                        .accessibilityLabel("Yazıyı küçült")
-                        .disabled(depo.ayarlar.okumaPunto <= 14)
-                    Button { puntoDegistir(1) } label: { Image(systemName: "textformat.size.larger") }
-                        .accessibilityLabel("Yazıyı büyüt")
-                        .disabled(depo.ayarlar.okumaPunto >= 30)
-                    Button {
-                        depo.degistir { $0.ayarlar.okumaKoyu = !koyu }
-                        Dokunsal.hafif(0.5)
-                    } label: { Image(systemName: koyu ? "sun.max" : "moon") }
-                        .accessibilityLabel(koyu ? "Açık okuma kartları" : "Koyu okuma kartları")
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { ayarlar = true } label: { Image(systemName: "textformat.size") }
+                        .accessibilityLabel("Okuma ayarları")
                 }
             }
-    }
-
-    private func puntoDegistir(_ y: Double) {
-        depo.degistir { $0.ayarlar.okumaPunto = min(30, max(14, $0.ayarlar.okumaPunto + y)) }
-        Dokunsal.hafif(0.4)
+            .sheet(isPresented: $ayarlar) { OkumaAyarlariSayfasi().presentationDetents([.medium, .large]) }
+            .onAppear { if yon.okumaAyarAc { yon.okumaAyarAc = false; ayarlar = true } }
     }
 }
 
-/// Okuma kartı: açık kipte krem, koyu kipte cam.
+/// Okuma kartı: gündüz temasında krem, sepya/gece/siyah temada kendi zemin ve yazı rengiyle.
 struct OkumaKarti: ViewModifier {
     @Environment(Depo.self) private var depo
+    @Environment(VakitServisi.self) private var vakit
     var ic: CGFloat = 18
 
     @ViewBuilder
     func body(content: Content) -> some View {
-        if depo.ayarlar.okumaKoyu ?? false {
+        let t = depo.okumaTemasi(vakit)
+        if t.koyu {
             content
                 .environment(\.colorScheme, .dark)
-                .foregroundStyle(Color(hex: "#EDE9F7"))
-                .camKart(Color.black, kose: 24, ic: ic)
+                .foregroundStyle(Color(hex: t.yazi))
+                .padding(ic)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(hex: t.zemin), in: .rect(cornerRadius: 24))
+                .overlay { CamKenari(sekil: RoundedRectangle(cornerRadius: 24)) }
         } else {
             content.kremKart(kose: 24, ic: ic)
         }
@@ -356,7 +352,7 @@ struct HadisKarti: View {
             Text(hadis.konu.uppercased(with: Locale(identifier: "tr_TR"))).font(.kalin(10.5)).tracking(1).foregroundStyle(Color.altin)
             Text(hadis.metin)
                 .font(.okuma(depo.ayarlar.okumaPunto))
-                .lineSpacing(depo.ayarlar.okumaPunto * 0.28)
+                .lineSpacing(depo.ayarlar.satirBoslugu(depo.ayarlar.okumaPunto))
                 .textSelection(.enabled)
             HStack(spacing: 14) {
                 VStack(alignment: .leading, spacing: 2) {
@@ -383,7 +379,7 @@ struct SozKarti: View {
     let soz: Soz
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(soz.soz).font(.okuma(depo.ayarlar.okumaPunto)).lineSpacing(depo.ayarlar.okumaPunto * 0.25).textSelection(.enabled)
+            Text(soz.soz).font(.okuma(depo.ayarlar.okumaPunto)).lineSpacing(depo.ayarlar.satirBoslugu(depo.ayarlar.okumaPunto)).textSelection(.enabled)
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(soz.kisi).font(.footnote.weight(.semibold))
@@ -474,7 +470,7 @@ struct KayitliAyetKarti: View {
                     .multilineTextAlignment(.trailing)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                 let meal = v.meal.isEmpty ? (kuran.ayetleri(yer.sure).dropFirst(yer.ayet).first { !$0.meal.isEmpty }?.meal ?? "") : v.meal
-                Text(meal).font(.okuma(p)).lineSpacing(p * 0.25)
+                Text(meal).font(.okuma(p)).lineSpacing(depo.ayarlar.satirBoslugu(p))
             } else {
                 ProgressView().frame(maxWidth: .infinity)
             }

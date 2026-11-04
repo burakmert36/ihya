@@ -153,11 +153,12 @@ struct OkumaEkrani: View {
     @Environment(Depo.self) private var depo
     @Environment(Yonlendirici.self) private var yon
     @Environment(OdakMotoru.self) private var odak
-    @Environment(\.colorScheme) private var sistem
+    @Environment(VakitServisi.self) private var vakit
+    @State private var ayarlar = false
 
     var body: some View {
         if let k = depo.kayit.kitaplar.first(where: { $0.id == kitapID }) {
-            let koyu = depo.ayarlar.okumaKoyu ?? (sistem == .dark)
+            let tema = depo.okumaTemasi(vakit)
             PDFGorunumu(url: KitapDeposu.url(k), baslangic: k.sayfa) { yeni in
                 depo.degistir { kayit in
                     if let i = kayit.kitaplar.firstIndex(where: { $0.id == kitapID }) {
@@ -166,8 +167,10 @@ struct OkumaEkrani: View {
                     }
                 }
             }
-            .koyuOkuma(koyu)
+            .pdfTemasi(tema)
+            .sicakIsik()
             .ignoresSafeArea(edges: .bottom)
+            .sheet(isPresented: $ayarlar) { OkumaAyarlariSayfasi().presentationDetents([.medium, .large]) }
             .navigationTitle(k.ad)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(.hidden, for: .tabBar)
@@ -180,10 +183,8 @@ struct OkumaEkrani: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        depo.degistir { $0.ayarlar.okumaKoyu = !koyu }
-                    } label: { Image(systemName: koyu ? "sun.max" : "moon") }
-                        .accessibilityLabel(koyu ? "Açık okuma" : "Koyu okuma")
+                    Button { ayarlar = true } label: { Image(systemName: "textformat.size") }
+                        .accessibilityLabel("Okuma ayarları")
                 }
                 ToolbarItem(placement: .bottomBar) {
                     Text("\(k.sayfa + 1) / \(max(k.toplam, 1))").font(.footnote).monospacedDigit().foregroundStyle(.secondary)
@@ -196,8 +197,15 @@ struct OkumaEkrani: View {
 }
 
 private extension View {
-    @ViewBuilder func koyuOkuma(_ etkin: Bool) -> some View {
-        if etkin { self.colorInvert().hueRotation(.degrees(180)) } else { self }
+    /// PDF sayfaları beyaz zeminlidir: gece/siyah temada renkler ters çevrilir (resimler doğal kalsın diye ton 180° döner),
+    /// sepyada ters çevrilip sıcak tona boyanır.
+    @ViewBuilder func pdfTemasi(_ t: OkumaTemasi) -> some View {
+        switch t {
+        case .gece: self.colorInvert().hueRotation(.degrees(180)).brightness(0.04)
+        case .siyah: self.colorInvert().hueRotation(.degrees(180))
+        case .sepya: self.colorInvert().hueRotation(.degrees(180)).colorMultiply(Color(hex: "#F0DDB8"))
+        default: self
+        }
     }
 }
 

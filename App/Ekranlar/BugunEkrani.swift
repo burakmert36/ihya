@@ -11,18 +11,7 @@ struct BugunEkrani: View {
             VStack(spacing: 12) {
                 SahneBasligi(ust: "\(Tarihler.ustSatir()) · \(BugunEkrani.hicriKisa(vakit.hicri(.now)))", baslik: "İhya") {
                     HStack(spacing: 8) {
-                        let n = depo.seri
-                        if n > 0 {
-                            HStack(spacing: 5) {
-                                FilizSimgesi().frame(width: 14, height: 14)
-                                Text("\(n) gün seri").font(.kalin(13))
-                            }
-                            .foregroundStyle(palet.vurgu)
-                            .padding(.horizontal, 12)
-                            .frame(height: 32)
-                            .camYuzey(palet.cam(), in: .capsule)
-                            .accessibilityElement(children: .combine)
-                        }
+                        SeriHapi()
                         NavigationLink(value: Rota.ayarlar) {
                             Image(systemName: "gearshape").font(.system(size: 15, weight: .semibold)).frame(width: 32, height: 32)
                         }

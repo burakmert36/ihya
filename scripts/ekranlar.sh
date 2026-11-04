@@ -16,6 +16,7 @@ xcrun simctl ui "$UDID" appearance light || true
 # ısınma: ilk açılış yavaş (Intel simülatör); ekran görüntüsünden önce bir kez aç-kapat
 xcrun simctl launch "$UDID" "$APPID" -ekranGoruntusu 1 > /dev/null; sleep 25
 cek bugun 01-bugun 16
+cek seri 01b-seri 18
 cek kuran 02-kuran 30
 cek kuran-oku 03-kuran-oku 18
 cek kuran-dinle 03b-kuran-dinle 25
@@ -39,6 +40,8 @@ cek esma-9 17b-esma-dua
 cek kible 18-kible
 cek zikir 19-zikir
 cek vakitler 20-vakitler
+cek ilce 21b-ilce 25
+cek okuma-ayar 21c-okuma-ayar 18
 cek ayarlar 21-ayarlar
 cek tema-gece 22-tema-gece 15
 cek tema-fildisi-kitaplik 23-tema-fildisi 15

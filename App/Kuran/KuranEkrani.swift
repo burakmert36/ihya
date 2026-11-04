@@ -377,7 +377,7 @@ struct KuranOkuyucu: View {
             }
             if a.kuranMeal, !v.meal.isEmpty {
                 (Text(v.mealBas < v.no ? "\(v.mealBas)-\(v.no). " : "\(v.no). ").font(.kalin(13)).foregroundStyle(palet.vurgu) + Text(v.meal).font(.okuma(a.okumaPunto - 1)))
-                    .lineSpacing(3)
+                    .lineSpacing(a.satirBoslugu(a.okumaPunto - 1))
             }
         }
         .camKart(okunuyor ? palet.vurgu : nil, kose: 22, ic: 14)

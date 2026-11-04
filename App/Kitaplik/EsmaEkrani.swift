@@ -66,6 +66,9 @@ struct EsmaKaresi: View {
 /// İsmin detayı: anlamı, açıklaması ve o isimle yapılan dualar (Buhârî, Kur'an duaları, âyetler).
 struct EsmaDetay: View {
     @Environment(\.palet) private var palet
+    @Environment(Depo.self) private var depo
+    @Environment(Yonlendirici.self) private var yon
+    @Environment(\.dismiss) private var kapat
     let baslangic: EsmaIsmi
     @State private var sira: Int
 
@@ -97,6 +100,12 @@ struct EsmaDetay: View {
                     Text(e.aciklama).font(.okuma(17)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 8)
+                Button { zikret(e) } label: {
+                    Label("“\(EsmaDetay.nida(e.ad))” diye zikret", systemImage: "circle.dashed")
+                        .font(.kalin(14)).frame(maxWidth: .infinity, minHeight: 30)
+                }
+                .buttonStyle(.glass)
+                .accessibilityHint("Tesbihi bu isimle açar")
                 if !dualar.isEmpty {
                     BolumBasligi(metin: "Bu isimle dua", simge: "hands.and.sparkles")
                         .padding(.top, 10)
@@ -123,6 +132,41 @@ struct EsmaDetay: View {
             .buttonStyle(.glass)
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
+        }
+    }
+}
+
+extension EsmaDetay {
+    /// "el-Latîf" → "Yâ Latîf"; tamlamalı isimler çağrı hâlinde.
+    static func nida(_ ad: String) -> String {
+        switch ad {
+        case "Allah": return "Yâ Allah"
+        case "Mâlikü'l-mülk": return "Yâ Mâlike'l-mülk"
+        case "Zü'l-celâli ve'l-ikrâm": return "Yâ Ze'l-celâli ve'l-ikrâm"
+        default:
+            guard let i = ad.firstIndex(of: "-"), ad.distance(from: ad.startIndex, to: i) <= 2 else { return "Yâ " + ad }
+            let govde = ad[ad.index(after: i)...]
+            return "Yâ " + govde.prefix(1).uppercased(with: Locale(identifier: "tr_TR")) + govde.dropFirst()
+        }
+    }
+
+    /// Tesbihi bu isimle açar; sayaçta başka bir zikir varsa önce kaydedilir.
+    func zikret(_ e: EsmaIsmi) {
+        let v = UserDefaults.standard
+        let eskiSayi = v.integer(forKey: "zikir.sayi")
+        if eskiSayi > 0 {
+            let tesbihat = v.object(forKey: "zikir.tesbihat") as? Bool ?? true
+            let eskiAd = tesbihat ? "Namaz tesbihatı" : (v.string(forKey: "zikir.baslik") ?? "")
+            depo.degistir { $0.zikirler.append(ZikirKaydi(baslik: eskiAd, sayi: eskiSayi, tarih: .now)) }
+        }
+        v.set(0, forKey: "zikir.sayi")
+        v.set(0, forKey: "zikir.asama")
+        v.set(false, forKey: "zikir.tesbihat")
+        v.set(EsmaDetay.nida(e.ad), forKey: "zikir.baslik")
+        kapat()
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            yon.ac(.zikir)
         }
     }
 }

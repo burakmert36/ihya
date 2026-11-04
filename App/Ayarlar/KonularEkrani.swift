@@ -62,7 +62,8 @@ struct KonuDuzenle: View {
                                 .frame(width: 34, height: 34)
                                 .overlay { if konu.renk == r { Image(systemName: "checkmark").font(.footnote.weight(.bold)).foregroundStyle(.white) } }
                                 .onTapGesture { konu.renk = r }
-                                .accessibilityAddTraits(konu.renk == r ? .isSelected : [])
+                                .accessibilityLabel("Renk \((KonularEkrani.renkler.firstIndex(of: r) ?? 0) + 1)")
+                                .accessibilityAddTraits(konu.renk == r ? [.isSelected, .isButton] : .isButton)
                         }
                     }
                     .padding(.vertical, 6)

@@ -192,6 +192,7 @@ struct Ayarlar: Codable, Equatable {
     var kuranPunto: Double = 28
     /// Diyanet ilçe numarası (ezanvakti.emushaf.net); 9335 Bursa merkez.
     var ilceKodu: Int = 9335
+    var ilceAdi: String = "Bursa"
     var tilavetHafiz: String = Hafiz.tumu[0].id
     var tilavetHiz: Double = 1
     var tilavetTakip: Bool = true
@@ -212,13 +213,15 @@ struct Ayarlar: Codable, Equatable {
     enum CodingKeys: String, CodingKey {
         case konumKipi, enlem, boylam, konumAdi, vakitBildirim, onceDakika, ezan, bildirimTonu, katiMod
         case sesOdakta, sesSondaAzalt, tesbihTitresim, tesbihSes, tesbihSesDuzeyi, okumaPunto, okumaKoyu, tema, gunlukHedef, ezandaSustur, kuranDinlerkenKis
-        case kuranMeal, kuranOkunus, kuranPunto, ilceKodu, tilavetHafiz, tilavetHiz, tilavetTakip, tilavetDevam, sesKilitEkrani
+        case kuranMeal, kuranOkunus, kuranPunto, ilceKodu, ilceAdi, tilavetHafiz, tilavetHiz, tilavetTakip, tilavetDevam, sesKilitEkrani
         case okumaTemasi, sicakIsik, satirAraligi, ekranAcik, seriHatirlatma, seriHatirlatmaDk, cumaOzeti
     }
 
     /// Okuma teması: "kendiliğinden" akşamdan imsaka gece, öbür saatlerde gündüz.
     func etkinOkumaTemasi(gece: Bool) -> OkumaTemasi { okumaTemasi == .otomatik ? (gece ? .gece : .gunduz) : okumaTemasi }
     var satirCarpani: Double { [1.45, 1.7, 1.95][max(0, min(2, satirAraligi))] }
+    /// SwiftUI satır boşluğu (yazının kendi ~1,2 satır yüksekliğine eklenen).
+    func satirBoslugu(_ punto: Double) -> Double { punto * max(0.1, satirCarpani - 1.2) }
 }
 
 extension Ayarlar {
@@ -237,7 +240,7 @@ extension Ayarlar {
         tema = v(.tema, tema); gunlukHedef = v(.gunlukHedef, gunlukHedef)
         ezandaSustur = v(.ezandaSustur, ezandaSustur); kuranDinlerkenKis = v(.kuranDinlerkenKis, kuranDinlerkenKis)
         kuranMeal = v(.kuranMeal, kuranMeal); kuranOkunus = v(.kuranOkunus, kuranOkunus); kuranPunto = v(.kuranPunto, kuranPunto)
-        ilceKodu = v(.ilceKodu, ilceKodu); tilavetHafiz = v(.tilavetHafiz, tilavetHafiz); tilavetHiz = v(.tilavetHiz, tilavetHiz)
+        ilceKodu = v(.ilceKodu, ilceKodu); ilceAdi = v(.ilceAdi, ilceAdi); tilavetHafiz = v(.tilavetHafiz, tilavetHafiz); tilavetHiz = v(.tilavetHiz, tilavetHiz)
         tilavetTakip = v(.tilavetTakip, tilavetTakip); tilavetDevam = v(.tilavetDevam, tilavetDevam); sesKilitEkrani = v(.sesKilitEkrani, sesKilitEkrani)
         // Eski "koyu okuma" anahtarı yeni temaya taşınır.
         okumaTemasi = v(.okumaTemasi, okumaKoyu.map { $0 ? OkumaTemasi.gece : .gunduz } ?? okumaTemasi)

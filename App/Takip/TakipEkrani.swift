@@ -136,6 +136,7 @@ struct NamazTakipEkrani: View {
                     sayac("Son 30 gün", "\(aylik)", "/ 150 vakit")
                     sayac("Tam gün serisi", "\(tamGunSerisi())", "gün")
                 }
+                KazaKarti()
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 16)

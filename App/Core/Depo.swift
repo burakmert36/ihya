@@ -89,15 +89,67 @@ final class Depo {
         }
     }
 
-    /// Tamamlanan odakla süren gün serisi; bugün henüz odak yoksa dünden sayar.
-    var seri: Int {
+    // MARK: Seri
+
+    @ObservationIgnored private var seriOnbellek: (anahtar: String, durum: SeriDurumu)?
+
+    /// Dikim serisi: gün sınırı imsak; rahmet yağmuru ve 48 saatlik telafi kurallarıyla (Seri.hesapla).
+    func seriDurumu(_ v: VakitServisi) -> SeriDurumu {
+        let tamam = kayit.oturumlar.filter { $0.durum == .tamam }
+        let bugun = v.imsakGunu(.now)
+        let anahtar = "\(tamam.count)-\(tamam.last?.baslangic.timeIntervalSince1970 ?? 0)-\(bugun.timeIntervalSince1970)-\(Int(Date().timeIntervalSince1970 / 3600))"
+        if let o = seriOnbellek, o.anahtar == anahtar { return o.durum }
+        let d = Seri.hesapla(dikimler: tamam.map(\.baslangic), simdi: .now, gun: { v.imsakGunu($0) }, imsak: { v.imsak($0) })
+        seriOnbellek = (anahtar, d)
+        return d
+    }
+
+    func seri(_ v: VakitServisi) -> Int { seriDurumu(v).seri }
+
+    // MARK: Kaza
+
+    static let kazaVakitleri: [(anahtar: String, ad: String, vakit: Int?)] = [
+        ("sabah", "Sabah", 0), ("ogle", "Öğle", 2), ("ikindi", "İkindi", 3), ("aksam", "Akşam", 4), ("yatsi", "Yatsı", 5), ("vitir", "Vitir", nil),
+    ]
+
+    func kazaDegistir(_ anahtar: String, _ fark: Int) {
+        degistir { $0.kaza[anahtar] = max(0, ($0.kaza[anahtar] ?? 0) + fark) }
+    }
+
+    /// Son üç günde kısmen işaretlenmiş (hiç işaretlenmemiş günler takip edilmemiş sayılır) günlerin eksik vakitleri.
+    func kazaOnerisi() -> [(gun: String, vakitler: [Int])] {
         let c = Calendar.current
-        let gunler = Set(kayit.oturumlar.filter { $0.durum == .tamam }.map { c.startOfDay(for: $0.baslangic) })
-        var g = c.startOfDay(for: .now)
-        if !gunler.contains(g) { g = c.date(byAdding: .day, value: -1, to: g)! }
-        var n = 0
-        while gunler.contains(g) { n += 1; g = c.date(byAdding: .day, value: -1, to: g)! }
-        return n
+        let bugun = c.startOfDay(for: .now)
+        return (1...3).reversed().compactMap { i -> (gun: String, vakitler: [Int])? in
+            let g = c.date(byAdding: .day, value: -i, to: bugun)!
+            let a = Depo.gunAnahtari(g)
+            guard a > kayit.kazaBakilan, let isaret = kayit.namaz[a], !isaret.isEmpty else { return nil }
+            let eksik = VakitAdi.namazlar.map(\.0).filter { !isaret.contains($0) }
+            return eksik.isEmpty ? nil : (a, eksik)
+        }
+    }
+
+    func kazaOnerisiniUygula(_ ekle: Bool) {
+        let oneri = kazaOnerisi()
+        degistir { k in
+            if ekle {
+                for o in oneri {
+                    for v in o.vakitler {
+                        if let anahtar = Depo.kazaVakitleri.first(where: { $0.vakit == v })?.anahtar { k.kaza[anahtar, default: 0] += 1 }
+                    }
+                }
+            }
+            k.kazaBakilan = Depo.gunAnahtari(Calendar.current.date(byAdding: .day, value: -1, to: .now)!)
+        }
+    }
+
+    // MARK: Yedek
+
+    /// Geri yüklemede bütün veriyi değiştirir.
+    func tumunuDegistir(_ yeni: Kayit) {
+        kayit = yeni
+        seriOnbellek = nil
+        kaydet()
     }
 
     /// Bugün tamamlanan oturumlar.
@@ -151,6 +203,9 @@ enum Ornek {
         k.favoriler = [Favori(tur: .ayet, anahtar: "2:255"), Favori(tur: .hadis, anahtar: "1"), Favori(tur: .dua, anahtar: "istihare")]
         k.sonKatman = ["yagmur": 0.7, "kuslar": 0.4]
         k.kuranSon = [36, 12]
+        k.kaza = ["sabah": 14, "ogle": 3, "ikindi": 2, "aksam": 0, "yatsi": 5, "vitir": 5]
+        k.kutlananSeri = 365
+        k.sonYedek = Date().addingTimeInterval(-3 * 3600)
         k.ezber = Array(1...12)
         k.karisimlar = [Karisim(ad: "Yağmurlu kütüphane", katman: ["yagmur_cam": 0.6, "kutuphane": 0.5])]
         return k

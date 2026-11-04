@@ -58,6 +58,7 @@ struct DualarEkrani: View {
 
 struct DuaKarti: View {
     @Environment(Depo.self) private var depo
+    @Environment(VakitServisi.self) private var vakit
     let dua: Dua
     var body: some View {
         let p = depo.ayarlar.okumaPunto
@@ -75,9 +76,9 @@ struct DuaKarti: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .textSelection(.enabled)
             }
-            Text(dua.okunus).font(.system(size: p - 1, design: .serif)).italic().foregroundStyle(Color(hex: depo.ayarlar.okumaKoyu == true ? "#9CF5BE" : "#0E6A33"))
+            Text(dua.okunus).font(.system(size: p - 1, design: .serif)).italic().foregroundStyle(Color(hex: depo.okumaTemasi(vakit).koyu ? "#9CF5BE" : "#0E6A33"))
                 .textSelection(.enabled)
-            Text(dua.anlam).font(.okuma(p)).lineSpacing(p * 0.25).textSelection(.enabled)
+            Text(dua.anlam).font(.okuma(p)).lineSpacing(depo.ayarlar.satirBoslugu(p)).textSelection(.enabled)
             if let n = dua.not, !n.isEmpty {
                 Text(n).font(.footnote).foregroundStyle(.secondary)
             }
@@ -151,6 +152,7 @@ struct DuaDefteriEkrani: View {
 
 struct DefterKarti: View {
     @Environment(Depo.self) private var depo
+    @Environment(VakitServisi.self) private var vakit
     let oge: DefterOgesi
     let sayac: Binding<Int>?
 
@@ -179,7 +181,7 @@ struct DefterKarti: View {
                         }
                         .padding(.horizontal, 14).padding(.vertical, 9)
                         .background(Capsule().fill(sayac.wrappedValue == t ? Color(hex: "#1FB25A") : Color(hex: "#1FB25A").opacity(0.15)))
-                        .foregroundStyle(sayac.wrappedValue == t ? Color.white : Color(hex: depo.ayarlar.okumaKoyu == true ? "#9CF5BE" : "#0E6A33"))
+                        .foregroundStyle(sayac.wrappedValue == t ? Color.white : Color(hex: depo.okumaTemasi(vakit).koyu ? "#9CF5BE" : "#0E6A33"))
                         .contentShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -189,7 +191,7 @@ struct DefterKarti: View {
                     Text("\(t) kere").font(.caption).foregroundStyle(.secondary)
                 }
             }
-            if let o = oge.okunus { Text(o).font(.okuma(p)).italic().lineSpacing(p * 0.25).textSelection(.enabled) }
+            if let o = oge.okunus { Text(o).font(.okuma(p)).italic().lineSpacing(depo.ayarlar.satirBoslugu(p)).textSelection(.enabled) }
             if let a = oge.anlam { Text(a).font(.system(size: p - 2)).foregroundStyle(.secondary).lineSpacing(p * 0.2).textSelection(.enabled) }
             if let n = oge.not { Text(n).font(.footnote).foregroundStyle(.secondary).padding(.top, 2) }
         }

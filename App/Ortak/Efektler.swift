@@ -13,8 +13,13 @@ struct KonfetiYagmuru: View {
 
     @State private var parcalar: [Parca] = (0..<70).map { _ in Parca.rastgele() }
     @State private var baslangic = Date()
+    @Environment(\.accessibilityReduceMotion) private var hareketiAzalt
 
     var body: some View {
+        if !hareketiAzalt { yagmur }
+    }
+
+    private var yagmur: some View {
         TimelineView(.animation) { an in
             Canvas { ctx, boyut in
                 let t0 = an.date.timeIntervalSince(baslangic)
@@ -42,6 +47,7 @@ struct KilitKutlamasi: View {
     let kapat: () -> Void
     @State private var asama = 0
     @State private var aci = 0.0
+    @Environment(\.accessibilityReduceMotion) private var hareketiAzalt
 
     var body: some View {
         ZStack {
@@ -87,7 +93,7 @@ struct KilitKutlamasi: View {
             Efekt.cal("efekt_kilit", duzey: 0.8)
             Dokunsal.kutlama()
             withAnimation(.spring(response: 0.55, dampingFraction: 0.5)) { asama = 1 }
-            withAnimation(.linear(duration: 14).repeatForever(autoreverses: false)) { aci = 360 }
+            if !hareketiAzalt { withAnimation(.linear(duration: 14).repeatForever(autoreverses: false)) { aci = 360 } }
             try? await Task.sleep(nanoseconds: 450_000_000)
             withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) { asama = 2 }
         }

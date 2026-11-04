@@ -78,6 +78,80 @@ enum Bildirim {
         return "5 saniye sonra gelecek. Telefon sessiz kipteyse iOS bildirim sesini çalmaz; zil anahtarını aç."
     }
 
+    // MARK: Seri hatırlatması ve Cuma özeti
+
+    /// Vakit dışı bildirimler (günde en çok iki): bugün dikim yoksa akşamüstü seri hatırlatması, Cuma sabahı haftanın özeti.
+    /// Namaz vakitlerinin 20 dakika yakınına düşmez; suçlayıcı dil kullanmaz.
+    static func gunlukleriKur(_ depo: Depo, _ vakit: VakitServisi) async {
+        guard !EkranGoruntusu.etkin else { return }
+        let bekleyen = await merkez.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix("seri-") || $0.hasPrefix("cuma-") }
+        merkez.removePendingNotificationRequests(withIdentifiers: bekleyen)
+        let ayar = await merkez.notificationSettings()
+        guard ayar.authorizationStatus == .authorized || ayar.authorizationStatus == .provisional else { return }
+        let a = depo.ayarlar
+        let c = Calendar.current
+        let simdi = Date()
+        if a.seriHatirlatma {
+            let durum = depo.seriDurumu(vakit)
+            for g in 0..<3 {
+                let gun = c.startOfDay(for: c.date(byAdding: .day, value: g, to: simdi)!)
+                if g == 0 && durum.bugunDikildi { continue }
+                let an = vakittenKacir(gun.addingTimeInterval(Double(a.seriHatirlatmaDk) * 60), vakit)
+                guard an > simdi else { continue }
+                let icerik = UNMutableNotificationContent()
+                if g == 0, let t = durum.telafi {
+                    icerik.title = "Serini kurtarabilirsin"
+                    icerik.body = "\(t.kalan) fidan daha dikersen \(t.onceki) günlük serin sürer."
+                } else if g == 0, durum.seri > 0 {
+                    icerik.title = "Bugünün fidanı seni bekliyor"
+                    icerik.body = "\(durum.seri) günlük serin sürüyor. Kısa bir odakla bugünü de yeşert."
+                } else {
+                    icerik.title = "Bugünün fidanı seni bekliyor"
+                    icerik.body = "Kısa bir odakla bahçene bir fidan ek; Kur'an, kitap ya da zikir olabilir."
+                }
+                icerik.sound = UNNotificationSound(named: UNNotificationSoundName("bildirim_damla.wav"))
+                let b = c.dateComponents([.year, .month, .day, .hour, .minute], from: an)
+                try? await merkez.add(UNNotificationRequest(identifier: "seri-\(Depo.gunAnahtari(gun))", content: icerik,
+                                                            trigger: UNCalendarNotificationTrigger(dateMatching: b, repeats: false)))
+            }
+        }
+        if a.cumaOzeti {
+            var gun = c.startOfDay(for: simdi)
+            while c.component(.weekday, from: gun) != 6 { gun = c.date(byAdding: .day, value: 1, to: gun)! }
+            var an = vakittenKacir(gun.addingTimeInterval(10.5 * 3600), vakit)
+            if an <= simdi { an = vakittenKacir(c.date(byAdding: .day, value: 7, to: gun)!.addingTimeInterval(10.5 * 3600), vakit) }
+            let icerik = UNMutableNotificationContent()
+            icerik.title = "Hayırlı Cumalar"
+            icerik.body = haftaOzeti(depo)
+            icerik.sound = UNNotificationSound(named: UNNotificationSoundName("bildirim_huzur.wav"))
+            let b = c.dateComponents([.year, .month, .day, .hour, .minute], from: an)
+            try? await merkez.add(UNNotificationRequest(identifier: "cuma-\(Depo.gunAnahtari(an))", content: icerik,
+                                                        trigger: UNCalendarNotificationTrigger(dateMatching: b, repeats: false)))
+        }
+    }
+
+    /// Bir vaktin 20 dakika yakınındaysa o vaktin 25 dakika sonrasına kaydırır.
+    static func vakittenKacir(_ an: Date, _ vakit: VakitServisi) -> Date {
+        for v in vakit.vakitler(an) where abs(v.timeIntervalSince(an)) < 20 * 60 { return v.addingTimeInterval(25 * 60) }
+        return an
+    }
+
+    /// Son yedi günün özeti: odak süresi, fidan, namaz, zikir.
+    static func haftaOzeti(_ depo: Depo) -> String {
+        let c = Calendar.current
+        let bas = c.date(byAdding: .day, value: -7, to: .now)!
+        let oturum = depo.kayit.oturumlar.filter { $0.durum == .tamam && $0.baslangic >= bas }
+        let dk = Int(oturum.reduce(0) { $0 + $1.sure })
+        let namaz = (0..<7).reduce(0) { t, i in t + (depo.kayit.namaz[Depo.gunAnahtari(c.date(byAdding: .day, value: -i, to: .now)!)]?.count ?? 0) }
+        let zikir = depo.kayit.zikirler.filter { $0.tarih >= bas }.reduce(0) { $0 + $1.sayi }
+        var p: [String] = []
+        if dk > 0 { p.append(dk >= 60 ? "\(dk / 60) sa \(dk % 60) dk odak" : "\(dk) dk odak") }
+        if !oturum.isEmpty { p.append("\(oturum.count) fidan") }
+        if namaz > 0 { p.append("\(namaz)/35 namaz") }
+        if zikir > 0 { p.append("\(zikir) zikir") }
+        return p.isEmpty ? "Yeni haftaya bir fidanla başlamaya ne dersin?" : "Son yedi gün: " + p.joined(separator: ", ") + "."
+    }
+
     // MARK: Odak bildirimleri
 
     static func odakBitti(_ zaman: Date, bitki: String) {
