@@ -72,6 +72,7 @@ final class KibleYonetici: NSObject, CLLocationManagerDelegate {
 }
 
 struct KibleEkrani: View {
+    @Environment(\.palet) private var palet
     @State private var y = KibleYonetici()
 
     var body: some View {
@@ -81,7 +82,7 @@ struct KibleEkrani: View {
             VStack(spacing: 4) {
                 Text(hizali ? "Kıble yönündesin" : y.pusulaVar ? (fark > 0 ? "Sağa dön" : "Sola dön") : "Kıble açısı")
                     .font(.title2.weight(.semibold))
-                    .foregroundStyle(hizali ? Color.ihya : .primary)
+                    .foregroundStyle(hizali ? palet.vurgu : .primary)
                     .contentTransition(.opacity)
                 Text(y.pusulaVar ? "\(Int(abs(fark).rounded()))° fark" : "Bu cihazda pusula yok; açıyı kuzeyden ölç.")
                     .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
@@ -89,14 +90,14 @@ struct KibleEkrani: View {
             .padding(.top, 12)
             ZStack {
                 Circle()
-                    .fill(hizali ? Color.ihya.opacity(0.14) : Color.secondary.opacity(0.06))
+                    .fill(hizali ? palet.vurgu.opacity(0.14) : Color.secondary.opacity(0.06))
                     .animation(.easeInOut(duration: 0.3), value: hizali)
                 Kadran(kible: y.kibleAcisi)
                     .rotationEffect(.degrees(-y.surekliYon))
                     .animation(.spring(response: 0.45, dampingFraction: 0.8), value: y.surekliYon)
                 Image(systemName: "arrowtriangle.up.fill")
                     .font(.title3)
-                    .foregroundStyle(hizali ? Color.ihya : .primary)
+                    .foregroundStyle(hizali ? palet.vurgu : .primary)
                     .offset(y: -168)
             }
             .frame(width: 320, height: 320)
@@ -137,6 +138,7 @@ enum Aci {
 
 /// Pusula kadranı: yön harfleri, derece çizgileri ve kıble işareti.
 private struct Kadran: View {
+    @Environment(\.palet) private var palet
     let kible: Double
     var body: some View {
         ZStack {
@@ -157,11 +159,11 @@ private struct Kadran: View {
             }
             VStack(spacing: 4) {
                 KabeSimgesi().frame(width: 34, height: 34)
-                Capsule().fill(Color.ihya).frame(width: 3, height: 76)
+                Capsule().fill(palet.vurgu).frame(width: 3, height: 76)
             }
             .offset(y: -58)
             .rotationEffect(.degrees(kible))
-            Circle().fill(Color.ihya).frame(width: 10, height: 10)
+            Circle().fill(palet.vurgu).frame(width: 10, height: 10)
         }
     }
 }

@@ -2,13 +2,14 @@ import SwiftUI
 
 /// Esmâ-ül Hüsnâ: sade bir ızgara, sekiz köşeli yıldız motifi; dokununca anlam ve açıklama.
 struct EsmaEkrani: View {
+    @Environment(\.palet) private var palet
     @State private var secili: EsmaIsmi?
 
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 VStack(spacing: 6) {
-                    Text("الأسماء الحسنى").font(.arapca(34, kalin: true)).foregroundStyle(Color.ihya)
+                    Text("الأسماء الحسنى").font(.arapca(34, kalin: true)).foregroundStyle(palet.vurgu)
                     Text("“En güzel isimler Allah'ındır, O'na o isimlerle dua edin.” (A'râf 7:180)")
                         .font(.footnote).foregroundStyle(.secondary).multilineTextAlignment(.center)
                 }
@@ -23,7 +24,7 @@ struct EsmaEkrani: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
         }
-        .background(MotifDeseni(renk: .ihya, aralik: 56).ignoresSafeArea().opacity(0.6))
+        .background(MotifDeseni(renk: palet.vurgu, aralik: 56).ignoresSafeArea().opacity(0.6))
         .navigationTitle("Esmâ-ül Hüsnâ")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $secili) { e in
@@ -33,12 +34,13 @@ struct EsmaEkrani: View {
 }
 
 struct EsmaKaresi: View {
+    @Environment(\.palet) private var palet
     let isim: EsmaIsmi
     var body: some View {
         VStack(spacing: 6) {
             ZStack {
                 SekizKoseYildiz(ic: 0.7)
-                    .stroke(Color.ihya.opacity(0.35), lineWidth: 1)
+                    .stroke(palet.vurgu.opacity(0.35), lineWidth: 1)
                     .frame(width: 70, height: 70)
                 Text(isim.arapca)
                     .font(.arapca(isim.arapca.count > 9 ? 15 : 21, kalin: true))
@@ -57,6 +59,7 @@ struct EsmaKaresi: View {
 }
 
 struct EsmaDetay: View {
+    @Environment(\.palet) private var palet
     let baslangic: EsmaIsmi
     @State private var sira = 0
 
@@ -65,9 +68,9 @@ struct EsmaDetay: View {
         let e = liste.indices.contains(sira) ? liste[sira] : baslangic
         VStack(spacing: 18) {
             ZStack {
-                SekizKoseYildiz(ic: 0.72).fill(Color.ihya.opacity(0.10)).frame(width: 190, height: 190)
-                SekizKoseYildiz(ic: 0.72).stroke(Color.ihya.opacity(0.5), lineWidth: 1.5).frame(width: 190, height: 190)
-                SekizKoseYildiz(ic: 0.72).stroke(Color.ihya.opacity(0.25), lineWidth: 1).frame(width: 150, height: 150).rotationEffect(.degrees(22.5))
+                SekizKoseYildiz(ic: 0.72).fill(palet.vurgu.opacity(0.10)).frame(width: 190, height: 190)
+                SekizKoseYildiz(ic: 0.72).stroke(palet.vurgu.opacity(0.5), lineWidth: 1.5).frame(width: 190, height: 190)
+                SekizKoseYildiz(ic: 0.72).stroke(palet.vurgu.opacity(0.25), lineWidth: 1).frame(width: 150, height: 150).rotationEffect(.degrees(22.5))
                 Text(e.arapca)
                     .font(.arapca(e.arapca.count > 9 ? 30 : 44, kalin: true))
                     .minimumScaleFactor(0.5)

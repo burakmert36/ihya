@@ -60,6 +60,24 @@ enum Bildirim {
         return UNNotificationSound(named: UNNotificationSoundName(a.bildirimTonu + ".wav"))
     }
 
+    /// Ayarlar'daki "Deneme bildirimi": 5 sn sonra seçili sesle bir bildirim. Kullanıcıya gösterilecek açıklamayı döndürür.
+    static func dene(_ a: Ayarlar) async -> String {
+        if await merkez.notificationSettings().authorizationStatus == .notDetermined { _ = await izinIste() }
+        let ayar = await merkez.notificationSettings()
+        guard ayar.authorizationStatus == .authorized || ayar.authorizationStatus == .provisional else {
+            return "Bildirim izni kapalı. iPhone Ayarlar › Ihya › Bildirimler'den aç."
+        }
+        let icerik = UNMutableNotificationContent()
+        icerik.title = "Deneme bildirimi"
+        icerik.body = "Vakit bildirimleri bu sesle gelecek."
+        icerik.sound = ses(2, a)
+        merkez.removePendingNotificationRequests(withIdentifiers: ["deneme"])
+        try? await merkez.add(UNNotificationRequest(identifier: "deneme", content: icerik, trigger: UNTimeIntervalNotificationTrigger(timeInterval: 5, repeats: false)))
+        if a.ezan == .sessiz { return "5 saniye sonra sessiz bir bildirim gelecek (ses: Sessiz)." }
+        if ayar.soundSetting != .enabled { return "5 saniye sonra gelecek, ama bu uygulamanın bildirim sesi iPhone ayarlarında kapalı." }
+        return "5 saniye sonra gelecek. Telefon sessiz kipteyse iOS bildirim sesini çalmaz; zil anahtarını aç."
+    }
+
     // MARK: Odak bildirimleri
 
     static func odakBitti(_ zaman: Date, bitki: String) {

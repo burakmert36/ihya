@@ -107,6 +107,7 @@ struct KitaplarEkrani: View {
 }
 
 private struct KitapSatiri: View {
+    @Environment(\.palet) private var palet
     let kitap: Kitap
     @State private var kapak: UIImage?
 
@@ -120,7 +121,7 @@ private struct KitapSatiri: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(kitap.ad).font(.body.weight(.medium)).lineLimit(2)
                 if kitap.toplam > 0 {
-                    ProgressView(value: Double(kitap.sayfa + 1), total: Double(kitap.toplam)).tint(Color.ihya)
+                    ProgressView(value: Double(kitap.sayfa + 1), total: Double(kitap.toplam)).tint(palet.vurgu)
                     Text("Sayfa \(kitap.sayfa + 1) / \(kitap.toplam)").font(.caption).foregroundStyle(.secondary)
                 }
             }

@@ -89,6 +89,20 @@ final class Depo {
         }
     }
 
+    /// Tamamlanan odakla süren gün serisi; bugün henüz odak yoksa dünden sayar.
+    var seri: Int {
+        let c = Calendar.current
+        let gunler = Set(kayit.oturumlar.filter { $0.durum == .tamam }.map { c.startOfDay(for: $0.baslangic) })
+        var g = c.startOfDay(for: .now)
+        if !gunler.contains(g) { g = c.date(byAdding: .day, value: -1, to: g)! }
+        var n = 0
+        while gunler.contains(g) { n += 1; g = c.date(byAdding: .day, value: -1, to: g)! }
+        return n
+    }
+
+    /// Bugün tamamlanan oturumlar.
+    var bugunkuOturumlar: [OdakOturumu] { kayit.oturumlar.filter { Calendar.current.isDateInToday($0.baslangic) } }
+
     // MARK: Favoriler
 
     func begenildi(_ tur: Favori.Tur, _ anahtar: String) -> Bool { kayit.favoriler.contains { $0.tur == tur && $0.anahtar == anahtar } }
@@ -155,4 +169,6 @@ struct SistemRastgele {
 enum EkranGoruntusu {
     static let etkin = UserDefaults.standard.bool(forKey: "ekranGoruntusu")
     static let ekran = UserDefaults.standard.string(forKey: "ekran") ?? ""
+    /// CI: ses motorunu sınar, sonucu konsola yazar.
+    static let sesSinamasi = UserDefaults.standard.bool(forKey: "sesSinama")
 }

@@ -33,7 +33,22 @@ struct DevamEdenOdak: Codable, Hashable {
     var konu: UUID?
     var ad: String
     var kati: Bool
-    var bitis: Date { baslangic.addingTimeInterval(Double(plan) * 60) }
+    /// Biten molaların toplamı (sn) ve süren molanın başı.
+    var molaSn: Double? = nil
+    var molaBas: Date? = nil
+    /// Bu oturum tamamlanınca yeniden yeşerecek kuru bitki.
+    var ihya: UUID? = nil
+
+    var molada: Bool { molaBas != nil }
+
+    /// Molalar düşülerek geçen süre (sn).
+    func gecenSn(_ an: Date = .now) -> Double {
+        let mola = (molaSn ?? 0) + (molaBas.map { max(0, an.timeIntervalSince($0)) } ?? 0)
+        return max(0, an.timeIntervalSince(baslangic) - mola)
+    }
+
+    /// Molasız sürseydi biteceği an.
+    var bitis: Date { Date().addingTimeInterval(Double(plan) * 60 - gecenSn()) }
 }
 
 struct ZikirKaydi: Codable, Identifiable, Hashable {
@@ -91,9 +106,17 @@ enum EzanTuru: String, Codable, CaseIterable, Identifiable {
 }
 
 enum Tema: String, Codable, CaseIterable, Identifiable {
-    case sistem, acik, koyu
+    case ihya, gece, fildisi, lacivert, zumrut
     var id: String { rawValue }
-    var ad: String { self == .sistem ? "Sistem" : self == .acik ? "Açık" : "Koyu" }
+    var ad: String {
+        switch self {
+        case .ihya: "İhya"
+        case .gece: "Gece"
+        case .fildisi: "Fildişi"
+        case .lacivert: "Lacivert"
+        case .zumrut: "Zümrüt"
+        }
+    }
 }
 
 enum KonumKipi: String, Codable, CaseIterable, Identifiable {
@@ -120,11 +143,14 @@ struct Ayarlar: Codable, Equatable {
     var okumaPunto: Double = 19
     /// nil: uygulama temasıyla aynı
     var okumaKoyu: Bool? = nil
-    var tema: Tema = .sistem
+    var tema: Tema = .ihya
+    var gunlukHedef: Int = 60
+    var ezandaSustur: Bool = true
+    var kuranDinlerkenKis: Bool = true
 
     enum CodingKeys: String, CodingKey {
         case konumKipi, enlem, boylam, konumAdi, vakitBildirim, onceDakika, ezan, bildirimTonu, katiMod
-        case sesOdakta, sesSondaAzalt, tesbihTitresim, tesbihSes, tesbihSesDuzeyi, okumaPunto, okumaKoyu, tema
+        case sesOdakta, sesSondaAzalt, tesbihTitresim, tesbihSes, tesbihSesDuzeyi, okumaPunto, okumaKoyu, tema, gunlukHedef, ezandaSustur, kuranDinlerkenKis
     }
 }
 
@@ -141,7 +167,8 @@ extension Ayarlar {
         tesbihTitresim = v(.tesbihTitresim, tesbihTitresim); tesbihSes = v(.tesbihSes, tesbihSes)
         tesbihSesDuzeyi = v(.tesbihSesDuzeyi, tesbihSesDuzeyi); okumaPunto = v(.okumaPunto, okumaPunto)
         okumaKoyu = (try? c.decodeIfPresent(Bool.self, forKey: .okumaKoyu)) ?? nil
-        tema = v(.tema, tema)
+        tema = v(.tema, tema); gunlukHedef = v(.gunlukHedef, gunlukHedef)
+        ezandaSustur = v(.ezandaSustur, ezandaSustur); kuranDinlerkenKis = v(.kuranDinlerkenKis, kuranDinlerkenKis)
         let vb = v(.vakitBildirim, vakitBildirim)
         if vb.count == 6 { vakitBildirim = vb }
     }
@@ -164,16 +191,19 @@ struct Kayit: Codable {
     var acik: [String] = BitkiKatalogu.baslangic
     var sonTur: String = "papatya"
     var sonPlan: Int = 25
+    /// Ezberlenen Esmâ-i Hüsnâ numaraları.
+    var ezber: [Int] = []
 
     enum CodingKeys: String, CodingKey {
-        case ayarlar, oturumlar, devam, konular, zikirler, karisimlar, sonKatman, sonMesafe, favoriler, kitaplar, namaz, tohum, acik, sonTur, sonPlan
+        case ayarlar, oturumlar, devam, konular, zikirler, karisimlar, sonKatman, sonMesafe, favoriler, kitaplar, namaz, tohum, acik, sonTur, sonPlan, ezber
     }
 
     static let varsayilanKonular: [Konu] = [
-        Konu(ad: "Ders", renk: "#2F80ED", aciklama: "Okul ve sınav çalışması"),
-        Konu(ad: "İş", renk: "#F2994A"),
-        Konu(ad: "Okuma", renk: "#27AE60", aciklama: "Kitap ve makale"),
-        Konu(ad: "Kur'ân", renk: "#9B51E0", aciklama: "Tilavet ve ezber"),
+        Konu(ad: "Kur'an", renk: "#27AE60", aciklama: "Mushaf açık; tilavet ve ezber"),
+        Konu(ad: "Dinle", renk: "#2F80ED", aciklama: "Sohbet, ders ya da tilavet dinleme"),
+        Konu(ad: "Kitap", renk: "#F2994A", aciklama: "Okuma ve not alma"),
+        Konu(ad: "Zikir", renk: "#9B51E0", aciklama: "Tesbih ve dua"),
+        Konu(ad: "Serbest", renk: "#56657F", aciklama: "Ders, iş ya da başka bir odak"),
     ]
 }
 
@@ -187,6 +217,6 @@ extension Kayit {
         konular = v(.konular, konular); zikirler = v(.zikirler, zikirler); karisimlar = v(.karisimlar, karisimlar)
         sonKatman = v(.sonKatman, sonKatman); sonMesafe = v(.sonMesafe, sonMesafe); favoriler = v(.favoriler, favoriler); kitaplar = v(.kitaplar, kitaplar)
         namaz = v(.namaz, namaz); tohum = v(.tohum, tohum); acik = v(.acik, acik)
-        sonTur = v(.sonTur, sonTur); sonPlan = v(.sonPlan, sonPlan)
+        sonTur = v(.sonTur, sonTur); sonPlan = v(.sonPlan, sonPlan); ezber = v(.ezber, ezber)
     }
 }

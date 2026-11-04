@@ -135,6 +135,13 @@ final class BitkiMotoru: @unchecked Sendable {
         return (try? JSONDecoder().decode([Sekil].self, from: veri)) ?? []
     }
 
+    /// "Gül fidanı · 1 çiçek" gibi kısa özet (bitki.js bitkiOzet).
+    func ozet(tur: String, dk: Double) -> String {
+        kuyruk.sync {
+            baglam?.objectForKeyedSubscript("bitkiOzet")?.call(withArguments: [tur, dk])?.toString() ?? BitkiKatalogu.ad(tur)
+        }
+    }
+
     private func yol(_ d: String) -> CGPath {
         if let y = yollar[d] { return y }
         let y = BitkiMotoru.yolCoz(d)

@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct DiniGunlerEkrani: View {
+    @Environment(\.palet) private var palet
     var body: some View {
         let bugun = Calendar.current.startOfDay(for: .now)
         let gelecek = Icerik.diniGunler.filter { $0.gun >= bugun }
@@ -9,10 +10,10 @@ struct DiniGunlerEkrani: View {
             if let ilk = gelecek.first {
                 Section {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Sıradaki").font(.caption.weight(.semibold)).foregroundStyle(Color.ihya)
+                        Text("Sıradaki").font(.caption.weight(.semibold)).foregroundStyle(palet.vurgu)
                         Text(ilk.ad).font(.title2.weight(.semibold))
                         Text(Tarihler.gunAyGun.string(from: ilk.gun)).font(.subheadline)
-                        Text(kalan(ilk.gun, bugun)).font(.headline).foregroundStyle(Color.ihya)
+                        Text(kalan(ilk.gun, bugun)).font(.headline).foregroundStyle(palet.vurgu)
                         if !ilk.aciklama.isEmpty { Text(ilk.aciklama).font(.footnote).foregroundStyle(.secondary) }
                     }
                     .padding(.vertical, 6)
@@ -51,12 +52,13 @@ struct DiniGunlerEkrani: View {
 }
 
 private struct GunSatiri: View {
+    @Environment(\.palet) private var palet
     let gun: DiniGun
     let kalan: String
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: gun.tur == "bayram" ? "star.fill" : gun.tur == "kandil" ? "moon.stars.fill" : gun.tur == "arefe" ? "sunset.fill" : "calendar")
-                .foregroundStyle(gun.tur == "bayram" ? Color.orange : Color.ihya)
+                .foregroundStyle(gun.tur == "bayram" ? Color.orange : palet.vurgu)
                 .frame(width: 26)
             VStack(alignment: .leading, spacing: 2) {
                 Text(gun.ad).font(.body)

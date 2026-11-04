@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct KoleksiyonEkrani: View {
+    @Environment(\.palet) private var palet
     @Environment(Depo.self) private var depo
     @State private var agac = false
     @State private var secili: BitkiTuru?
@@ -17,9 +18,9 @@ struct KoleksiyonEkrani: View {
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                     Spacer()
-                    Image(systemName: "leaf.circle.fill").font(.largeTitle).foregroundStyle(Color.ihya)
+                    Image(systemName: "leaf.circle.fill").font(.largeTitle).foregroundStyle(palet.vurgu)
                 }
-                .camKart(.ihya)
+                .camKart(palet.vurgu)
                 Picker("Tür", selection: $agac) {
                     Text("Çiçekler").tag(false)
                     Text("Ağaçlar").tag(true)
@@ -57,6 +58,7 @@ struct KoleksiyonEkrani: View {
 }
 
 struct KoleksiyonHucresi: View {
+    @Environment(\.palet) private var palet
     let tur: BitkiTuru
     let acik: Bool
     var body: some View {
@@ -71,7 +73,7 @@ struct KoleksiyonHucresi: View {
             Text(tur.ad).font(.footnote.weight(.medium)).lineLimit(1).minimumScaleFactor(0.8)
             HStack(spacing: 4) {
                 if acik {
-                    Image(systemName: "checkmark.circle.fill").foregroundStyle(Color.ihya)
+                    Image(systemName: "checkmark.circle.fill").foregroundStyle(palet.vurgu)
                     Text("\(tur.dk) dk")
                 } else {
                     Image(systemName: "lock.fill")

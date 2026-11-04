@@ -25,8 +25,10 @@ final class OdakMotoru {
     @ObservationIgnored private var sonKilit: Date?
     @ObservationIgnored private var arkaGorev: UIBackgroundTaskIdentifier = .invalid
     @ObservationIgnored private var kontrolGorevi: Task<Void, Never>?
+    @ObservationIgnored private var molaGorevi: Task<Void, Never>?
 
     static let tolerans: TimeInterval = 10
+    static let molaSiniri: TimeInterval = 5 * 60
 
     init(depo: Depo) {
         self.depo = depo
@@ -47,13 +49,13 @@ final class OdakMotoru {
 
     var gecenDakika: Double {
         guard let d = devam else { return 0 }
-        return min(Double(d.plan), max(0, Date().timeIntervalSince(d.baslangic) / 60))
+        return min(Double(d.plan), d.gecenSn() / 60)
     }
 
     // MARK: Akış
 
-    func baslat(tur: String, plan: Int, konu: UUID?, ad: String) {
-        let d = DevamEdenOdak(baslangic: Date(), plan: plan, tur: tur, tohum: Int.random(in: 1...9999), konu: konu, ad: ad, kati: depo.ayarlar.katiMod)
+    func baslat(tur: String, plan: Int, konu: UUID?, ad: String, ihya: UUID? = nil) {
+        let d = DevamEdenOdak(baslangic: Date(), plan: plan, tur: tur, tohum: Int.random(in: 1...9999), konu: konu, ad: ad, kati: depo.ayarlar.katiMod, ihya: ihya)
         devam = d
         hal = .calisiyor
         depo.degistir { $0.devam = d; $0.sonTur = tur; $0.sonPlan = plan }
@@ -87,7 +89,10 @@ final class OdakMotoru {
         let o = OdakOturumu(baslangic: d.baslangic, plan: d.plan, sure: Double(d.plan), tur: d.tur, tohum: d.tohum, konu: d.konu, ad: d.ad, durum: .tamam, kazanc: kazanc)
         sonKazanc = kazanc
         bitir(o)
-        depo.degistir { $0.tohum += kazanc }
+        depo.degistir { k in
+            k.tohum += kazanc
+            if let kuru = d.ihya { k.oturumlar.removeAll { $0.id == kuru && $0.durum == .vazgecildi } }
+        }
         hal = .bitti(o)
         if UIApplication.shared.applicationState == .active {
             Efekt.cal("efekt_kutlama", duzey: 0.7)
@@ -96,6 +101,44 @@ final class OdakMotoru {
     }
 
     func kapat() { hal = .bos }
+
+    // MARK: Mola
+
+    /// En çok 5 dakikalık mola: sayaç durur, uygulamadan çıkmak bitkiyi kurutmaz.
+    func molaVer() {
+        guard var d = devam, !d.molada else { return }
+        d.molaBas = Date()
+        guncelle(d)
+        kontrolGorevi?.cancel()
+        Bildirim.odakIptal()
+        ses?.sonumuIptal()
+        Dokunsal.hafif()
+        let bas = d.molaBas
+        molaGorevi?.cancel()
+        molaGorevi = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(OdakMotoru.molaSiniri * 1_000_000_000))
+            guard !Task.isCancelled, let self, self.devam?.molaBas == bas else { return }
+            self.molayiBitir()
+        }
+    }
+
+    func molayiBitir() {
+        guard var d = devam, let bas = d.molaBas else { return }
+        molaGorevi?.cancel()
+        d.molaSn = (d.molaSn ?? 0) + Date().timeIntervalSince(bas)
+        d.molaBas = nil
+        guncelle(d)
+        Bildirim.odakBitti(d.bitis, bitki: BitkiKatalogu.ad(d.tur))
+        if depo.ayarlar.sesOdakta, depo.ayarlar.sesSondaAzalt, let ses, ses.caliyor { ses.sondaAzalt(bitis: d.bitis) }
+        Dokunsal.orta()
+        izle()
+    }
+
+    private func guncelle(_ d: DevamEdenOdak) {
+        devam = d
+        depo.degistir { $0.devam = d }
+        depo.hemenKaydet()
+    }
 
     // MARK: Ekran görüntüsü örnekleri
 
@@ -112,6 +155,7 @@ final class OdakMotoru {
 
     private func bitir(_ o: OdakOturumu) {
         kontrolGorevi?.cancel()
+        molaGorevi?.cancel()
         devam = nil
         depo.degistir { $0.oturumlar.append(o); $0.devam = nil }
         depo.hemenKaydet()
@@ -126,6 +170,7 @@ final class OdakMotoru {
     private func izle() {
         kontrolGorevi?.cancel()
         guard let d = devam else { return }
+        guard !d.molada else { return }
         kontrolGorevi = Task { @MainActor [weak self] in
             let kalan = d.bitis.timeIntervalSinceNow
             if kalan > 0 { try? await Task.sleep(nanoseconds: UInt64(kalan * 1_000_000_000)) }
@@ -137,7 +182,7 @@ final class OdakMotoru {
     // MARK: Arka plan
 
     func arkaPlanaGecti() {
-        guard let d = devam else { return }
+        guard let d = devam, !d.molada else { return }
         arkaPlanGiris = Date()
         guard d.kati else { return }
         arkaGorev = UIApplication.shared.beginBackgroundTask(withName: "odak") { [weak self] in Task { @MainActor in self?.arkaGorevBitti() } }
@@ -153,6 +198,10 @@ final class OdakMotoru {
         Bildirim.uyariyiKaldir()
         defer { arkaPlanGiris = nil; sonKilit = nil }
         guard let d = devam else { return }
+        if d.molada {
+            if let b = d.molaBas, Date().timeIntervalSince(b) >= OdakMotoru.molaSiniri { molayiBitir() }
+            return
+        }
         if Date() >= d.bitis { tamamla(); return }
         if d.kati, let giris = arkaPlanGiris, !kilitlendi, Date().timeIntervalSince(giris) > OdakMotoru.tolerans {
             vazgec()

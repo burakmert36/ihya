@@ -11,39 +11,35 @@ struct DualarEkrani: View {
                 if let d = Icerik.duaDefteri {
                     NavigationLink(value: Rota.duaDefteri) {
                         HStack(spacing: 14) {
-                            Image(systemName: "book.pages")
-                                .font(.title2)
-                                .foregroundStyle(Color.ihya)
-                                .frame(width: 48, height: 48)
-                                .background(Circle().fill(Color.ihya.opacity(0.14)))
+                            HarfRozeti(harf: "ن", renk1: "#8FD6C8", renk2: "#2E8F7E", boyut: 46)
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("Dua Defterim").font(.headline)
-                                Text(d.baslik).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                                Text("Dua Defterim").font(.kalin(16))
+                                Text(d.baslik).font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary).lineLimit(2)
                             }
                             Spacer()
-                            Image(systemName: "chevron.right").foregroundStyle(.tertiary)
+                            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
                         }
-                        .padding(16)
-                        .background(RoundedRectangle(cornerRadius: 20).fill(Color.ihya.opacity(0.10)))
+                        .camKart(kose: 24, ic: 14)
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, 16)
                 }
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
-                        KonuCipi(ad: "Tümü", renk: .ihya, secili: tema == nil) { tema = nil }
+                        KonuCipi(ad: "Tümü", renk: Color(hex: "#F7C548"), secili: tema == nil) { tema = nil }
                         ForEach(Icerik.duaTemalari) { t in
-                            KonuCipi(ad: t.ad, renk: .ihya, secili: tema == t.id) { tema = tema == t.id ? nil : t.id }
+                            KonuCipi(ad: t.ad, renk: Color(hex: "#F7C548"), secili: tema == t.id) { tema = tema == t.id ? nil : t.id }
                         }
                     }
                     .padding(.horizontal, 16)
+                    .padding(.vertical, 2)
                 }
                 .scrollBounceBehavior(.basedOnSize, axes: .horizontal)
                 ForEach(temalar) { t in
                     Label(t.ad, systemImage: t.simge)
-                        .font(.title3.weight(.semibold))
+                        .font(.kalin(18))
                         .padding(.top, 10)
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 20)
                     ForEach(t.dualar) { d in DuaKarti(dua: d).padding(.horizontal, 16) }
                 }
                 Text("Âyet mealleri Diyanet İşleri meali; hadisler Sahîh-i Buhârî. Okunuşlar Türkçe harflerle yaklaşık telaffuzdur; doğru okuyuş için Arapça metne ve bir hocaya başvur.")
@@ -79,17 +75,15 @@ struct DuaKarti: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .textSelection(.enabled)
             }
-            Text(dua.okunus).font(.system(size: p - 1, design: .serif)).italic().foregroundStyle(Color.ihya)
+            Text(dua.okunus).font(.system(size: p - 1, design: .serif)).italic().foregroundStyle(Color(hex: depo.ayarlar.okumaKoyu == true ? "#9CF5BE" : "#0E6A33"))
                 .textSelection(.enabled)
             Text(dua.anlam).font(.okuma(p)).lineSpacing(p * 0.25).textSelection(.enabled)
             if let n = dua.not, !n.isEmpty {
                 Text(n).font(.footnote).foregroundStyle(.secondary)
             }
-            Text(dua.kaynak).font(.caption.weight(.medium)).foregroundStyle(.secondary)
+            Text(dua.kaynak).font(.caption.weight(.bold)).foregroundStyle(Color.altin)
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 20).fill(Color.primary.opacity(0.045)))
+        .okumaKarti()
     }
 }
 
@@ -103,12 +97,12 @@ struct DuaDefteriEkrani: View {
             let p = depo.ayarlar.okumaPunto
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 16) {
-                    Text(d.baslik).font(.system(size: 28, weight: .semibold, design: .serif)).padding(.top, 8)
+                    Text(d.baslik).font(.system(size: 28, weight: .semibold, design: .serif)).padding(.top, 8).padding(.horizontal, 4)
                     BolumBasligi(metin: "Başlangıç", simge: "sunrise")
                     ForEach(d.giris, id: \.self) { o in DefterKarti(oge: o, sayac: sayacBagi(o)) }
                     ForEach(Array(d.bolumler.enumerated()), id: \.element.id) { i, b in
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("\(i + 1). \(b.baslik)").font(.title3.weight(.semibold))
+                            Text("\(i + 1). \(b.baslik)").font(.kalin(18))
                             if let a = b.aciklama { Text(a).font(.footnote).foregroundStyle(.secondary) }
                         }
                         .padding(.top, 12)
@@ -122,19 +116,17 @@ struct DuaDefteriEkrani: View {
                                     HStack(alignment: .firstTextBaseline, spacing: 10) {
                                         Text("\(a.no)")
                                             .font(.caption.weight(.semibold)).monospacedDigit()
-                                            .foregroundStyle(Color.ihya)
+                                            .foregroundStyle(Color.altin)
                                             .frame(width: 26, alignment: .trailing)
                                         Text(a.okunus).font(.okuma(p)).textSelection(.enabled)
                                     }
                                 }
                             }
-                            .padding(18)
-                            .background(RoundedRectangle(cornerRadius: 20).fill(Color.primary.opacity(0.045)))
+                            .okumaKarti()
                         }
                         if let m = b.metin {
                             Text(m).font(.okuma(p)).lineSpacing(p * 0.3).textSelection(.enabled)
-                                .padding(18)
-                                .background(RoundedRectangle(cornerRadius: 20).fill(Color.primary.opacity(0.045)))
+                                .okumaKarti()
                         }
                     }
                     BolumBasligi(metin: "Kapanış", simge: "sunset").padding(.top, 8)
@@ -186,8 +178,8 @@ struct DefterKarti: View {
                                 .contentTransition(.numericText(value: Double(sayac.wrappedValue)))
                         }
                         .padding(.horizontal, 14).padding(.vertical, 9)
-                        .background(Capsule().fill(sayac.wrappedValue == t ? Color.ihya : Color.ihya.opacity(0.15)))
-                        .foregroundStyle(sayac.wrappedValue == t ? Color.white : Color.ihya)
+                        .background(Capsule().fill(sayac.wrappedValue == t ? Color(hex: "#1FB25A") : Color(hex: "#1FB25A").opacity(0.15)))
+                        .foregroundStyle(sayac.wrappedValue == t ? Color.white : Color(hex: depo.ayarlar.okumaKoyu == true ? "#9CF5BE" : "#0E6A33"))
                         .contentShape(Capsule())
                     }
                     .buttonStyle(.plain)
@@ -201,8 +193,6 @@ struct DefterKarti: View {
             if let a = oge.anlam { Text(a).font(.system(size: p - 2)).foregroundStyle(.secondary).lineSpacing(p * 0.2).textSelection(.enabled) }
             if let n = oge.not { Text(n).font(.footnote).foregroundStyle(.secondary).padding(.top, 2) }
         }
-        .padding(18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 20).fill(Color.primary.opacity(0.045)))
+        .okumaKarti()
     }
 }

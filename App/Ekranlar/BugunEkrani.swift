@@ -4,119 +4,118 @@ struct BugunEkrani: View {
     @Environment(Depo.self) private var depo
     @Environment(VakitServisi.self) private var vakit
     @Environment(Yonlendirici.self) private var yon
+    @Environment(\.palet) private var palet
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 18) {
-                baslik
+            VStack(spacing: 12) {
+                SahneBasligi(ust: "\(Tarihler.ustSatir()) · \(BugunEkrani.hicriKisa(vakit.hicri(.now)))", baslik: "İhya") {
+                    HStack(spacing: 8) {
+                        let n = depo.seri
+                        if n > 0 {
+                            HStack(spacing: 5) {
+                                FilizSimgesi().frame(width: 14, height: 14)
+                                Text("\(n) gün seri").font(.kalin(13))
+                            }
+                            .foregroundStyle(palet.vurgu)
+                            .padding(.horizontal, 12)
+                            .frame(height: 32)
+                            .glassEffect(palet.cam(), in: .capsule)
+                            .accessibilityElement(children: .combine)
+                        }
+                        NavigationLink(value: Rota.ayarlar) {
+                            Image(systemName: "gearshape").font(.system(size: 15, weight: .semibold)).frame(width: 32, height: 32)
+                        }
+                        .buttonStyle(.plain)
+                        .glassEffect(palet.cam(etkilesimli: true), in: .circle)
+                        .accessibilityLabel("Ayarlar")
+                    }
+                    .padding(.bottom, 4)
+                }
                 SonrakiVakitKarti()
                 NamazTakibi()
-                OdakOzeti()
-                if let h = Icerik.gunun(Icerik.hadisler) { GununHadisi(hadis: h) }
-                if let s = Icerik.gunun(Icerik.sozler, kaydir: 3) { GununSozu(soz: s) }
+                BugunkuBahce()
+                if let s = Icerik.gunun(Icerik.sozler.filter { $0.soz.count <= 110 }, kaydir: 3) { GununSozu(soz: s) }
                 kisayollar
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 24)
+            .padding(.bottom, 16)
         }
-        .background(alignment: .top) {
-            LinearGradient(colors: [Color.ihya.opacity(0.16), .clear], startPoint: .top, endPoint: .bottom)
-                .frame(height: 320)
-                .ignoresSafeArea()
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink(value: Rota.ayarlar) { Image(systemName: "gearshape") }
-                    .accessibilityLabel("Ayarlar")
-            }
-        }
-        .toolbarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .navigationBar)
     }
 
-    private var baslik: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline) {
-                Text("İhya")
-                    .font(.system(size: 44, weight: .semibold, design: .serif))
-                Spacer()
-                Text("إحياء")
-                    .font(.arapca(34, kalin: true))
-                    .foregroundStyle(Color.ihya)
-            }
-            Text("\(Tarihler.gunAyGun.string(from: .now)) · \(vakit.hicri(.now))")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.top, 4)
+    /// "23 Cemaziyelevvel 1448" → "23 C.EVVEL 1448"
+    static func hicriKisa(_ h: String) -> String {
+        let tr = Locale(identifier: "tr_TR")
+        let kisa = ["Cemaziyelevvel": "C.EVVEL", "Cemaziyelahir": "C.ÂHİR", "Rebiulevvel": "R.EVVEL", "Rebiulahir": "R.ÂHİR"]
+        return h.split(separator: " ").map { p in kisa[String(p)] ?? String(p).uppercased(with: tr) }.joined(separator: " ")
     }
 
     private var kisayollar: some View {
-        GlassEffectContainer(spacing: 10) {
-            HStack(spacing: 10) {
-                kisayol("Kıble", "location.north.line", .kible)
-                kisayol("Dualar", "hands.sparkles", .dualar)
-                kisayol("Esmâ", "sparkles", .esma)
-                kisayol("Günler", "calendar", .diniGunler)
+        let k = palet.koyu
+        return GlassEffectContainer(spacing: 8) {
+            HStack(spacing: 8) {
+                CamDugme(baslik: "Odaklan", renk: Color(hex: k ? "#7CF0A4" : "#0E6A33")) { yon.odakAc() }
+                CamDugme(baslik: "Sesler", renk: Color(hex: k ? "#9CC8FF" : "#1F4E8C")) { yon.ac(.sesler) }
+                CamDugme(baslik: "Zikir", renk: Color(hex: k ? "#D3B5FF" : "#5B2E91")) { yon.ac(.zikir) }
+                CamDugme(baslik: "Oku", renk: Color(hex: k ? "#F2C98A" : "#5A3A10")) {
+                    if let son = depo.kayit.kitaplar.filter({ $0.son != nil }).max(by: { ($0.son ?? .distantPast) < ($1.son ?? .distantPast) }) {
+                        yon.ac(.kitap(son.id))
+                    } else {
+                        yon.ac(.gununHadisi)
+                    }
+                }
             }
         }
-    }
-
-    private func kisayol(_ ad: String, _ simge: String, _ rota: Rota) -> some View {
-        Button {
-            yon.sekme = .kitaplik
-            yon.kitaplikYol = [rota]
-        } label: {
-            VStack(spacing: 6) {
-                Image(systemName: simge).font(.title3)
-                Text(ad).font(.caption)
-            }
-            .frame(maxWidth: .infinity, minHeight: 64)
-        }
-        .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 18))
     }
 }
 
-/// Sıradaki vakit ve geri sayım; altında günün altı vakti.
+/// Sıradaki vakit, saniyeli geri sayım ve günün altı vakti çizgisi.
 struct SonrakiVakitKarti: View {
     @Environment(VakitServisi.self) private var vakit
+    @Environment(Yonlendirici.self) private var yon
+    @Environment(\.palet) private var palet
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 30)) { an in
+        TimelineView(.periodic(from: .now, by: 1)) { an in
             let d = vakit.durum(an.date)
             let bugun = vakit.vakitler(an.date)
-            NavigationLink(value: Rota.vakitler) {
-                VStack(alignment: .leading, spacing: 14) {
+            let k = bugun.firstIndex { $0 > an.date }
+            let kalan = max(0, Int(d.sonrakiZaman.timeIntervalSince(an.date)))
+            Button { yon.sec(.vakit) } label: {
+                VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .firstTextBaseline) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(VakitAdi.vaktine(d.sonraki))
-                                .font(.headline)
-                            Text(vakit.konumAdi)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        (Text("Sıradaki vakit · ").foregroundStyle(.secondary) + Text(k.map { VakitAdi.adlar[$0] } ?? "İmsak (yarın)").foregroundStyle(palet.vurgu))
+                            .font(.kalin(13))
                         Spacer()
-                        Text(timerInterval: an.date...max(an.date, d.sonrakiZaman), countsDown: true)
-                            .font(.system(size: 34, weight: .semibold, design: .rounded))
-                            .monospacedDigit()
-                            .multilineTextAlignment(.trailing)
+                        Text("\(Tarihler.saat.string(from: d.sonrakiZaman)) · \(vakit.konumAdi)")
+                            .font(.system(size: 12, weight: .bold)).foregroundStyle(.secondary)
                     }
-                    HStack(spacing: 0) {
-                        ForEach(0..<6, id: \.self) { i in
-                            VStack(spacing: 3) {
-                                Text(VakitAdi.adlar[i]).font(.caption2)
-                                Text(Tarihler.saat.string(from: bugun[i])).font(.footnote.weight(.semibold)).monospacedDigit()
+                    Text(String(format: "%02d:%02d:%02d", kalan / 3600, kalan % 3600 / 60, kalan % 60))
+                        .font(.system(size: 46, weight: .heavy)).monospacedDigit().tracking(-1)
+                        .contentTransition(.numericText(countsDown: true))
+                    HStack(alignment: .top, spacing: 4) {
+                        ForEach(0..<6, id: \.self) { j in
+                            let gecti = k == nil || j < (k ?? 0)
+                            let simdi = j == k
+                            VStack(spacing: 4) {
+                                Capsule()
+                                    .fill(gecti ? AnyShapeStyle(LinearGradient(colors: [Color(hex: "#57D67E"), Color(hex: "#1BA552")], startPoint: .leading, endPoint: .trailing))
+                                          : simdi ? AnyShapeStyle(LinearGradient(colors: [Color(hex: "#FFC65C"), Color(hex: "#FF9F43")], startPoint: .leading, endPoint: .trailing))
+                                          : AnyShapeStyle(Color.primary.opacity(0.12)))
+                                    .frame(height: 6)
+                                Text(VakitAdi.adlar[j]).font(.kalin(10.5))
+                                    .foregroundStyle(simdi ? Color(hex: palet.koyu ? "#FFB45C" : "#C25E00") : gecti ? palet.vurgu : Color.secondary)
+                                    .lineLimit(1).minimumScaleFactor(0.8)
+                                Text(Tarihler.saat.string(from: bugun[j])).font(.system(size: 10.5, weight: .semibold)).monospacedDigit()
+                                    .foregroundStyle(.secondary)
                             }
-                            .foregroundStyle(i == d.simdiki ? Color.ihya : .primary)
-                            .padding(.vertical, 6)
                             .frame(maxWidth: .infinity)
-                            .background {
-                                if i == d.simdiki { Capsule().fill(Color.ihya.opacity(0.14)) }
-                            }
                         }
                     }
                 }
-                .camKart(.ihya)
+                .padding(.horizontal, 2)
+                .camKart(kose: 30)
             }
             .buttonStyle(.plain)
         }
@@ -126,43 +125,49 @@ struct SonrakiVakitKarti: View {
 /// Beş vakit namaz takibi: dokununca ses, ışıltı ve titreşim.
 struct NamazTakibi: View {
     @Environment(Depo.self) private var depo
+    @Environment(VakitServisi.self) private var vakit
+    @Environment(\.palet) private var palet
     @State private var isilti: [Int: Int] = [:]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                BolumBasligi(metin: "Bugünkü namazlar", simge: "checkmark.circle")
-                Text("\(VakitAdi.namazlar.filter { depo.kilindi($0.0) }.count)/5")
-                    .font(.footnote.weight(.semibold)).foregroundStyle(.secondary)
+        let kilinan = VakitAdi.namazlar.filter { depo.kilindi($0.0) }.count
+        let saatler = vakit.vakitler(.now)
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Namazlarım").font(.kalin(15))
+                Spacer()
+                Text("\(kilinan)/5 kılındı").font(.kalin(12)).foregroundStyle(palet.vurgu)
             }
-            HStack(spacing: 0) {
+            HStack(spacing: 6) {
                 ForEach(0..<VakitAdi.namazlar.count, id: \.self) { k in
                     let v = VakitAdi.namazlar[k]
                     let kilindi = depo.kilindi(v.0)
+                    let vakti = saatler.indices.contains(v.0) && Date() >= saatler[v.0]
                     Button { degistir(v.0) } label: {
-                        VStack(spacing: 6) {
-                            ZStack {
-                                Circle()
-                                    .fill(kilindi ? Color.ihya : Color.secondary.opacity(0.12))
-                                    .frame(width: 46, height: 46)
-                                Image(systemName: kilindi ? "checkmark" : "moon.stars")
-                                    .font(.system(size: kilindi ? 18 : 15, weight: .semibold))
-                                    .foregroundStyle(kilindi ? Color.white : Color.secondary)
-                                    .contentTransition(.symbolEffect(.replace))
-                            }
-                            .overlay {
-                                if let s = isilti[v.0] { IsiltiPatlamasi().id(s) }
-                            }
-                            Text(v.1).font(.caption)
+                        VStack(spacing: 3) {
+                            Image(systemName: kilindi ? "checkmark" : "circle")
+                                .font(.system(size: 13, weight: .heavy))
+                                .contentTransition(.symbolEffect(.replace))
+                            Text(v.1).font(.kalin(11)).lineLimit(1).minimumScaleFactor(0.8)
                         }
-                        .frame(maxWidth: .infinity)
+                        .foregroundStyle(kilindi ? Color.white : vakti ? Color(hex: palet.koyu ? "#FFB45C" : "#C25E00") : Color.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 54)
+                        .background {
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(kilindi ? AnyShapeStyle(LinearGradient(colors: [Color(r: 96, g: 236, b: 150, a: 0.95), Color(r: 20, g: 158, b: 82, a: 0.92)], startPoint: .top, endPoint: .bottom))
+                                      : AnyShapeStyle(Color.white.opacity(palet.koyu ? 0.08 : 0.45)))
+                                .shadow(color: kilindi ? Color(r: 20, g: 150, b: 70, a: 0.3) : .clear, radius: 7, y: 6)
+                        }
+                        .overlay(RoundedRectangle(cornerRadius: 18).strokeBorder(Color.primary.opacity(kilindi ? 0 : 0.08), lineWidth: 1))
+                        .overlay { if let s = isilti[v.0] { IsiltiPatlamasi().id(s) } }
+                        .contentShape(RoundedRectangle(cornerRadius: 18))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("\(v.1) namazı \(kilindi ? "kılındı" : "kılınmadı")")
                 }
             }
         }
-        .camKart()
+        .camKart(ic: 14)
     }
 
     private func degistir(_ i: Int) {
@@ -178,73 +183,77 @@ struct NamazTakibi: View {
     }
 }
 
-struct OdakOzeti: View {
+/// Bugünkü bahçe: günlük hedefe göre ilerleme ve bugün dikilenler.
+struct BugunkuBahce: View {
     @Environment(Depo.self) private var depo
     @Environment(Yonlendirici.self) private var yon
+    @Environment(\.palet) private var palet
 
     var body: some View {
-        let bugun = depo.kayit.oturumlar.filter { Calendar.current.isDateInToday($0.baslangic) }
-        let dk = bugun.filter { $0.durum == .tamam }.reduce(0) { $0 + $1.sure }
-        VStack(alignment: .leading, spacing: 12) {
-            BolumBasligi(metin: "Bugünkü odak", simge: "leaf")
-            HStack(alignment: .bottom) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(dk.sureMetni).font(.title2.weight(.semibold))
-                    Text(bugun.isEmpty ? "Henüz bitki dikmedin." : "\(bugun.filter { $0.durum == .tamam }.count) bitki · \(depo.kayit.tohum) tohum")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
-                Spacer()
-                HStack(spacing: -10) {
-                    ForEach(bugun.suffix(5)) { o in
-                        BitkiResmi(tur: o.tur, dk: o.sure, tohum: o.tohum, lod: 0.6, kurudu: o.durum == .vazgecildi, sigdir: true)
-                            .frame(width: 40, height: 48)
+        let bugun = depo.bugunkuOturumlar
+        let tamam = bugun.filter { $0.durum == .tamam }
+        let dk = Int(tamam.reduce(0) { $0 + $1.sure }.rounded())
+        let hedef = max(10, depo.ayarlar.gunlukHedef)
+        Button { yon.sec(.bahce) } label: {
+            HStack(spacing: 12) {
+                HStack(alignment: .bottom, spacing: 2) {
+                    if tamam.isEmpty {
+                        FilizSimgesi().fill(palet.vurgu.opacity(0.35)).frame(width: 44, height: 44).frame(width: 58, height: 68)
+                    } else {
+                        ForEach(tamam.suffix(2)) { o in
+                            BitkiResmi(tur: o.tur, dk: Double(o.plan), tohum: o.tohum, lod: 0.7, sigdir: true)
+                                .frame(width: 58, height: 68)
+                        }
                     }
                 }
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text("Bugünkü bahçe").font(.kalin(15))
+                        Spacer()
+                        Text("\(dk) / \(hedef) dk").font(.kalin(12)).foregroundStyle(.secondary).monospacedDigit()
+                    }
+                    IlerlemeCubugu(oran: Double(dk) / Double(hedef))
+                    Text(ozet(tamam, dk: dk, hedef: hedef))
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                        .multilineTextAlignment(.leading)
+                }
             }
-            Button {
-                yon.sekme = .odak
-            } label: {
-                Label("Odaklan", systemImage: "leaf.fill").frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.glassProminent)
-            .controlSize(.large)
+            .camKart(ic: 14)
         }
-        .camKart()
+        .buttonStyle(.plain)
     }
-}
 
-struct GununHadisi: View {
-    @Environment(Depo.self) private var depo
-    let hadis: Hadis
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            BolumBasligi(metin: "Günün hadisi", simge: "text.quote")
-            Text(hadis.metin).font(.okuma(17)).lineSpacing(3)
-            HStack {
-                Text("\(hadis.ravi) · \(hadis.kaynak)").font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                BegenDugmesi(tur: .hadis, anahtar: String(hadis.no))
-                ShareLink(item: "\(hadis.metin)\n\n\(hadis.kaynak)") { Image(systemName: "square.and.arrow.up") }
-                    .accessibilityLabel("Paylaş")
-            }
+    private func ozet(_ liste: [OdakOturumu], dk: Int, hedef: Int) -> String {
+        let parcalar = liste.suffix(2).reversed().map { o in
+            "\(BitkiKatalogu.ad(o.tur)) · \(depo.konu(o.konu)?.ad ?? (o.ad.isEmpty ? "Odak" : o.ad)) \(o.plan) dk"
         }
-        .camKart()
+        let bas = parcalar.isEmpty ? "Henüz bitki dikmedin." : parcalar.joined(separator: ", ") + "."
+        return dk >= hedef ? "\(bas) Günlük hedef tamam." : "\(bas) \(hedef - dk) dk daha ile hedef tamam."
     }
 }
 
 struct GununSozu: View {
+    @Environment(Yonlendirici.self) private var yon
     let soz: Soz
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            BolumBasligi(metin: soz.ayetMi ? "Günün âyeti" : "Günün sözü", simge: soz.ayetMi ? "book.closed" : "quote.opening")
-            Text(soz.soz).font(.okuma(17)).lineSpacing(3)
-            HStack {
-                Text("\(soz.kisi) · \(soz.kaynak)").font(.caption).foregroundStyle(.secondary)
-                Spacer()
-                BegenDugmesi(tur: .soz, anahtar: soz.id)
+        Button { yon.ac(.sozler) } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .top) {
+                    Text("\(soz.ayetMi ? "GÜNÜN ÂYETİ" : "GÜNÜN SÖZÜ") · \(soz.kisi)")
+                        .font(.kalin(10.5)).tracking(1).foregroundStyle(Color.altin)
+                        .lineLimit(1)
+                    Spacer()
+                    BegenDugmesi(tur: .soz, anahtar: soz.id)
+                }
+                Text("“\(soz.soz)”").font(.system(size: 18, weight: .medium, design: .serif)).lineSpacing(3)
+                    .multilineTextAlignment(.leading)
+                Text(soz.kaynak).font(.system(size: 11, weight: .bold)).foregroundStyle(Color(hex: "#7A6A48"))
             }
+            .kremKart()
         }
-        .camKart()
+        .buttonStyle(.plain)
     }
 }
 
@@ -262,6 +271,8 @@ struct BegenDugmesi: View {
             Image(systemName: begenildi ? "heart.fill" : "heart")
                 .foregroundStyle(begenildi ? Color.pink : Color.secondary)
                 .symbolEffect(.bounce, value: begenildi)
+                .frame(width: 28, height: 28)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel(begenildi ? "Kaydedildi" : "Kaydet")

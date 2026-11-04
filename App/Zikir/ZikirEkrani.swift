@@ -3,9 +3,10 @@ import SwiftUI
 
 struct ZikirEkrani: View {
     @Environment(Depo.self) private var depo
+    @Environment(\.palet) private var palet
     @AppStorage("zikir.sayi") private var sayi = 0
     @AppStorage("zikir.baslik") private var baslik = ""
-    @AppStorage("zikir.tesbihat") private var tesbihat = false
+    @AppStorage("zikir.tesbihat") private var tesbihat = true
     @AppStorage("zikir.asama") private var asama = 0
     @State private var hiz = 0.3
     @State private var sonDokunus = Date.distantPast
@@ -14,21 +15,23 @@ struct ZikirEkrani: View {
     @State private var kaydedildi = false
     @FocusState private var yaziyor: Bool
 
-    static let tesbihatAdlari = ["Sübhânallah", "Elhamdülillah", "Allâhu ekber"]
+    static let tesbihatAdlari = ["Sübhânallah", "Elhamdülillah", "Allâhu ekber", "Tevhid"]
+    static let arapca = ["سُبْحَانَ اللّٰهِ", "اَلْحَمْدُ لِلّٰهِ", "اَللّٰهُ أَكْبَرُ", "لَا إِلٰهَ إِلَّا اللّٰهُ"]
+    static let anlam = ["Allah her türlü eksiklikten münezzehtir", "Hamd yalnız Allah’a mahsustur", "Allah en büyüktür", "Allah’tan başka ilâh yoktur"]
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             ust
             TesbihHalkasi(sayi: sayi, hiz: hiz)
                 .overlay {
-                    VStack(spacing: 2) {
+                    VStack(spacing: 0) {
                         Text("\(sayi)")
-                            .font(.system(size: 64, weight: .semibold, design: .rounded))
+                            .font(.system(size: 64, weight: .heavy))
                             .monospacedDigit()
                             .contentTransition(.numericText(value: Double(sayi)))
-                        Text(tesbihat ? "\(min(asama + 1, 3)). tur · 33" : (sayi >= 33 ? "\(sayi / 33) × 33" : "dokun"))
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                        Text(tesbihat ? "/ 33" : (sayi >= 33 ? "\(sayi / 33) × 33" : " "))
+                            .font(.kalin(15)).foregroundStyle(.secondary)
+                        Text("dokun · bir tane çek").font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).padding(.top, 6)
                     }
                     .allowsHitTesting(false)
                 }
@@ -40,8 +43,8 @@ struct ZikirEkrani: View {
             denetimler
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 12)
-        .navigationTitle("Zikir")
+        .padding(.bottom, 8)
+        .navigationTitle(tesbihat ? "Tesbihat" : "Zikir")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -58,49 +61,47 @@ struct ZikirEkrani: View {
 
     @ViewBuilder private var ust: some View {
         if tesbihat {
-            VStack(spacing: 6) {
-                if asama < 3 {
-                    Text(ZikirEkrani.tesbihatAdlari[asama]).font(.title2.weight(.semibold))
-                    HStack(spacing: 6) {
-                        ForEach(0..<3, id: \.self) { i in
-                            Capsule().fill(i < asama ? Color.ihya : i == asama ? Color.ihya.opacity(0.4) : Color.secondary.opacity(0.2))
-                                .frame(width: 34, height: 6)
+            let a = min(asama, 3)
+            VStack(spacing: 8) {
+                HStack(spacing: 6) {
+                    ForEach(0..<4, id: \.self) { i in
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text(ZikirEkrani.tesbihatAdlari[i]).font(.kalin(10.5)).lineLimit(1).minimumScaleFactor(0.6)
+                                .foregroundStyle(i <= a ? palet.vurgu : Color.secondary)
+                            IlerlemeCubugu(oran: i < a ? 1 : i == a ? (i == 3 ? 1 : Double(sayi) / 33) : 0, yukseklik: 6)
                         }
                     }
-                } else {
-                    Text("Tesbihat tamam").font(.title2.weight(.semibold))
-                    Text("Lâ ilâhe illallâhu vahdehû lâ şerîke leh, lehü'l-mülkü ve lehü'l-hamdü ve hüve alâ külli şey'in kadîr.")
-                        .font(.okuma(15)).multilineTextAlignment(.center).foregroundStyle(.secondary)
                 }
+                Text(ZikirEkrani.arapca[a])
+                    .font(.arapca(40, kalin: true))
+                    .foregroundStyle(LinearGradient(colors: [Color(hex: "#FFE2A0"), Color(hex: "#E89A35")], startPoint: .top, endPoint: .bottom))
+                    .lineLimit(1).minimumScaleFactor(0.6)
+                    .padding(.top, 4)
+                Text(ZikirEkrani.tesbihatAdlari[a]).font(.system(size: 18, design: .serif).italic())
+                Text(a < 3 ? ZikirEkrani.anlam[a] : "Lâ ilâhe illallâhu vahdehû lâ şerîke leh, lehü’l-mülkü ve lehü’l-hamdü ve hüve alâ külli şey’in kadîr.")
+                    .font(.system(size: 13, weight: .medium)).foregroundStyle(.secondary).multilineTextAlignment(.center)
             }
-            .frame(minHeight: 70)
+            .padding(.top, 6)
         } else {
             TextField("Zikir adı (isteğe bağlı)", text: $baslik)
-                .font(.title3.weight(.medium))
+                .font(.system(size: 20, weight: .semibold, design: .serif))
                 .multilineTextAlignment(.center)
                 .focused($yaziyor)
                 .submitLabel(.done)
-                .padding(.vertical, 10)
-                .frame(minHeight: 70)
+                .padding(.horizontal, 16)
+                .frame(height: 50)
+                .glassEffect(palet.cam(), in: .capsule)
+                .padding(.top, 10)
         }
     }
 
     private var denetimler: some View {
-        GlassEffectContainer(spacing: 10) {
-            HStack(spacing: 10) {
-                dugme("Sıfırla", "arrow.counterclockwise") { if sayi > 0 { sifirlaSor = true } }
-                dugme("33×3", tesbihat ? "checkmark.circle.fill" : "circle.grid.3x3", vurgu: tesbihat) {
-                    tesbihat.toggle()
-                    sayi = 0
-                    asama = 0
-                }
-                dugme("Titreşim", depo.ayarlar.tesbihTitresim ? "iphone.radiowaves.left.and.right" : "iphone.slash", vurgu: depo.ayarlar.tesbihTitresim) {
-                    depo.degistir { $0.ayarlar.tesbihTitresim.toggle() }
-                }
-                dugme("Ses", depo.ayarlar.tesbihSes ? "speaker.wave.2" : "speaker.slash", vurgu: depo.ayarlar.tesbihSes) { sesAyari = true }
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                hap(depo.ayarlar.tesbihSes ? "Kehribar sesi" : "Ses kapalı", on: depo.ayarlar.tesbihSes) { sesAyari = true }
                     .popover(isPresented: $sesAyari) {
                         VStack(alignment: .leading, spacing: 12) {
-                            Toggle("Tık sesi", isOn: depo.ayar(\.tesbihSes))
+                            Toggle("Kehribar sesi", isOn: depo.ayar(\.tesbihSes))
                             HStack {
                                 Image(systemName: "speaker.fill").foregroundStyle(.secondary)
                                 Slider(value: depo.ayar(\.tesbihSesDuzeyi), in: 0.05...1, onEditingChanged: { suruyor in
@@ -114,23 +115,33 @@ struct ZikirEkrani: View {
                         .frame(width: 260)
                         .presentationCompactAdaptation(.popover)
                     }
-                dugme(kaydedildi ? "Kaydedildi" : "Kaydet", kaydedildi ? "checkmark" : "tray.and.arrow.down", vurgu: kaydedildi) { kaydet() }
+                hap("Titreşim", on: depo.ayarlar.tesbihTitresim) { depo.degistir { $0.ayarlar.tesbihTitresim.toggle() } }
+                hap("Baştan", on: false) { if sayi > 0 || asama > 0 { sifirlaSor = true } }
+            }
+            HStack(spacing: 8) {
+                hap(tesbihat ? "33×3 tesbihat" : "Serbest zikir", on: tesbihat) {
+                    tesbihat.toggle()
+                    sayi = 0
+                    asama = 0
+                }
+                hap(kaydedildi ? "Kaydedildi" : "Kaydet", on: kaydedildi) { kaydet() }
                     .disabled(sayi == 0 && !kaydedildi)
             }
         }
     }
 
-    private func dugme(_ ad: String, _ simge: String, vurgu: Bool = false, _ is_: @escaping () -> Void) -> some View {
-        Button(action: is_) {
-            VStack(spacing: 5) {
-                Image(systemName: simge).font(.body.weight(.medium)).contentTransition(.symbolEffect(.replace))
-                Text(ad).font(.caption2).lineLimit(1).minimumScaleFactor(0.8)
-            }
-            .foregroundStyle(vurgu ? Color.ihya : Color.primary)
-            .frame(maxWidth: .infinity, minHeight: 58)
+    private func hap(_ ad: String, on: Bool, _ eylem: @escaping () -> Void) -> some View {
+        Button(action: eylem) {
+            Text(ad).font(.kalin(14)).lineLimit(1).minimumScaleFactor(0.8)
+                .foregroundStyle(on ? palet.vurgu : Color.primary)
+                .padding(.horizontal, 16)
+                .frame(minHeight: 40)
+                .overlay(Capsule().strokeBorder(on ? palet.vurgu.opacity(0.8) : .clear, lineWidth: 1.2))
+                .contentShape(Capsule())
         }
         .buttonStyle(.plain)
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+        .glassEffect(on ? Glass.regular.tint(palet.vurgu.opacity(0.18)).interactive() : palet.cam(etkilesimli: true), in: .capsule)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private func say() {
@@ -174,7 +185,7 @@ struct ZikirEkrani: View {
     }
 }
 
-/// 33 tanelik tesbih: her sayımda bir tane ilerler; hız dokunma aralığına göre değişir. 11 ve 22. taneler nişanedir.
+/// 33 tanelik kehribar tesbih: her sayımda bir tane ilerler; hız dokunma aralığına göre değişir. Altta sabit imame ve püskül.
 struct TesbihHalkasi: View {
     let sayi: Int
     let hiz: Double
@@ -182,32 +193,41 @@ struct TesbihHalkasi: View {
 
     var body: some View {
         GeometryReader { g in
-            let r = min(g.size.width, g.size.height) / 2 - 18
+            let r = min(g.size.width, g.size.height) / 2 - 22
             ZStack {
-                Circle().stroke(Color.secondary.opacity(0.15), lineWidth: 1.5).frame(width: r * 2, height: r * 2)
+                Circle()
+                    .fill(RadialGradient(colors: [Color(r: 79, g: 70, b: 229, a: 0.28), Color(r: 79, g: 70, b: 229, a: 0.04)], center: .center, startRadius: 0, endRadius: r))
+                    .frame(width: r * 2, height: r * 2)
+                Circle().stroke(Color(r: 244, g: 176, b: 74, a: 0.25), lineWidth: 1).frame(width: r * 2, height: r * 2)
                 ZStack {
                     ForEach(0..<TesbihHalkasi.tane, id: \.self) { i in
                         let nisane = i % 11 == 0
                         Circle()
-                            .fill(RadialGradient(colors: nisane ? [Color(red: 0.98, green: 0.86, blue: 0.55), Color(red: 0.72, green: 0.48, blue: 0.16)]
-                                                 : [Color(red: 0.62, green: 0.86, blue: 0.62), Color(red: 0.13, green: 0.52, blue: 0.30)],
-                                                 center: UnitPoint(x: 0.35, y: 0.3), startRadius: 1, endRadius: 14))
-                            .frame(width: nisane ? 24 : 19, height: nisane ? 24 : 19)
-                            .shadow(color: .black.opacity(0.18), radius: 2, y: 1)
+                            .fill(RadialGradient(stops: [.init(color: Color(hex: "#FFEDC0"), location: 0), .init(color: Color(hex: "#F4B04A"), location: 0.38),
+                                                         .init(color: Color(hex: "#C46A1B"), location: 0.78), .init(color: Color(hex: "#7E3F0E"), location: 1)],
+                                                 center: UnitPoint(x: 0.35, y: 0.3), startRadius: 0, endRadius: nisane ? 11 : 9))
+                            .frame(width: nisane ? 20 : 16, height: nisane ? 20 : 16)
+                            .shadow(color: Color(hex: "#F4B04A").opacity(0.35), radius: 3)
                             .offset(y: -r)
                             .rotationEffect(.degrees(Double(i) * 360 / Double(TesbihHalkasi.tane)))
                     }
                 }
                 .rotationEffect(.degrees(-Double(sayi) * 360 / Double(TesbihHalkasi.tane)))
-                Image(systemName: "arrowtriangle.down.fill")
-                    .font(.caption)
-                    .foregroundStyle(Color.ihya)
-                    .offset(y: -r - 22)
+                // imame ve püskül
+                VStack(spacing: 0) {
+                    Capsule().fill(LinearGradient(colors: [Color(hex: "#FFE2A0"), Color(hex: "#E89A35"), Color(hex: "#9A5114")], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 12, height: 30)
+                    HStack(spacing: 2) {
+                        ForEach(0..<5, id: \.self) { _ in Capsule().fill(Color(hex: "#E8B04A")).frame(width: 1.5, height: 34) }
+                    }
+                }
+                .offset(y: r + 30)
             }
             .frame(width: g.size.width, height: g.size.height)
         }
         .aspectRatio(1, contentMode: .fit)
         .padding(.horizontal, 8)
+        .padding(.bottom, 40)
     }
 }
 
@@ -244,7 +264,7 @@ struct ZikirIstatistikEkrani: View {
                     }
                     Chart(cubukla(filtreli, a)) { c in
                         BarMark(x: .value("Zaman", c.etiket), y: .value("Sayı", c.sayi))
-                            .foregroundStyle(Color.ihya.gradient)
+                            .foregroundStyle(Color(hex: "#F4B04A").gradient)
                             .cornerRadius(4)
                     }
                     .chartXAxis { AxisMarks(values: .automatic(desiredCount: 8)) }
