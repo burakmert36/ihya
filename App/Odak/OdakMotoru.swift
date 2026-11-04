@@ -71,6 +71,7 @@ final class OdakMotoru {
         }
         Efekt.cal("efekt_baslat", duzey: 0.5)
         Dokunsal.orta()
+        CanliEtkinlik.baslat(d, konu: depo.konu(konu)?.ad ?? "")
         izle()
     }
 
@@ -138,6 +139,7 @@ final class OdakMotoru {
         devam = d
         depo.degistir { $0.devam = d }
         depo.hemenKaydet()
+        CanliEtkinlik.guncelle(d)
     }
 
     // MARK: Ekran görüntüsü örnekleri
@@ -157,6 +159,7 @@ final class OdakMotoru {
         kontrolGorevi?.cancel()
         molaGorevi?.cancel()
         devam = nil
+        CanliEtkinlik.bitir()
         depo.degistir { $0.oturumlar.append(o); $0.devam = nil }
         depo.hemenKaydet()
         Bildirim.odakIptal()

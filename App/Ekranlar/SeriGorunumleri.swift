@@ -40,6 +40,7 @@ struct SeriHapi: View {
         }
         .task(id: d.seri) { kutlamaBak(d) }
         .onAppear { if yon.seriAc { yon.seriAc = false; acik = true } }
+        .onChange(of: yon.seriAc) { _, v in if v { yon.seriAc = false; acik = true } }
     }
 
     /// Yeni bir kilometre taşına ulaşıldıysa bir kez kutlar; seri düşerse eşik de düşer ki yeniden kutlanabilsin.

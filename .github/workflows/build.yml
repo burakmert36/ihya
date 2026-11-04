@@ -71,6 +71,17 @@ jobs:
             MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
             build 2>&1 | tee build.log | grep -E "error:|warning: unre|\*\* BUILD" | head -300
 
+      - name: Yetkileri göm (App Group; SideStore yeniden imzalarken okur)
+        if: env.ATLA != '1'
+        run: |
+          APP=build/Build/Products/Release-iphoneos/Ihya.app
+          ls "$APP/PlugIns" || true
+          if [ -d "$APP/PlugIns/IhyaWidgets.appex" ]; then
+            codesign --force --sign - --entitlements Widgets/IhyaWidgets.entitlements "$APP/PlugIns/IhyaWidgets.appex" || echo "uyarı: widget imzalanamadı"
+          fi
+          codesign --force --sign - --entitlements App/Ihya.entitlements "$APP" || echo "uyarı: uygulama imzalanamadı"
+          codesign -d --entitlements - "$APP" 2>&1 | tail -8 || true
+
       - name: IPA paketle
         if: env.ATLA != '1'
         run: |

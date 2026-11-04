@@ -302,12 +302,14 @@ struct KokGorunum: View {
             case .background:
                 odak.arkaPlanaGecti()
                 sesSeciminiSakla()
+                WidgetKoprusu.guncelle(depo, vakit)
                 Yedek.gunlukYedek(depo)
                 depo.hemenKaydet()
                 ArkaPlan.planla()
             case .active:
                 odak.onPlanaGeldi()
                 if odak.hal != .bos { yon.odakAcik = true }
+                niyetiIsle(NiyetKoprusu.al())
                 Task { await vakit.gerekirseYenile() }
             default: break
             }
@@ -321,7 +323,14 @@ struct KokGorunum: View {
         }
         .onChange(of: depo.kayit.oturumlar.count) { _, _ in
             Task { await Bildirim.gunlukleriKur(depo, vakit) }
+            WidgetKoprusu.guncelle(depo, vakit)
         }
+        .onChange(of: depo.kayit.namaz) { _, _ in WidgetKoprusu.guncelle(depo, vakit) }
+        .onReceive(NotificationCenter.default.publisher(for: .ihyaNiyet)) { n in
+            _ = NiyetKoprusu.al()
+            niyetiIsle(n.object as? String)
+        }
+        .onOpenURL { url in niyetiIsle(url.host()) }
         .onChange(of: Set(ses.katman.keys)) { _, _ in sesSeciminiSakla() }
         .onChange(of: depo.ayarlar.kuranDinlerkenKis, initial: true) { _, yeni in ses.kuranKis = yeni }
         .onChange(of: depo.ayarlar, initial: true) { _, a in
@@ -329,6 +338,25 @@ struct KokGorunum: View {
             ses.kilitEkrani = a.sesKilitEkrani
         }
         .task { await ezandaSustur() }
+    }
+
+    /// Widget, Canlı Etkinlik, Denetim Merkezi ve kısayollardan gelen istek (ihya://odak gibi).
+    private func niyetiIsle(_ ad: String?) {
+        guard let ad else { return }
+        switch ad {
+        case "odak": if !yon.odakAcik { yon.odakAc() }
+        case "sesler": yon.odakAcik = false; yon.sekme = .bugun; yon.bugunYol = [.sesler]
+        case "vakitler": yon.odakAcik = false; yon.sekme = .bugun; yon.bugunYol = [.vakitler]
+        case "seri": yon.odakAcik = false; yon.sekme = .bugun; yon.bugunYol = []; yon.seriAc = true
+        case "dinle":
+            let son = depo.kayit.kuranSon
+            let s = son.first ?? 1, a = son.count > 1 ? son[1] : 1
+            yon.odakAcik = false
+            yon.sekme = .kuran
+            yon.kuranYol = [.sure(s, a)]
+            if !TilavetMotoru.ortak.etkin { TilavetMotoru.ortak.cal(sure: s, ayet: a) }
+        default: break
+        }
     }
 
     /// "Ezan vaktinde sustur": vakit girince çalan odak seslerini yavaşça durdurur (güneş doğuşu hariç).
@@ -378,6 +406,9 @@ struct KokGorunum: View {
         await Bildirim.vakitleriKur(vakit, depo.ayarlar)
         await Bildirim.gunlukleriKur(depo, vakit)
         Yedek.gunlukYedek(depo)
+        WidgetKoprusu.guncelle(depo, vakit)
+        if odak.devam == nil { CanliEtkinlik.bitir() } else if let d = odak.devam { CanliEtkinlik.baslat(d, konu: depo.konu(d.konu)?.ad ?? "") }
+        niyetiIsle(NiyetKoprusu.al())
         ArkaPlan.planla()
     }
 }

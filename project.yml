@@ -26,14 +26,19 @@ targets:
     platform: iOS
     sources:
       - path: App
+      - path: Paylasilan
       - path: Resources
         buildPhase: resources
+    dependencies:
+      - target: IhyaWidgets
+        embed: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.burakmert36.ihya
         PRODUCT_NAME: Ihya
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_ENTITLEMENTS: App/Ihya.entitlements
     info:
       path: App/Info.plist
       properties:
@@ -55,3 +60,45 @@ targets:
         UIFileSharingEnabled: true
         LSSupportsOpeningDocumentsInPlace: true
         ITSAppUsesNonExemptEncryption: false
+        NSSupportsLiveActivities: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.burakmert36.ihya
+            CFBundleURLSchemes: [ihya]
+    scheme:
+      testTargets: [IhyaTests]
+
+  IhyaWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Widgets
+      - path: Paylasilan
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.burakmert36.ihya.widgets
+        PRODUCT_NAME: IhyaWidgets
+        CODE_SIGN_ENTITLEMENTS: Widgets/IhyaWidgets.entitlements
+        SKIP_INSTALL: "YES"
+        LD_RUNPATH_SEARCH_PATHS: "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks"
+    info:
+      path: Widgets/Info.plist
+      properties:
+        CFBundleDisplayName: İhya
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+
+  IhyaTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+    dependencies:
+      - target: Ihya
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.burakmert36.ihya.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Ihya.app/Ihya"
+        BUNDLE_LOADER: "$(TEST_HOST)"
