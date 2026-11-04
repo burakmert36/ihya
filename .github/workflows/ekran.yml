@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   ekran:
-    runs-on: ${{ vars.TEST_RUNNER || 'macos-15-intel' }}
+    runs-on: ${{ vars.TEST_RUNNER || 'macos-latest' }}
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
