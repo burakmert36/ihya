@@ -173,14 +173,17 @@ struct OdakKurulum: View {
                     .padding(.horizontal, 18)
                     .frame(height: 44)
                     .glassEffect(palet.cam(), in: .capsule)
-                AnaDugme(baslik: "BAŞLAT · \(plan) dk", yukseklik: 40, eylem: baslat)
-                    .disabled(secili == nil)
-                    .padding(.top, 4)
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 20)
+            .padding(.bottom, 12)
         }
         .scrollDismissesKeyboard(.interactively)
+        .safeAreaInset(edge: .bottom) {
+            AnaDugme(baslik: "BAŞLAT · \(plan) dk", yukseklik: 40, eylem: baslat)
+                .disabled(secili == nil)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 6)
+        }
         .onAppear {
             if tur.isEmpty {
                 tur = depo.acikMi(depo.kayit.sonTur) ? depo.kayit.sonTur : (acikTurler.first?.id ?? "papatya")

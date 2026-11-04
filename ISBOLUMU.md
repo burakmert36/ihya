@@ -17,7 +17,16 @@ Bu dosya işin nerede olduğunu gösterir. Her aşama bitince güncellenir.
 | A2 | Bitki motoru v2: 27 çiçek, 27 ağaç, evreler, fiyatlar; uygulamada JavaScriptCore ile çizim | Bitti |
 | A3 | Uygulama ekranları ve servisleri (aşağıdaki liste) | Bitti (sürüm 1.0.4+) |
 | A4 | Ekran görüntüleriyle denetim, düzeltmeler, performans ve pil | Sürüyor |
+| A4b | Tasarıma sadık arayüz: sahne zeminleri, Liquid Glass, beş tema, yeni alt çubuk, ses motoru ve bildirim düzeltmeleri | Sürüyor (1.1) |
 | A5 | Sürüm yayını ve kısa kullanım notu | Sırada |
+
+## Arayüz düzeni (1.1)
+
+- Alt çubuk: Bugün · Bahçe · Kitaplık · Vakit; yanında yeşil yuvarlak Odak düğmesi (Odak tam ekran açılır).
+- Zikir, Kitaplık'ta ve Bugün'deki kısayolda. Ayarlar, Bugün başlığındaki dişliden.
+- Her ekran kendi sahnesinde: Bugün gökyüzü, Odak yeşil, Bahçe ada, Kitaplık camgöbeği, Vakit gün batımı, Hadis çivit, Sesler gece mavisi, Zikir lacivert.
+- Temalar: İhya (sahneli, varsayılan), Gece, Fildişi, Lacivert, Zümrüt.
+- Ses motoru: altı sabit yuva, motor başlamadan bağlanır; CI'da `-sesSinama 1` ile sınanır (`logs/ses.txt`).
 
 ## A3 · Ekranlar
 

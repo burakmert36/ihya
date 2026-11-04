@@ -311,15 +311,15 @@ struct SahneBasligi<Sag: View>: View {
     @ViewBuilder var sag: () -> Sag
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            VStack(alignment: .leading, spacing: 2) {
-                if let ust {
-                    Text(ust).font(.kalin(12)).tracking(0.8).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
-                }
-                Text(baslik).font(.system(size: 34, weight: .heavy)).tracking(-0.6).lineLimit(1).minimumScaleFactor(0.7)
+        VStack(alignment: .leading, spacing: 2) {
+            if let ust {
+                Text(ust).font(.kalin(12)).tracking(0.8).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.75)
             }
-            Spacer(minLength: 4)
-            sag()
+            HStack(alignment: .bottom, spacing: 8) {
+                Text(baslik).font(.system(size: 34, weight: .heavy)).tracking(-0.6).lineLimit(1).minimumScaleFactor(0.7)
+                Spacer(minLength: 4)
+                sag()
+            }
         }
         .padding(.horizontal, 4)
         .padding(.top, 6)
