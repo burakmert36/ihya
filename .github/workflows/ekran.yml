@@ -15,12 +15,29 @@ concurrency:
 
 jobs:
   ekran:
-    runs-on: ${{ vars.TEST_RUNNER || 'macos-latest' }}
+    # macOS makineleri zaman zaman iş almıyor; üç makine türü sıraya girer, ilk başlayan sahiplenir, ötekiler atlar.
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-26, macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
+      - name: Sahiplen
+        run: |
+          KILIT="ekran-kilit-${GITHUB_SHA:0:7}"
+          if git ls-remote --exit-code origin "refs/heads/$KILIT" >/dev/null 2>&1; then
+            echo "ATLA=1" >> "$GITHUB_ENV"; echo "Başka makine bu commit için çalışıyor; atlanıyor."; exit 0
+          fi
+          if git fetch -q origin test-logs 2>/dev/null && git show origin/test-logs:durum.txt 2>/dev/null | grep -q "sha=$GITHUB_SHA status=success"; then
+            echo "ATLA=1" >> "$GITHUB_ENV"; echo "Bu commit için ekranlar hazır; atlanıyor."; exit 0
+          fi
+          git push -q origin "HEAD:refs/heads/$KILIT" || { echo "ATLA=1" >> "$GITHUB_ENV"; echo "Sahiplenilemedi; atlanıyor."; }
+
       - name: En yeni Xcode'u seç
+        if: env.ATLA != '1'
         run: |
           XC=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
           [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
@@ -29,11 +46,13 @@ jobs:
           { xcodebuild -version; sw_vers; } | tee logs/env.txt
 
       - name: XcodeGen
+        if: env.ATLA != '1'
         run: |
           brew install xcodegen
           xcodegen generate
 
       - name: iPhone 17 simülatörü
+        if: env.ATLA != '1'
         run: |
           python3 scripts/sim_sec.py > sim.txt
           read UDID NAME < sim.txt
@@ -45,6 +64,7 @@ jobs:
           xcrun simctl privacy "$UDID" grant location com.burakmert36.ihya || true
 
       - name: Simülatör için derle
+        if: env.ATLA != '1'
         run: |
           set -o pipefail
           xcodebuild build \
@@ -54,6 +74,7 @@ jobs:
             2>&1 | tee logs/build.log | grep -E "error:|\*\* BUILD" | head -300
 
       - name: Ekranları çek
+        if: env.ATLA != '1'
         continue-on-error: true
         run: |
           xcrun simctl install "$UDID" dd/Build/Products/Debug-iphonesimulator/Ihya.app
@@ -63,7 +84,7 @@ jobs:
           bash scripts/ekranlar.sh "$UDID" shots 2>&1 | tee logs/ekran.log
 
       - name: Sonuçları kaydet
-        if: always()
+        if: always() && env.ATLA != '1'
         run: |
           mkdir -p /tmp/out/shots
           cp shots/*.png /tmp/out/shots/ 2>/dev/null || true
@@ -81,3 +102,4 @@ jobs:
           git add -A
           git commit -qm "ekran ${{ github.run_number }} (${{ github.sha }})" || true
           git push -f origin test-logs || true
+          git push -q origin ":refs/heads/ekran-kilit-${GITHUB_SHA:0:7}" || true

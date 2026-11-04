@@ -15,8 +15,13 @@ concurrency:
 
 jobs:
   build:
-    # Varsayılan macos-latest (arm64); sorun olursa depo değişkeni BUILD_RUNNER ile değiştirilir (ör. macos-15-intel).
-    runs-on: ${{ vars.BUILD_RUNNER || 'macos-latest' }}
+    # Kasım 2026: GitHub'ın macOS makineleri zaman zaman iş almıyor (15 dk bekleyip iptal). Üç makine türü birlikte
+    # sıraya girer; ilk başlayan derleyip yayınlar, sonra başlayanlar sürüm yayınlanmışsa atlar.
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-26, macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +29,17 @@ jobs:
       - name: Sürüm numarası
         run: echo "VERSION=$(cat VERSION | tr -d '[:space:]').${{ github.run_number }}" >> "$GITHUB_ENV"
 
+      - name: Başka makine yayınladı mı?
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "ATLA=1" >> "$GITHUB_ENV"
+            echo "v$VERSION zaten yayınlandı; bu makine atlıyor."
+          fi
+
       - name: En yeni Xcode'u seç
+        if: env.ATLA != '1'
         run: |
           XC=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
           [ -z "$XC" ] && XC=$(ls -d /Applications/Xcode*.app | sort -V | tail -1)
@@ -33,11 +48,13 @@ jobs:
           xcodebuild -version
 
       - name: XcodeGen
+        if: env.ATLA != '1'
         run: |
           brew install xcodegen
           xcodegen generate
 
       - name: Derle
+        if: env.ATLA != '1'
         run: |
           set -o pipefail
           xcodebuild \
@@ -48,6 +65,7 @@ jobs:
             build 2>&1 | tee build.log | grep -E "error:|warning: unre|\*\* BUILD" | head -300
 
       - name: IPA paketle
+        if: env.ATLA != '1'
         run: |
           APP=build/Build/Products/Release-iphoneos/Ihya.app
           mkdir -p out/Payload
@@ -56,19 +74,21 @@ jobs:
           ls -la out/Ihya.ipa
 
       - name: SideStore kaynağı
+        if: env.ATLA != '1'
         run: python3 scripts/make_source.py out/Ihya.ipa "$VERSION" "${{ github.repository }}" > out/sidestore.json
 
       - name: Sürümü yayınla
+        if: env.ATLA != '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "v$VERSION" out/Ihya.ipa out/sidestore.json \
             --title "İhya $VERSION" \
             --notes "Telefona kurmak için: SideStore'da kaynak olarak https://github.com/${{ github.repository }}/releases/latest/download/sidestore.json ekle ya da Ihya.ipa dosyasını SideStore ile aç." \
-            --latest
+            --latest || gh release upload "v$VERSION" out/Ihya.ipa out/sidestore.json --clobber
 
       - name: Derleme özetini kaydet
-        if: always()
+        if: always() && env.ATLA != '1'
         run: |
           mkdir -p /tmp/logs
           {
