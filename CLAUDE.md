@@ -25,3 +25,4 @@ Kişisel, yalnız sahibinin iPhone'unda çalışan İslami odak ve ibadet uygula
 ## Commit
 
 - Mesajlar Türkçe; uygulama derlemesini tetiklemeyecek değişikliklerde `[skip ci]`.
+- ECC'den (github.com/affaan-m/ECC, MIT) yalnız iki beceri alındı: `swiftui-patterns`, `swift-concurrency-6-2` (`.claude/skills/`). Gerekince yüklenir; geri kalanı web odaklı ve bağlamı şişirir, kurulmadı.

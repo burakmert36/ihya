@@ -371,7 +371,18 @@ struct KokGorunum: View {
             _ = NiyetKoprusu.al()
             niyetiIsle(n.object as? String)
         }
-        .onOpenURL { url in niyetiIsle(url.host()) }
+        .onOpenURL { url in
+            // "İhya ile aç": paylaşılan PDF kitaplığa eklenir ve açılır.
+            if url.isFileURL {
+                guard url.pathExtension.lowercased() == "pdf", let k = try? KitapDeposu.ice(url) else { return }
+                depo.degistir { $0.kitaplar.insert(k, at: 0) }
+                yon.odakAcik = false
+                yon.sekme = .kitaplik
+                yon.kitaplikYol = [.kitaplar, .kitap(k.id)]
+            } else {
+                niyetiIsle(url.host())
+            }
+        }
         .onChange(of: Set(ses.katman.keys)) { _, _ in sesSeciminiSakla() }
         .onChange(of: depo.ayarlar.kuranDinlerkenKis, initial: true) { _, yeni in ses.kuranKis = yeni }
         .onChange(of: depo.ayarlar, initial: true) { _, a in

@@ -28,3 +28,7 @@ Her döngü 15–70 sn, eşit güçlü çapraz geçişle dikişsiz; ayrıntılar
 | Âyet âyet tilavet | EveryAyah (everyayah.com) | Dinlendikçe telefona iner |
 | Bütün sûre tilaveti ve âyet zamanları | mp3quran.net (ayat_timing API) | Dinlendikçe akar; "indir" ile saklanır |
 | Ezan kayıtları | github.com/abodehq/Athan-MP3 (sabit sürüm cf1a9dd) | Seçilince iner; ilk 29 sn bildirim sesi olur |
+
+## Geliştirme becerileri
+
+`.claude/skills/swiftui-patterns` ve `swift-concurrency-6-2`: ECC (github.com/affaan-m/ECC), MIT lisansı, Copyright (c) Affaan Mustafa.

@@ -45,53 +45,7 @@ struct AyarlarEkrani: View {
     ]
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 10) {
-                BolumBasligi(metin: "Tema").padding(.horizontal, 6)
-                temalar
-                vakitGruplari
-                ezanGrubu
-                odakGruplari
-                tilavetGrubu
-                altGruplar
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 24)
-        }
-        .navigationTitle("Ayarlar")
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $muezzinAc) { MuezzinSecici().presentationDetents([.large]) }
-        .onAppear { if yon.muezzinAc { yon.muezzinAc = false; muezzinAc = true } }
-        .onChange(of: depo.ayarlar.ezan) { _, yeni in
-            if yeni == .muezzin { Task { await EzanCalar.ortak.gerekenleriIndir(depo.ayarlar); await Bildirim.vakitleriKur(vakit, depo.ayarlar) } }
-        }
-        .fileImporter(isPresented: Binding(get: { secici != nil }, set: { if !$0 { secici = nil } }), allowedContentTypes: secici?.turler ?? [.data]) { sonuc in
-            guard let s = secici else { return }
-            secici = nil
-            guard case .success(let url) = sonuc else { return }
-            switch s {
-            case .ezan(let tur):
-                guard let ad = tur.kayitAdi else { return }
-                do {
-                    try EzanKaydi.ice(url, ad: ad)
-                    ezanDurum += 1
-                    mesaj = "\(tur.ad) kaydı eklendi."
-                    Task { await Bildirim.vakitleriKur(vakit, depo.ayarlar) }
-                } catch {
-                    mesaj = "Bu dosya okunamadı. MP3, M4A ya da WAV dene."
-                }
-            case .yedekKlasoru:
-                mesaj = Yedek.klasorSec(url, depo: depo) ?? "Yedek klasörü “\(url.lastPathComponent)” oldu; ilk yedek yazıldı."
-            case .geriYukle:
-                let erisim = url.startAccessingSecurityScopedResource()
-                defer { if erisim { url.stopAccessingSecurityScopedResource() } }
-                do {
-                    geriYuklenecek = try Yedek.coz(try Data(contentsOf: url))
-                } catch {
-                    mesaj = (error as? LocalizedError)?.errorDescription ?? "Dosya okunamadı."
-                }
-            }
-        }
+        ustKisim
         .fileExporter(isPresented: $disaAktar, document: disaBelge, contentType: .json,
                       defaultFilename: Yedek.dosyaAdi()) { sonuc in
             if case .success = sonuc { mesaj = "Yedek kaydedildi." }
@@ -121,6 +75,58 @@ struct AyarlarEkrani: View {
             Button("Tamam", role: .cancel) {}
         }
     }
+
+    private var ustKisim: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 10) {
+                BolumBasligi(metin: "Tema").padding(.horizontal, 6)
+                temalar
+                vakitGruplari
+                ezanGrubu
+                odakGruplari
+                tilavetGrubu
+                altGruplar
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 24)
+        }
+        .navigationTitle("Ayarlar")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $muezzinAc) { MuezzinSecici().presentationDetents([.large]) }
+        .onAppear { if yon.muezzinAc { yon.muezzinAc = false; muezzinAc = true } }
+        .onChange(of: depo.ayarlar.ezan) { _, yeni in
+            if yeni == .muezzin { Task { await EzanCalar.ortak.gerekenleriIndir(depo.ayarlar); await Bildirim.vakitleriKur(vakit, depo.ayarlar) } }
+        }
+        .fileImporter(isPresented: Binding(get: { secici != nil }, set: { if !$0 { secici = nil } }), allowedContentTypes: secici?.turler ?? [.data]) { dosyaSecildi($0) }
+    }
+
+    private func dosyaSecildi(_ sonuc: Result<URL, Error>) {
+            guard let s = secici else { return }
+            secici = nil
+            guard case .success(let url) = sonuc else { return }
+            switch s {
+            case .ezan(let tur):
+                guard let ad = tur.kayitAdi else { return }
+                do {
+                    try EzanKaydi.ice(url, ad: ad)
+                    ezanDurum += 1
+                    mesaj = "\(tur.ad) kaydı eklendi."
+                    Task { await Bildirim.vakitleriKur(vakit, depo.ayarlar) }
+                } catch {
+                    mesaj = "Bu dosya okunamadı. MP3, M4A ya da WAV dene."
+                }
+            case .yedekKlasoru:
+                mesaj = Yedek.klasorSec(url, depo: depo) ?? "Yedek klasörü “\(url.lastPathComponent)” oldu; ilk yedek yazıldı."
+            case .geriYukle:
+                let erisim = url.startAccessingSecurityScopedResource()
+                defer { if erisim { url.stopAccessingSecurityScopedResource() } }
+                do {
+                    geriYuklenecek = try Yedek.coz(try Data(contentsOf: url))
+                } catch {
+                    mesaj = (error as? LocalizedError)?.errorDescription ?? "Dosya okunamadı."
+                }
+            }
+        }
 
     /// Tema ızgarası: her kart temanın zemini üstünde Besmele'den bir parça gösterir.
     private var temalar: some View {
@@ -342,6 +348,8 @@ struct AyarlarEkrani: View {
             Kaynak(ad: "Arapça yazı", deger: "Amiri yazı tipi (SIL Open Font License)")
             Ayrac()
             Kaynak(ad: "Kur'an metni ve tilavet", deger: "Kral Fahd Mushafı (fawazahmed0/quran-api); tilavet: EveryAyah ve mp3quran arşivleri (âyet zamanlarıyla)")
+            Ayrac()
+            Kaynak(ad: "Gizlilik", deger: "Hesap, sunucu, reklam ve analitik yok. Verilerin yalnız bu telefonda ve seçtiğin yedek klasöründe durur; internete yalnız vakit takvimi, tilavet ve ezan kayıtları için çıkılır.")
             Ayrac()
             Kaynak(ad: "Ezan kayıtları", deger: "Athan-MP3 derlemesi; seçilince indirilir, uygulamaya gömülmez")
             Ayrac()
