@@ -208,6 +208,7 @@ enum Ornek {
         k.sonYedek = Date().addingTimeInterval(-3 * 3600)
         k.ezber = Array(1...12)
         k.karisimlar = [Karisim(ad: "Yağmurlu kütüphane", katman: ["yagmur_cam": 0.6, "kutuphane": 0.5])]
+        k.kitaplar = OrnekKitaplar.hazirla()
         return k
     }
 }

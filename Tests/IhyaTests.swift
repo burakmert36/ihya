@@ -173,6 +173,25 @@ final class IhyaTests: XCTestCase {
         XCTAssertTrue(Muezzin.tumu.allSatisfy { $0.url != nil })
     }
 
+    func testPdfYazisiDuzenlenir() {
+        let ham = "Bu uzun bir satırdır ve okumayı kolay-\nlaştırmak için birleşmeli, devam eden\ncümle burada bitiyor ama satır uzundur.\nKısa son satır.\n\nYeni paragraf başlıyor."
+        let d = KitapDeposu.duzenle(ham)
+        XCTAssertTrue(d.contains("kolaylaştırmak"), d)
+        XCTAssertTrue(d.contains("devam eden cümle"), d)
+        XCTAssertTrue(d.contains("Kısa son satır.\n\nYeni paragraf"), d)
+        XCTAssertEqual(KitapDeposu.duzenle(""), "")
+    }
+
+    func testEskiKitapKaydiAcilir() throws {
+        let j = Data("{\"id\":\"0000000B-0000-4000-8000-000000000001\",\"ad\":\"A\",\"dosya\":\"a.pdf\",\"sayfa\":4,\"toplam\":10,\"eklenme\":0}".utf8)
+        let k = try JSONDecoder().decode(Kitap.self, from: j)
+        XCTAssertEqual(k.sayfa, 4)
+        XCTAssertEqual(k.yakinlik, 1)
+        XCTAssertTrue(k.yerImleri.isEmpty)
+        XCTAssertFalse(k.tamam)
+        XCTAssertEqual(k.oran, 0.5, accuracy: 0.001)
+    }
+
     func testMealAramaKatlamasi() {
         XCTAssertTrue(KuranDeposu.katla("Sabredenlerle beraberdir").contains(KuranDeposu.katla("SABRED")))
         XCTAssertEqual(KuranDeposu.katla("Işık"), KuranDeposu.katla("isik"))

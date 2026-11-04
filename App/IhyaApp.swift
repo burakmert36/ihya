@@ -181,6 +181,11 @@ final class Yonlendirici {
     /// Seri sayfası ve okuma ayarları doğrudan açılsın (ekran görüntüsü için).
     var seriAc = false
     var okumaAyarAc = false
+    /// Kitap okuyucuda açılacak panel (CI ekran görüntüleri): "ayar", "icindekiler", "ara"
+    var kitapPanel: String?
+    /// CI: hafız ve müezzin seçicileri açılsın.
+    var hafizAc = false
+    var muezzinAc = false
     var bugunYol: [Rota] = []
     var kuranYol: [Rota] = []
     var takipYol: [Rota] = []
@@ -269,6 +274,16 @@ final class Yonlendirici {
         case "kible": sekme = .kitaplik; kitaplikYol = [.kible]
         case "dinigunler": sekme = .kitaplik; kitaplikYol = [.diniGunler]
         case "kitaplar": sekme = .kitaplik; kitaplikYol = [.kitaplar]
+        case "kitaplar-sirt": UserDefaults.standard.set(true, forKey: "kitaplik.sirt"); sekme = .kitaplik; kitaplikYol = [.kitaplar]
+        case "kitap-oku", "kitap-metin", "kitap-yatay", "kitap-ayar", "kitap-icindekiler":
+            if ad == "kitap-metin" { depo.degistir { $0.ayarlar.kitapMetin = true } }
+            if ad == "kitap-yatay" { depo.degistir { $0.ayarlar.kitapYatay = true } }
+            if ad == "kitap-ayar" { kitapPanel = "ayar" }
+            if ad == "kitap-icindekiler" { kitapPanel = "icindekiler" }
+            sekme = .kitaplik
+            kitaplikYol = [.kitaplar, .kitap(OrnekKitaplar.ilk)]
+        case "hafiz": sekme = .kuran; hafizAc = true
+        case "ezan": bugunYol = [.ayarlar]; muezzinAc = true
         case "okuma", "favoriler": sekme = .kitaplik; kitaplikYol = [.favoriler]
         case "zikir": sekme = .kitaplik; kitaplikYol = [.zikir]
         case "zikir-istatistik": sekme = .kitaplik; kitaplikYol = [.zikir, .zikirIstatistik]

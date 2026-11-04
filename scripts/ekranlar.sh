@@ -32,6 +32,15 @@ cek istatistik 10-istatistik
 cek koleksiyon 11-koleksiyon 15
 cek sesler 12-sesler
 cek kitaplik 13-kitaplik
+cek kitaplar 13b-kitap-raf 20
+cek kitaplar-sirt 13c-kitap-sirt 18
+cek kitap-oku 13d-kitap-oku 20
+cek kitap-yatay 13e-kitap-yatay 20
+cek kitap-metin 13f-kitap-metin 20
+cek kitap-ayar 13g-kitap-ayar 20
+cek kitap-icindekiler 13h-kitap-icindekiler 20
+cek hafiz 03e-hafiz 25
+cek ezan 21d-ezan 18
 cek hadis 14-hadis
 cek dualar 15-dualar
 cek dua-defteri 16-dua-defteri

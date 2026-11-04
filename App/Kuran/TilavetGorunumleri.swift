@@ -308,5 +308,6 @@ struct DinleKarti: View {
         }
         .camKart(kose: 26)
         .sheet(isPresented: $hafizSec) { HafizSecici().presentationDetents([.medium, .large]) }
+        .onAppear { if yon.hafizAc { yon.hafizAc = false; hafizSec = true } }
     }
 }

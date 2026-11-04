@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 struct AyarlarEkrani: View {
     @Environment(Depo.self) private var depo
     @Environment(VakitServisi.self) private var vakit
+    @Environment(Yonlendirici.self) private var yon
     @Environment(\.palet) private var palet
     @State private var ezanDurum = 0
     @State private var muezzinAc = false
@@ -48,185 +49,11 @@ struct AyarlarEkrani: View {
             VStack(alignment: .leading, spacing: 10) {
                 BolumBasligi(metin: "Tema").padding(.horizontal, 6)
                 temalar
-                grup("Vakitler") {
-                    secimSatiri("Vakitler nereye göre?", alt: depo.ayarlar.konumKipi == .bursa ? "Diyanet'in ilçe takvimi; internet varken kendiliğinden yenilenir." : "Bulunduğun yere göre güneşten hesaplanır; birkaç dakika sapabilir.") {
-                        Picker("", selection: depo.ayar(\.konumKipi)) {
-                            Text("Diyanet").tag(KonumKipi.bursa)
-                            Text("Konumum").tag(KonumKipi.cihaz)
-                        }
-                        .pickerStyle(.segmented)
-                        .frame(width: 170)
-                    }
-                    if depo.ayarlar.konumKipi == .bursa {
-                        Ayrac()
-                        NavigationLink(value: Rota.ilce) {
-                            HStack {
-                                Label("İlçe", systemImage: "mappin.and.ellipse").font(.system(size: 15, weight: .bold))
-                                Spacer()
-                                Text(depo.ayarlar.ilceAdi).font(.system(size: 14, weight: .semibold)).foregroundStyle(.secondary)
-                                Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
-                            }
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    if depo.ayarlar.konumKipi == .cihaz {
-                        Ayrac()
-                        Button {
-                            konum.iste { e, b in
-                                depo.degistir { $0.ayarlar.enlem = e; $0.ayarlar.boylam = b; $0.ayarlar.konumAdi = "Bulunduğun yer" }
-                                mesaj = "Konum güncellendi."
-                            }
-                        } label: {
-                            HStack {
-                                Label("Konumu güncelle", systemImage: "location").font(.system(size: 15, weight: .bold))
-                                Spacer()
-                                Text(String(format: "%.3f, %.3f", depo.ayarlar.enlem, depo.ayarlar.boylam)).font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
-                            }
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                grup("Hatırlatmalar") {
-                    ForEach(0..<6, id: \.self) { i in
-                        if i > 0 { Ayrac() }
-                        anahtar(VakitAdi.adlar[i], alt: i == 1 ? "Güneş doğuşu; sabah namazının son vakti" : nil,
-                                Binding(get: { depo.ayarlar.vakitBildirim[i] }, set: { v in depo.degistir { $0.ayarlar.vakitBildirim[i] = v } }))
-                    }
-                    Ayrac()
-                    secimSatiri("Önceden hatırlat", alt: nil) {
-                        Picker("", selection: depo.ayar(\.onceDakika)) {
-                            Text("Vaktinde").tag(0)
-                            ForEach([5, 10, 15, 30, 45], id: \.self) { Text("\($0) dk önce").tag($0) }
-                        }
-                        .pickerStyle(.menu)
-                    }
-                    Ayrac()
-                    anahtar("Seri hatırlatması", alt: "Bugün fidan dikmediysen seçtiğin saatte nazikçe hatırlatır; namaz vaktine denk gelirse kayar.", depo.ayar(\.seriHatirlatma))
-                    if depo.ayarlar.seriHatirlatma {
-                        DatePicker("Saat", selection: Binding(get: {
-                            Calendar.current.startOfDay(for: .now).addingTimeInterval(Double(depo.ayarlar.seriHatirlatmaDk) * 60)
-                        }, set: { t in
-                            let c = Calendar.current.dateComponents([.hour, .minute], from: t)
-                            depo.degistir { $0.ayarlar.seriHatirlatmaDk = (c.hour ?? 20) * 60 + (c.minute ?? 30) }
-                        }), displayedComponents: .hourAndMinute)
-                        .font(.system(size: 15, weight: .bold))
-                    }
-                    Ayrac()
-                    anahtar("Cuma özeti", alt: "Cuma sabahı geçen yedi günün odak, namaz ve zikir özeti.", depo.ayar(\.cumaOzeti))
-                }
+                vakitGruplari
                 ezanGrubu
-                grup("Odak") {
-                    anahtar("Uygulamadan çıkınca bitki kurusun", alt: "Ekranı kilitlemek serbest; başka uygulamada 10 sn'den uzun kalırsan bitki kurur.", depo.ayar(\.katiMod))
-                    Ayrac()
-                    secimSatiri("Günlük hedef", alt: "Bugün kartındaki çubuk") {
-                        Stepper("\(depo.ayarlar.gunlukHedef) dk", value: depo.ayar(\.gunlukHedef), in: 10...600, step: 10)
-                            .font(.system(size: 14, weight: .bold))
-                            .fixedSize()
-                    }
-                    Ayrac()
-                    NavigationLink(value: Rota.konular) {
-                        HStack {
-                            Text("Odak konuları").font(.system(size: 15, weight: .bold))
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-                grup("Sesler") {
-                    anahtar("Odak süresince çal", alt: "Son seçtiğin sesler odak başlayınca çalar, bitince durur.", depo.ayar(\.sesOdakta))
-                    Ayrac()
-                    anahtar("Sonda sesi yavaşça azalt", alt: nil, depo.ayar(\.sesSondaAzalt))
-                    Ayrac()
-                    anahtar("Ezan vaktinde sustur", alt: nil, depo.ayar(\.ezandaSustur))
-                    Ayrac()
-                    anahtar("Kur’an dinlerken kıs", alt: "Tilavet ya da başka uygulama ses çalınca odak sesleri kısılır.", depo.ayar(\.kuranDinlerkenKis))
-                    Ayrac()
-                    anahtar("Kilit ekranında göster", alt: "Odak seslerini kilit ekranından başlatıp durdurursun. Açıkken çalan müzik durur; kapalıyken müzikle birlikte çalar.", depo.ayar(\.sesKilitEkrani))
-                }
+                odakGruplari
                 tilavetGrubu
-                grup("Tesbih") {
-                    anahtar("Titreşim", alt: nil, depo.ayar(\.tesbihTitresim))
-                    Ayrac()
-                    anahtar("Kehribar sesi", alt: nil, depo.ayar(\.tesbihSes))
-                    if depo.ayarlar.tesbihSes {
-                        HStack {
-                            Image(systemName: "speaker.fill").foregroundStyle(.secondary)
-                            Slider(value: depo.ayar(\.tesbihSesDuzeyi), in: 0.05...1, onEditingChanged: { suruyor in
-                                if !suruyor { Efekt.cal("tesbih_tik", duzey: Float(depo.ayarlar.tesbihSesDuzeyi)) }
-                            })
-                            Image(systemName: "speaker.wave.3.fill").foregroundStyle(.secondary)
-                        }
-                    }
-                }
-                grup("Okuma") {
-                    Button { okumaAyarlari = true } label: {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Okuma ayarları").font(.system(size: 15, weight: .bold))
-                                Text("\(depo.ayarlar.okumaTemasi.ad) · \(Int(depo.ayarlar.okumaPunto)) pt · sıcak ışık %\(Int(depo.ayarlar.sicakIsik * 100))")
-                                    .font(.system(size: 12.5, weight: .medium)).foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-                grup("Yedekleme") {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(depo.kayit.sonYedek.map { "Son yedek: \(Tarihler.gunAy.string(from: $0)) \(Tarihler.saat.string(from: $0))" } ?? "Henüz yedek yok")
-                            .font(.system(size: 15, weight: .bold))
-                        Text(Yedek.klasorAdi(depo.kayit.yedekYeri).map { "Her gün “\($0)” klasörüne ve telefondaki Yedekler klasörüne yazılır." }
-                             ?? "Her gün telefondaki Yedekler klasörüne yazılır. Uygulama silinirse bu klasör de silinir; iCloud Drive'da bir klasör seç.")
-                            .font(.system(size: 12.5, weight: .medium)).foregroundStyle(.secondary)
-                    }
-                    Ayrac()
-                    Button { secici = .yedekKlasoru } label: {
-                        Label(depo.kayit.yedekYeri == nil ? "Yedek klasörü seç (iCloud Drive)" : "Yedek klasörünü değiştir", systemImage: "folder.badge.plus")
-                            .font(.system(size: 15, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .buttonStyle(.plain)
-                    Ayrac()
-                    HStack(spacing: 10) {
-                        Button { mesaj = Yedek.gunlukYedek(depo, zorla: true) ?? "Yedek alındı." } label: {
-                            Label("Şimdi yedekle", systemImage: "arrow.clockwise.icloud").font(.kalin(13.5)).frame(maxWidth: .infinity, minHeight: 28)
-                        }
-                        .buttonStyle(.glass)
-                        Button {
-                            disaBelge = Yedek.veri(depo.kayit).map { YedekBelgesi(veri: $0) }
-                            disaAktar = true
-                        } label: {
-                            Label("Dışa aktar", systemImage: "square.and.arrow.up").font(.kalin(13.5)).frame(maxWidth: .infinity, minHeight: 28)
-                        }
-                        .buttonStyle(.glass)
-                    }
-                    Button { secici = .geriYukle } label: {
-                        Label("Yedekten geri yükle", systemImage: "arrow.uturn.backward.circle").font(.kalin(13.5)).frame(maxWidth: .infinity, minHeight: 28)
-                    }
-                    .buttonStyle(.glass)
-                    Text("Yedekte bahçen, oturumların, namaz ve kaza kayıtların, zikirlerin, kaydettiklerin, karışımların ve ayarların vardır. PDF kitaplar ve tilavet kayıtları yedeğe girmez.")
-                        .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
-                }
-                grup("Kaynaklar") {
-                    Kaynak(ad: "Hadisler", deger: "Sahîh-i Buhârî (Türkçe tercüme; her metin numarasıyla karşılaştırıldı)")
-                    Ayrac()
-                    Kaynak(ad: "Âyet mealleri", deger: "Diyanet İşleri Başkanlığı meali")
-                    Ayrac()
-                    Kaynak(ad: "Vakitler", deger: "Diyanet takvimi (ezanvakti.emushaf.net)")
-                    Ayrac()
-                    Kaynak(ad: "Doğa sesleri", deger: "Moodist ve Blanket kayıtları (CC0 / Pixabay lisansı)")
-                    Ayrac()
-                    Kaynak(ad: "Arapça yazı", deger: "Amiri yazı tipi (SIL Open Font License)")
-                    Ayrac()
-                    Kaynak(ad: "Kur'an metni ve tilavet", deger: "Kral Fahd Mushafı (fawazahmed0/quran-api); âyet âyet tilavet: EveryAyah arşivi")
-                    Ayrac()
-                    Kaynak(ad: "Sürüm", deger: (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") + " (" + (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "") + ")")
-                }
+                altGruplar
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 24)
@@ -234,6 +61,7 @@ struct AyarlarEkrani: View {
         .navigationTitle("Ayarlar")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $muezzinAc) { MuezzinSecici().presentationDetents([.large]) }
+        .onAppear { if yon.muezzinAc { yon.muezzinAc = false; muezzinAc = true } }
         .onChange(of: depo.ayarlar.ezan) { _, yeni in
             if yeni == .muezzin { Task { await EzanCalar.ortak.gerekenleriIndir(depo.ayarlar); await Bildirim.vakitleriKur(vakit, depo.ayarlar) } }
         }
@@ -331,6 +159,194 @@ struct AyarlarEkrani: View {
         }
         .padding(8)
         .camYuzey(palet.cam(), in: .rect(cornerRadius: 26))
+    }
+
+    @ViewBuilder private var vakitGruplari: some View {
+        grup("Vakitler") {
+            secimSatiri("Vakitler nereye göre?", alt: depo.ayarlar.konumKipi == .bursa ? "Diyanet'in ilçe takvimi; internet varken kendiliğinden yenilenir." : "Bulunduğun yere göre güneşten hesaplanır; birkaç dakika sapabilir.") {
+                Picker("", selection: depo.ayar(\.konumKipi)) {
+                    Text("Diyanet").tag(KonumKipi.bursa)
+                    Text("Konumum").tag(KonumKipi.cihaz)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 170)
+            }
+            if depo.ayarlar.konumKipi == .bursa {
+                Ayrac()
+                NavigationLink(value: Rota.ilce) {
+                    HStack {
+                        Label("İlçe", systemImage: "mappin.and.ellipse").font(.system(size: 15, weight: .bold))
+                        Spacer()
+                        Text(depo.ayarlar.ilceAdi).font(.system(size: 14, weight: .semibold)).foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            if depo.ayarlar.konumKipi == .cihaz {
+                Ayrac()
+                Button {
+                    konum.iste { e, b in
+                        depo.degistir { $0.ayarlar.enlem = e; $0.ayarlar.boylam = b; $0.ayarlar.konumAdi = "Bulunduğun yer" }
+                        mesaj = "Konum güncellendi."
+                    }
+                } label: {
+                    HStack {
+                        Label("Konumu güncelle", systemImage: "location").font(.system(size: 15, weight: .bold))
+                        Spacer()
+                        Text(String(format: "%.3f, %.3f", depo.ayarlar.enlem, depo.ayarlar.boylam)).font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        grup("Hatırlatmalar") {
+            ForEach(0..<6, id: \.self) { i in
+                if i > 0 { Ayrac() }
+                anahtar(VakitAdi.adlar[i], alt: i == 1 ? "Güneş doğuşu; sabah namazının son vakti" : nil,
+                        Binding(get: { depo.ayarlar.vakitBildirim[i] }, set: { v in depo.degistir { $0.ayarlar.vakitBildirim[i] = v } }))
+            }
+            Ayrac()
+            secimSatiri("Önceden hatırlat", alt: nil) {
+                Picker("", selection: depo.ayar(\.onceDakika)) {
+                    Text("Vaktinde").tag(0)
+                    ForEach([5, 10, 15, 30, 45], id: \.self) { Text("\($0) dk önce").tag($0) }
+                }
+                .pickerStyle(.menu)
+            }
+            Ayrac()
+            anahtar("Seri hatırlatması", alt: "Bugün fidan dikmediysen seçtiğin saatte nazikçe hatırlatır; namaz vaktine denk gelirse kayar.", depo.ayar(\.seriHatirlatma))
+            if depo.ayarlar.seriHatirlatma {
+                DatePicker("Saat", selection: Binding(get: {
+                    Calendar.current.startOfDay(for: .now).addingTimeInterval(Double(depo.ayarlar.seriHatirlatmaDk) * 60)
+                }, set: { t in
+                    let c = Calendar.current.dateComponents([.hour, .minute], from: t)
+                    depo.degistir { $0.ayarlar.seriHatirlatmaDk = (c.hour ?? 20) * 60 + (c.minute ?? 30) }
+                }), displayedComponents: .hourAndMinute)
+                .font(.system(size: 15, weight: .bold))
+            }
+            Ayrac()
+            anahtar("Cuma özeti", alt: "Cuma sabahı geçen yedi günün odak, namaz ve zikir özeti.", depo.ayar(\.cumaOzeti))
+        }
+    }
+
+    @ViewBuilder private var odakGruplari: some View {
+        grup("Odak") {
+            anahtar("Uygulamadan çıkınca bitki kurusun", alt: "Ekranı kilitlemek serbest; başka uygulamada 10 sn'den uzun kalırsan bitki kurur.", depo.ayar(\.katiMod))
+            Ayrac()
+            secimSatiri("Günlük hedef", alt: "Bugün kartındaki çubuk") {
+                Stepper("\(depo.ayarlar.gunlukHedef) dk", value: depo.ayar(\.gunlukHedef), in: 10...600, step: 10)
+                    .font(.system(size: 14, weight: .bold))
+                    .fixedSize()
+            }
+            Ayrac()
+            NavigationLink(value: Rota.konular) {
+                HStack {
+                    Text("Odak konuları").font(.system(size: 15, weight: .bold))
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        grup("Sesler") {
+            anahtar("Odak süresince çal", alt: "Son seçtiğin sesler odak başlayınca çalar, bitince durur.", depo.ayar(\.sesOdakta))
+            Ayrac()
+            anahtar("Sonda sesi yavaşça azalt", alt: nil, depo.ayar(\.sesSondaAzalt))
+            Ayrac()
+            anahtar("Ezan vaktinde sustur", alt: nil, depo.ayar(\.ezandaSustur))
+            Ayrac()
+            anahtar("Kur’an dinlerken kıs", alt: "Tilavet ya da başka uygulama ses çalınca odak sesleri kısılır.", depo.ayar(\.kuranDinlerkenKis))
+            Ayrac()
+            anahtar("Kilit ekranında göster", alt: "Odak seslerini kilit ekranından başlatıp durdurursun. Açıkken çalan müzik durur; kapalıyken müzikle birlikte çalar.", depo.ayar(\.sesKilitEkrani))
+        }
+    }
+
+    @ViewBuilder private var altGruplar: some View {
+        grup("Tesbih") {
+            anahtar("Titreşim", alt: nil, depo.ayar(\.tesbihTitresim))
+            Ayrac()
+            anahtar("Kehribar sesi", alt: nil, depo.ayar(\.tesbihSes))
+            if depo.ayarlar.tesbihSes {
+                HStack {
+                    Image(systemName: "speaker.fill").foregroundStyle(.secondary)
+                    Slider(value: depo.ayar(\.tesbihSesDuzeyi), in: 0.05...1, onEditingChanged: { suruyor in
+                        if !suruyor { Efekt.cal("tesbih_tik", duzey: Float(depo.ayarlar.tesbihSesDuzeyi)) }
+                    })
+                    Image(systemName: "speaker.wave.3.fill").foregroundStyle(.secondary)
+                }
+            }
+        }
+        grup("Okuma") {
+            Button { okumaAyarlari = true } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Okuma ayarları").font(.system(size: 15, weight: .bold))
+                        Text("\(depo.ayarlar.okumaTemasi.ad) · \(Int(depo.ayarlar.okumaPunto)) pt · sıcak ışık %\(Int(depo.ayarlar.sicakIsik * 100))")
+                            .font(.system(size: 12.5, weight: .medium)).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundStyle(.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        grup("Yedekleme") {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(depo.kayit.sonYedek.map { "Son yedek: \(Tarihler.gunAy.string(from: $0)) \(Tarihler.saat.string(from: $0))" } ?? "Henüz yedek yok")
+                    .font(.system(size: 15, weight: .bold))
+                Text(Yedek.klasorAdi(depo.kayit.yedekYeri).map { "Her gün “\($0)” klasörüne ve telefondaki Yedekler klasörüne yazılır." }
+                     ?? "Her gün telefondaki Yedekler klasörüne yazılır. Uygulama silinirse bu klasör de silinir; iCloud Drive'da bir klasör seç.")
+                    .font(.system(size: 12.5, weight: .medium)).foregroundStyle(.secondary)
+            }
+            Ayrac()
+            Button { secici = .yedekKlasoru } label: {
+                Label(depo.kayit.yedekYeri == nil ? "Yedek klasörü seç (iCloud Drive)" : "Yedek klasörünü değiştir", systemImage: "folder.badge.plus")
+                    .font(.system(size: 15, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(.plain)
+            Ayrac()
+            HStack(spacing: 10) {
+                Button { mesaj = Yedek.gunlukYedek(depo, zorla: true) ?? "Yedek alındı." } label: {
+                    Label("Şimdi yedekle", systemImage: "arrow.clockwise.icloud").font(.kalin(13.5)).frame(maxWidth: .infinity, minHeight: 28)
+                }
+                .buttonStyle(.glass)
+                Button {
+                    disaBelge = Yedek.veri(depo.kayit).map { YedekBelgesi(veri: $0) }
+                    disaAktar = true
+                } label: {
+                    Label("Dışa aktar", systemImage: "square.and.arrow.up").font(.kalin(13.5)).frame(maxWidth: .infinity, minHeight: 28)
+                }
+                .buttonStyle(.glass)
+            }
+            Button { secici = .geriYukle } label: {
+                Label("Yedekten geri yükle", systemImage: "arrow.uturn.backward.circle").font(.kalin(13.5)).frame(maxWidth: .infinity, minHeight: 28)
+            }
+            .buttonStyle(.glass)
+            Text("Yedekte bahçen, oturumların, namaz ve kaza kayıtların, zikirlerin, kaydettiklerin, karışımların ve ayarların vardır. PDF kitaplar ve tilavet kayıtları yedeğe girmez.")
+                .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+        }
+        grup("Kaynaklar") {
+            Kaynak(ad: "Hadisler", deger: "Sahîh-i Buhârî (Türkçe tercüme; her metin numarasıyla karşılaştırıldı)")
+            Ayrac()
+            Kaynak(ad: "Âyet mealleri", deger: "Diyanet İşleri Başkanlığı meali")
+            Ayrac()
+            Kaynak(ad: "Vakitler", deger: "Diyanet takvimi (ezanvakti.emushaf.net)")
+            Ayrac()
+            Kaynak(ad: "Doğa sesleri", deger: "Moodist ve Blanket kayıtları (CC0 / Pixabay lisansı)")
+            Ayrac()
+            Kaynak(ad: "Arapça yazı", deger: "Amiri yazı tipi (SIL Open Font License)")
+            Ayrac()
+            Kaynak(ad: "Kur'an metni ve tilavet", deger: "Kral Fahd Mushafı (fawazahmed0/quran-api); tilavet: EveryAyah ve mp3quran arşivleri (âyet zamanlarıyla)")
+            Ayrac()
+            Kaynak(ad: "Ezan kayıtları", deger: "Athan-MP3 derlemesi; seçilince indirilir, uygulamaya gömülmez")
+            Ayrac()
+            Kaynak(ad: "Sürüm", deger: (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "") + " (" + (Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "") + ")")
+        }
     }
 
     private var ezanGrubu: some View {
