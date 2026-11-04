@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths-ignore: ["**.md", "Tasarim/**", ".claude/**"]
   workflow_dispatch:
+  # macOS makineleri iş almazsa saatte bir yeniden dener; bu commit bir kez derlendiyse atlar.
+  schedule:
+    - cron: "23 * * * *"
 
 permissions:
   contents: write
@@ -33,7 +36,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view "v$VERSION" >/dev/null 2>&1; then
+          if [ "${{ github.event_name }}" = "schedule" ] && git fetch -q origin build-logs 2>/dev/null \
+             && git show origin/build-logs:build-summary.txt 2>/dev/null | head -1 | grep -q "sha=$GITHUB_SHA"; then
+            echo "ATLA=1" >> "$GITHUB_ENV"
+            echo "Bu commit zaten derlendi; zamanlanmış deneme atlıyor."
+          elif gh release view "v$VERSION" >/dev/null 2>&1; then
             echo "ATLA=1" >> "$GITHUB_ENV"
             echo "v$VERSION zaten yayınlandı; bu makine atlıyor."
           fi

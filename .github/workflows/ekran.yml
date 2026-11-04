@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths-ignore: ["**.md", "Tasarim/**", ".claude/**"]
   workflow_dispatch:
+  # macOS makineleri iş almazsa saatte bir yeniden dener; bu commit için ekranlar alındıysa atlar.
+  schedule:
+    - cron: "41 * * * *"
 
 permissions:
   contents: write
@@ -31,7 +34,8 @@ jobs:
           if git ls-remote --exit-code origin "refs/heads/$KILIT" >/dev/null 2>&1; then
             echo "ATLA=1" >> "$GITHUB_ENV"; echo "Başka makine bu commit için çalışıyor; atlanıyor."; exit 0
           fi
-          if git fetch -q origin test-logs 2>/dev/null && git show origin/test-logs:durum.txt 2>/dev/null | grep -q "sha=$GITHUB_SHA status=success"; then
+          if [ "${{ github.event_name }}" = "schedule" ]; then DESEN="sha=$GITHUB_SHA"; else DESEN="sha=$GITHUB_SHA status=success"; fi
+          if git fetch -q origin test-logs 2>/dev/null && git show origin/test-logs:durum.txt 2>/dev/null | grep -q "$DESEN"; then
             echo "ATLA=1" >> "$GITHUB_ENV"; echo "Bu commit için ekranlar hazır; atlanıyor."; exit 0
           fi
           git push -q origin "HEAD:refs/heads/$KILIT" || { echo "ATLA=1" >> "$GITHUB_ENV"; echo "Sahiplenilemedi; atlanıyor."; }
