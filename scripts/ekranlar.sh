@@ -1,4 +1,5 @@
 #!/bin/bash
+# (Yeniden deneme: GitHub Mac makineleri iş almıyor.)
 # Uygulamayı her ekran için '-ekran <ad>' bağımsız değişkeniyle açar ve ekran görüntüsü alır.
 # Sonda ses motorunu sınar (konsol çıktısı logs/ses.txt).
 # Kullanım: ekranlar.sh <simülatör-udid> <çıktı-klasörü>
