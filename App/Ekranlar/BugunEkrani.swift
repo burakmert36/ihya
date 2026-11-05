@@ -124,6 +124,14 @@ struct NamazTakibi: View {
                 Text("Namazlarım").font(.kalin(15))
                 Spacer()
                 Text("\(kilinan)/5 kılındı").font(.kalin(12)).foregroundStyle(palet.vurgu)
+                NavigationLink(value: Rota.kaza) {
+                    let borc = depo.kayit.kaza.values.reduce(0, +)
+                    Label(borc > 0 ? "Kaza \(borc)" : "Kaza", systemImage: "list.number")
+                        .font(.kalin(12)).padding(.horizontal, 10).padding(.vertical, 5)
+                        .camYuzey(palet.cam(etkilesimli: true), in: .capsule)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Kaza namazı takibi")
             }
             HStack(spacing: 6) {
                 ForEach(0..<VakitAdi.namazlar.count, id: \.self) { k in

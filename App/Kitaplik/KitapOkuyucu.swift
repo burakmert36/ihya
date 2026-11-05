@@ -1,3 +1,4 @@
+import AVFoundation
 import PDFKit
 import SwiftUI
 
@@ -20,6 +21,25 @@ final class PDFDenetci {
         let h = max(0, min(i, toplam - 1))
         sayfa = h
         if let v = gorunum, let p = belge?.page(at: h) { v.go(to: p) }
+    }
+
+    /// Otomatik kaydırma hızı (nokta/sn); 0 kapalı. Yalnız aşağı kayan sayfa görünümünde çalışır.
+    private(set) var kaydirmaHizi: Double = 0
+    func kaydir(_ h: Double) { kaydirmaHizi = max(0, h); kaydirmayiKur() }
+    @ObservationIgnored private var kaydirmaZamanlayici: Timer?
+
+    private func kaydirmayiKur() {
+        kaydirmaZamanlayici?.invalidate()
+        kaydirmaZamanlayici = nil
+        guard kaydirmaHizi > 0 else { return }
+        kaydirmaZamanlayici = Timer.scheduledTimer(withTimeInterval: 1.0 / 30, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, let v = self.gorunum, let k = v.subviews.compactMap({ $0 as? UIScrollView }).first else { return }
+                let enFazla = k.contentSize.height - k.bounds.height + k.adjustedContentInset.bottom
+                guard k.contentOffset.y < enFazla else { self.kaydir(0); return }
+                k.contentOffset.y = min(enFazla, k.contentOffset.y + self.kaydirmaHizi / 30)
+            }
+        }
     }
 
     func sonraki() { gorunum?.goToNextPage(nil) }
@@ -230,6 +250,7 @@ struct OkumaEkrani: View {
     @State private var surukleniyor = false
     @State private var acilis = Date()
     @State private var panel: Panel?
+    @State private var okuyucu = SesliOkuyucu()
 
     enum Panel: String, Identifiable { case ayar, icindekiler, ara; var id: String { rawValue } }
 
@@ -251,7 +272,8 @@ struct OkumaEkrani: View {
             Color(hex: tema.zemin).ignoresSafeArea()
             if let d = denetci {
                 if a.kitapMetin {
-                    MetinOkuyucu(denetci: d, tema: tema, punto: a.okumaPunto, satir: a.satirBoslugu(a.okumaPunto)) { cubuklar() }
+                    MetinOkuyucu(denetci: d, tema: tema, punto: a.okumaPunto, satir: a.satirBoslugu(a.okumaPunto),
+                                 duz: a.kitapYaziTipi == 1, kenar: [14, 22, 36][max(0, min(2, a.kitapKenar))]) { cubuklar() }
                 } else {
                     PDFGorunumu(denetci: d, baslangic: k.sayfa, yatay: a.kitapYatay, sagdanSola: a.kitapSagdanSola, zemin: tema.pdfZemin,
                                 sayfaDegisti: { sayfaKaydet($0) }, yakinlikDegisti: { y in kitapDegistir { $0.yakinlik = y } },
@@ -267,6 +289,23 @@ struct OkumaEkrani: View {
         .sicakIsik()
         .overlay(alignment: .bottom) {
             if !gizli, let d = denetci { altPanel(k, d).transition(.move(edge: .bottom).combined(with: .opacity)) }
+        }
+        .overlay(alignment: .topTrailing) {
+            if let d = denetci, d.kaydirmaHizi > 0 {
+                HStack(spacing: 4) {
+                    Button { d.kaydir(max(10, d.kaydirmaHizi - 10)) } label: { Image(systemName: "tortoise.fill").frame(width: 34, height: 34) }
+                        .accessibilityLabel("Yavaşlat")
+                    Button { d.kaydir(0) } label: { Image(systemName: "stop.fill").frame(width: 34, height: 34) }
+                        .accessibilityLabel("Otomatik kaydırmayı durdur")
+                    Button { d.kaydir(min(120, d.kaydirmaHizi + 10)) } label: { Image(systemName: "hare.fill").frame(width: 34, height: 34) }
+                        .accessibilityLabel("Hızlandır")
+                }
+                .font(.system(size: 14, weight: .bold))
+                .buttonStyle(.plain)
+                .padding(4)
+                .camYuzey(palet.cam(etkilesimli: true), in: .capsule)
+                .padding(12)
+            }
         }
         .statusBarHidden(gizli)
         .toolbar(gizli ? .hidden : .visible, for: .navigationBar)
@@ -298,6 +337,8 @@ struct OkumaEkrani: View {
             if let p = yon.kitapPanel { panel = Panel(rawValue: p); yon.kitapPanel = nil }
         }
         .onDisappear {
+            okuyucu.dur()
+            denetci?.kaydir(0)
             sureyiYaz()
             YonKilidi.ayarla(.portrait)
         }
@@ -365,6 +406,9 @@ struct OkumaEkrani: View {
                 dugme(depo.ayarlar.kitapYatay ? "arrow.left.arrow.right" : "arrow.up.arrow.down",
                       depo.ayarlar.kitapYatay ? "Sayfalar yana çevriliyor; aşağı kaydırmaya geç" : "Sayfalar aşağı kayıyor; yana çevirmeye geç") {
                     depo.degistir { $0.ayarlar.kitapYatay.toggle(); $0.ayarlar.kitapMetin = false }
+                }
+                dugme(okuyucu.okuyor ? "speaker.wave.2.fill" : "headphones", okuyucu.okuyor ? "Sesli okumayı durdur" : "Bu sayfadan sesli oku") {
+                    okuyucu.okuyor ? okuyucu.dur() : okuyucu.basla(d, hiz: depo.ayarlar.kitapSesHizi)
                 }
                 dugme("textformat", "Okuma ayarları") { panel = .ayar }
             }
@@ -455,6 +499,8 @@ private struct MetinOkuyucu: View {
     let tema: OkumaTemasi
     let punto: Double
     let satir: Double
+    let duz: Bool
+    let kenar: CGFloat
     let dokunuldu: () -> Void
     @State private var konum: Int?
 
@@ -462,11 +508,11 @@ private struct MetinOkuyucu: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 28) {
                 ForEach(0..<denetci.toplam, id: \.self) { i in
-                    MetinSayfasi(belge: denetci.belge, no: i, tema: tema, punto: punto, satir: satir).id(i)
+                    MetinSayfasi(belge: denetci.belge, no: i, tema: tema, punto: punto, satir: satir, duz: duz).id(i)
                 }
             }
             .scrollTargetLayout()
-            .padding(.horizontal, 22)
+            .padding(.horizontal, kenar)
             .padding(.top, 12)
             .padding(.bottom, 160)
         }
@@ -485,6 +531,7 @@ private struct MetinSayfasi: View {
     let tema: OkumaTemasi
     let punto: Double
     let satir: Double
+    let duz: Bool
     @State private var metin: String?
 
     var body: some View {
@@ -500,7 +547,7 @@ private struct MetinSayfasi: View {
                         .font(.system(size: 14, weight: .medium)).italic().foregroundStyle(Color(hex: tema.yazi).opacity(0.6))
                 } else {
                     Text(metin)
-                        .font(.okuma(punto))
+                        .font(duz ? .system(size: punto) : .okuma(punto))
                         .lineSpacing(satir)
                         .foregroundStyle(Color(hex: tema.yazi))
                         .textSelection(.enabled)
@@ -557,6 +604,28 @@ private struct KitapAyarlari: View {
                                 Text("Arapça ve Osmanlıca kitaplarda sayfa sırası").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
                             }
                         }
+                    }
+                    if a.kitapMetin {
+                        bolum("Yazı tipi ve kenar") {
+                            CamSegment(secenekler: [0, 1], secili: depo.ayar(\.kitapYaziTipi), ad: { ["Tırnaklı", "Düz"][$0] })
+                            CamSegment(secenekler: [0, 1, 2], secili: depo.ayar(\.kitapKenar), ad: { ["Dar kenar", "Orta", "Geniş kenar"][$0] })
+                        }
+                    } else if !a.kitapYatay, let d = denetci {
+                        bolum("Otomatik kaydırma") {
+                            CamSegment(secenekler: [0.0, 20.0, 40.0, 70.0], secili: Binding(get: { [0.0, 20.0, 40.0, 70.0].min { abs($0 - d.kaydirmaHizi) < abs($1 - d.kaydirmaHizi) } ?? 0 }, set: { d.kaydir($0) }),
+                                       ad: { [0.0: "Kapalı", 20.0: "Yavaş", 40.0: "Orta", 70.0: "Hızlı"][$0] ?? "" })
+                            Text("Sayfa kendiliğinden aşağı akar; elin serbest kalır. Okurken sağ üstteki düğmelerle hızını değiştirirsin.")
+                                .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                        }
+                    }
+                    bolum("Sesli okuma") {
+                        HStack(spacing: 12) {
+                            Image(systemName: "tortoise").foregroundStyle(.secondary)
+                            Slider(value: depo.ayar(\.kitapSesHizi), in: 0.35...0.65)
+                            Image(systemName: "hare").foregroundStyle(.secondary)
+                        }
+                        Text("Alttaki kulaklık düğmesi kitabı bulunduğun sayfadan Türkçe sesle okur; sayfa bitince sonrakine geçer.")
+                            .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
                     }
                     bolum("Ekran yönü") {
                         CamSegment(secenekler: [0, 1, 2], secili: depo.ayar(\.kitapEkran), ad: { ["Dik", "Yan", "Telefonla dönsün"][$0] })
@@ -875,5 +944,56 @@ private struct KitapAramasi: View {
             }
         }
         return sonuc
+    }
+}
+
+
+/// Kitabı Türkçe sesle okur (yazısı seçilebilen PDF'lerde); sayfa bitince sonrakine geçer.
+@MainActor
+@Observable
+final class SesliOkuyucu: NSObject, AVSpeechSynthesizerDelegate {
+    private(set) var okuyor = false
+    @ObservationIgnored private let konusan = AVSpeechSynthesizer()
+    @ObservationIgnored private weak var denetci: PDFDenetci?
+    @ObservationIgnored private var hiz: Float = 0.5
+
+    override init() {
+        super.init()
+        konusan.delegate = self
+    }
+
+    func basla(_ d: PDFDenetci, hiz h: Double) {
+        denetci = d
+        hiz = Float(h)
+        okuyor = true
+        SesOturumu.hazirla()
+        sayfayiOku(d.sayfa)
+    }
+
+    func dur() {
+        okuyor = false
+        konusan.stopSpeaking(at: .immediate)
+    }
+
+    private func sayfayiOku(_ i: Int) {
+        guard okuyor, let d = denetci, i < d.toplam else { okuyor = false; return }
+        let metin = KitapDeposu.duzenle(d.belge?.page(at: i)?.string ?? "")
+        if d.sayfa != i { d.git(i) }
+        // Yazısız sayfayı atlar (en çok üç sayfa).
+        guard !metin.isEmpty else {
+            if i + 1 < min(d.toplam, d.sayfa + 4) { sayfayiOku(i + 1) } else { okuyor = false }
+            return
+        }
+        let u = AVSpeechUtterance(string: metin)
+        u.voice = AVSpeechSynthesisVoice(language: "tr-TR")
+        u.rate = hiz
+        konusan.speak(u)
+    }
+
+    nonisolated func speechSynthesizer(_ s: AVSpeechSynthesizer, didFinish u: AVSpeechUtterance) {
+        Task { @MainActor in
+            guard self.okuyor, let d = self.denetci else { return }
+            self.sayfayiOku(d.sayfa + 1)
+        }
     }
 }

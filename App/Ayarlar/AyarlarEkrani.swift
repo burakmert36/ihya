@@ -361,7 +361,7 @@ struct AyarlarEkrani: View {
         grup("Ezan ve bildirim sesi") {
             secimSatiri("Bildirim sesi", alt: nil) {
                 Picker("", selection: depo.ayar(\.ezan)) {
-                    ForEach(EzanTuru.allCases) { Text($0.ad).tag($0) }
+                    ForEach(EzanTuru.secenekler + (depo.ayarlar.ezan == .tekMuezzin ? [.tekMuezzin] : [])) { Text($0.ad).tag($0) }
                 }
                 .pickerStyle(.menu)
             }
@@ -428,7 +428,7 @@ struct AyarlarEkrani: View {
                 Label("Deneme bildirimi gönder", systemImage: "bell.badge").font(.kalin(14)).frame(maxWidth: .infinity, minHeight: 30)
             }
             .buttonStyle(.glass)
-            Text("Tona dokununca telefon sessizde de duyulur. Bildirim sesini ise iOS, telefon sessiz kipteyken çalmaz. iOS bildirim sesini 30 saniyeyle sınırlar: ezanın ilk 29 saniyesi çalar; uygulama açıksa ezanın tamamı okunur. Makamlı ezan için kendi kaydını da ekleyebilirsin.")
+            Text("Tona dokununca telefon sessizde de duyulur. Bildirim sesini ise iOS, telefon sessiz kipteyken çalmaz. iOS bildirim sesini 30 saniyeyle sınırlar: ezanın ilk 29 saniyesi çalar; uygulama açıksa ezanın tamamı okunur. İstersen “Kendi kaydım” ile telefondaki bir ses dosyasını ekleyebilirsin.")
                 .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
         }
     }

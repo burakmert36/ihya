@@ -39,6 +39,7 @@ cek kitap-yatay 13e-kitap-yatay 20
 cek kitap-metin 13f-kitap-metin 20
 cek kitap-ayar 13g-kitap-ayar 20
 cek kitap-icindekiler 13h-kitap-icindekiler 20
+cek kaza 08b-kaza 16
 cek hafiz 03e-hafiz 25
 cek ezan 21d-ezan 18
 cek hadis 14-hadis

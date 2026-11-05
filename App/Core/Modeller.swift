@@ -115,13 +115,16 @@ enum EzanTuru: String, Codable, CaseIterable, Identifiable {
     var ad: String {
         switch self {
         case .muezzin: "Müezzin ezanı"
-        case .makamli: "Makamlı ezan"
-        case .tekMuezzin: "Tek müezzin"
-        case .kisa: "Kısa bildirim"
+        case .makamli: "Kendi kaydım (elle ekle)"
+        case .tekMuezzin: "Kendi kaydım 2"
+        case .kisa: "Normal bildirim sesi"
         case .sessiz: "Sessiz"
         }
     }
     /// Library/Sounds altındaki dosya adı (kullanıcının eklediği kayıt).
+    /// Seçicide görünenler (eski "tek müezzin" kaydı çalışmaya devam eder ama listede yok).
+    static let secenekler: [EzanTuru] = [.kisa, .muezzin, .makamli, .sessiz]
+
     var kayitAdi: String? {
         switch self {
         case .makamli: "ezan_makamli"
@@ -246,13 +249,19 @@ struct Ayarlar: Codable, Equatable {
     var kitapEkran: Int = 0
     /// Sayfa yerine yalnız yazı (büyütünce satırlar ekrana sığar)
     var kitapMetin: Bool = false
+    /// Yazı görünümü: 0 tırnaklı, 1 düz yazı tipi
+    var kitapYaziTipi: Int = 0
+    /// Yazı görünümü kenar boşluğu: 0 dar, 1 orta, 2 geniş
+    var kitapKenar: Int = 1
+    /// Sesli okuma hızı (AVSpeechUtterance oranı)
+    var kitapSesHizi: Double = 0.5
 
     enum CodingKeys: String, CodingKey {
         case konumKipi, enlem, boylam, konumAdi, vakitBildirim, onceDakika, ezan, bildirimTonu, katiMod
         case sesOdakta, sesSondaAzalt, tesbihTitresim, tesbihSes, tesbihSesDuzeyi, okumaPunto, okumaKoyu, tema, gunlukHedef, ezandaSustur, kuranDinlerkenKis
         case kuranMeal, kuranOkunus, kuranPunto, ilceKodu, ilceAdi, tilavetHafiz, tilavetHiz, tilavetTakip, tilavetDevam, sesKilitEkrani
         case okumaTemasi, sicakIsik, satirAraligi, ekranAcik, seriHatirlatma, seriHatirlatmaDk, cumaOzeti, muezzin, vakitMuezzin
-        case kitapYatay, kitapSagdanSola, kitapEkran, kitapMetin
+        case kitapYatay, kitapSagdanSola, kitapEkran, kitapMetin, kitapYaziTipi, kitapKenar, kitapSesHizi
     }
 
     /// Vaktin müezzini (Muezzin.id).
@@ -292,6 +301,7 @@ extension Ayarlar {
         muezzin = v(.muezzin, muezzin); vakitMuezzin = v(.vakitMuezzin, vakitMuezzin)
         kitapYatay = v(.kitapYatay, kitapYatay); kitapSagdanSola = v(.kitapSagdanSola, kitapSagdanSola)
         kitapEkran = v(.kitapEkran, kitapEkran); kitapMetin = v(.kitapMetin, kitapMetin)
+        kitapYaziTipi = v(.kitapYaziTipi, kitapYaziTipi); kitapKenar = v(.kitapKenar, kitapKenar); kitapSesHizi = v(.kitapSesHizi, kitapSesHizi)
         let vb = v(.vakitBildirim, vakitBildirim)
         if vb.count == 6 { vakitBildirim = vb }
     }

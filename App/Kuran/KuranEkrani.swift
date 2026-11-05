@@ -243,6 +243,8 @@ struct KuranOkuyucu: View {
     @Environment(Depo.self) private var depo
     @Environment(Yonlendirici.self) private var yon
     @Environment(\.palet) private var palet
+    @State private var gorunumAc = false
+    @State private var tutamBas: Double?
     @State private var kuran = KuranDeposu.ortak
     @State private var t = TilavetMotoru.ortak
     @State private var kaydirildi = false
@@ -280,12 +282,22 @@ struct KuranOkuyucu: View {
                                 .buttonStyle(.glass).controlSize(.large)
                                 .padding(.top, 8)
                             }
-                            Text("Arapça metin: Kral Fahd Mushafı (Hafs). Meal: Diyanet İşleri Başkanlığı. Okunuş yaklaşık telaffuzdur. Tilavet kayıtları: EveryAyah arşivi.")
+                            Text("Arapça metin: Kral Fahd Mushafı (Hafs). Meal: Diyanet İşleri Başkanlığı. Okunuş yaklaşık telaffuzdur. Tilavet kayıtları: EveryAyah ve mp3quran arşivleri.")
                                 .font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary).multilineTextAlignment(.center)
                         }
                         .padding(.horizontal, 16)
                         .padding(.bottom, 24)
                     }
+                    .simultaneousGesture(
+                        MagnifyGesture()
+                            .onChanged { d in
+                                let bas = tutamBas ?? depo.ayarlar.kuranPunto
+                                if tutamBas == nil { tutamBas = bas }
+                                let yeni = (min(48, max(20, bas * d.magnification)) / 2).rounded() * 2
+                                if yeni != depo.ayarlar.kuranPunto { depo.degistir { $0.ayarlar.kuranPunto = yeni } }
+                            }
+                            .onEnded { _ in tutamBas = nil }
+                    )
                     .onAppear {
                         guard !kaydirildi else { return }
                         kaydirildi = true
@@ -312,14 +324,15 @@ struct KuranOkuyucu: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Toggle("Meal", isOn: depo.ayar(\.kuranMeal))
-                    Toggle("Okunuş", isOn: depo.ayar(\.kuranOkunus))
-                    Button("Yazıyı büyüt", systemImage: "textformat.size.larger") { depo.degistir { $0.ayarlar.kuranPunto = min(44, $0.ayarlar.kuranPunto + 2) } }
-                    Button("Yazıyı küçült", systemImage: "textformat.size.smaller") { depo.degistir { $0.ayarlar.kuranPunto = max(20, $0.ayarlar.kuranPunto - 2) } }
-                } label: { Image(systemName: "textformat") }
+                Button { gorunumAc = true } label: { Image(systemName: "textformat.size") }
                 .accessibilityLabel("Okuma ayarları")
             }
+        }
+        .sheet(isPresented: $gorunumAc) {
+            KuranGorunumAyari()
+                .presentationDetents([.height(360), .medium])
+                .presentationBackgroundInteraction(.enabled(upThrough: .height(360)))
+                .sahne(.kuran)
         }
         .task { await kuran.hazirla() }
         .onAppear { sonGorunen = max(1, ayet) }
@@ -404,5 +417,60 @@ struct KuranOkuyucu: View {
         let yeni = [sure, no]
         guard depo.kayit.kuranSon != yeni else { return }
         depo.degistir { $0.kuranSon = yeni }
+    }
+}
+
+
+/// Kur'an okuyucunun yazı ayarı: pencere açık kalır, değişiklik arkadaki yazıda hemen görünür.
+struct KuranGorunumAyari: View {
+    @Environment(Depo.self) private var depo
+    @Environment(\.dismiss) private var kapat
+
+    var body: some View {
+        let a = depo.ayarlar
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Yazı ayarı").font(.kalin(17))
+                Spacer()
+                Button("Bitti") { kapat() }.font(.kalin(15))
+            }
+            satir("Arapça", deger: "\(Int(a.kuranPunto))", ornek: "ب", aralik: 20...48, yol: \.kuranPunto, adim: 2)
+            if a.kuranMeal {
+                satir("Meal", deger: "\(Int(a.okumaPunto))", ornek: "A", aralik: 14...30, yol: \.okumaPunto, adim: 1)
+            }
+            HStack(spacing: 10) {
+                Toggle("Meal", isOn: depo.ayar(\.kuranMeal)).toggleStyle(.button)
+                Toggle("Okunuş", isOn: depo.ayar(\.kuranOkunus)).toggleStyle(.button)
+                Spacer()
+            }
+            .font(.kalin(14))
+            Text("İpucu: Yazıyı iki parmakla da büyütüp küçültebilirsin.")
+                .font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+        }
+        .padding(20)
+    }
+
+    private func satir(_ ad: String, deger: String, ornek: String, aralik: ClosedRange<Double>, yol: WritableKeyPath<Ayarlar, Double>, adim: Double) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(ad).font(.kalin(14))
+                Spacer()
+                Text(deger).font(.kalin(14)).monospacedDigit().foregroundStyle(.secondary)
+            }
+            HStack(spacing: 12) {
+                Button { depo.degistir { $0.ayarlar[keyPath: yol] = max(aralik.lowerBound, $0.ayarlar[keyPath: yol] - adim) }; Dokunsal.hafif(0.4) } label: {
+                    Text(ornek).font(.system(size: 14, weight: .bold)).frame(width: 44, height: 40)
+                }
+                .buttonStyle(.glass)
+                .accessibilityLabel("\(ad) yazısını küçült")
+                Slider(value: depo.ayar(yol), in: aralik, step: adim)
+                    .accessibilityLabel("\(ad) yazı boyutu")
+                Button { depo.degistir { $0.ayarlar[keyPath: yol] = min(aralik.upperBound, $0.ayarlar[keyPath: yol] + adim) }; Dokunsal.hafif(0.4) } label: {
+                    Text(ornek).font(.system(size: 22, weight: .bold)).frame(width: 44, height: 40)
+                }
+                .buttonStyle(.glass)
+                .accessibilityLabel("\(ad) yazısını büyüt")
+            }
+        }
     }
 }

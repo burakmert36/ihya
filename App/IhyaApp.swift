@@ -149,13 +149,13 @@ enum TakipBolumu: String, CaseIterable, Hashable {
 enum Rota: Hashable {
     case vakitler, ayarlar, konular, ilce, kible, gununHadisi, hadisler, sozler, dualar, duaDefteri, esma, diniGunler, kitaplar, favoriler
     case kitap(UUID)
-    case istatistik, koleksiyon, sesler, zikir, zikirIstatistik
+    case istatistik, koleksiyon, sesler, zikir, zikirIstatistik, kaza
     /// Kur'an okuyucu: sûre, âyet.
     case sure(Int, Int)
 
     var sahne: Sahne {
         switch self {
-        case .vakitler: .vakit
+        case .vakitler, .kaza: .vakit
         case .ayarlar, .konular, .ilce: .ayarlar
         case .gununHadisi, .hadisler, .sozler, .favoriler: .hadis
         case .kible, .dualar, .duaDefteri, .esma, .diniGunler, .kitaplar: .kitaplik
@@ -216,6 +216,8 @@ final class Yonlendirici {
         if odakAcik { return odakYol.last?.sahne ?? .odak }
         return yol.last?.sahne ?? (sekme == .takip ? takipBolum.sahne : sekme.sahne)
     }
+
+    var aktifRota: Rota? { odakAcik ? odakYol.last : yol.last }
 
     /// Alt çubuk yalnız kök ekranlarda görünür (alt ekranlar kendi düğmelerini alta koyar).
     var okumada: Bool { !yol.isEmpty }
@@ -286,6 +288,7 @@ final class Yonlendirici {
         case "ezan": bugunYol = [.ayarlar]; muezzinAc = true
         case "okuma", "favoriler": sekme = .kitaplik; kitaplikYol = [.favoriler]
         case "zikir": sekme = .kitaplik; kitaplikYol = [.zikir]
+        case "kaza": bugunYol = [.kaza]
         case "zikir-istatistik": sekme = .kitaplik; kitaplikYol = [.zikir, .zikirIstatistik]
         case "vakitler": bugunYol = [.vakitler]
         case "ayarlar": bugunYol = [.ayarlar]
@@ -303,6 +306,9 @@ final class Yonlendirici {
 }
 
 struct KokGorunum: View {
+    /// Kitap okuyucuda ses çubuğu görünmez (okuma alanı temiz kalsın).
+    static func okuyucuda(_ r: Rota?) -> Bool { if case .kitap = r { return true }; return false }
+
     @Environment(Depo.self) private var depo
     @Environment(VakitServisi.self) private var vakit
     @Environment(SesMotoru.self) private var ses
@@ -325,7 +331,10 @@ struct KokGorunum: View {
             }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            if !yon.okumada { AltCubuk().environment(\.palet, p) }
+            VStack(spacing: 8) {
+                if !yon.odakAcik, yon.aktifRota != .sesler, !Self.okuyucuda(yon.aktifRota) { CalanSesCubugu().environment(\.palet, p) }
+                if !yon.okumada { AltCubuk().environment(\.palet, p) }
+            }
         }
         .preferredColorScheme(p.renkSemasi)
         .fullScreenCover(isPresented: $yon.odakAcik, onDismiss: { if odak.devam == nil { odak.kapat() } }) {
@@ -518,6 +527,7 @@ struct RotaGorunumu: View {
         case .sesler: SeslerEkrani()
         case .zikir: ZikirEkrani()
         case .zikirIstatistik: ZikirIstatistikEkrani()
+        case .kaza: KazaEkrani()
         case .sure(let n, let a): KuranOkuyucu(sure: n, ayet: a)
         }
     }
