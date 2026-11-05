@@ -453,6 +453,8 @@ struct KokGorunum: View {
             if EkranGoruntusu.sesSinamasi { await SesMotoru.sina() }
             return
         }
+        // Birim testleri uygulamayı da açar; izin penceresi açık kalıp ekran görüntülerini kapatmasın.
+        if ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil { return }
         if odak.hal != .bos { yon.odakAcik = true }
         await Bildirim.izinIste()
         await vakit.gerekirseYenile()

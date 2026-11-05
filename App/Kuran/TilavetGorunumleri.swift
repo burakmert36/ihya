@@ -206,11 +206,12 @@ struct HafizSecici: View {
                                 HStack(spacing: 12) {
                                     HafizRozeti(hafiz: h, boyut: 50)
                                     VStack(alignment: .leading, spacing: 3) {
-                                        Text(h.ad).font(.kalin(16))
+                                        Text(h.ad).font(.kalin(16)).lineLimit(1).minimumScaleFactor(0.75)
                                         Text(h.unvan).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.secondary)
                                     }
                                     Spacer(minLength: 4)
                                     Text(h.arapca).font(.arapca(17)).foregroundStyle(palet.vurgu).lineLimit(1).minimumScaleFactor(0.6)
+                                        .frame(maxWidth: 104, alignment: .trailing)
                                     Image(systemName: secili ? "checkmark.circle.fill" : "circle")
                                         .font(.system(size: 20)).foregroundStyle(secili ? palet.vurgu : .secondary)
                                 }
