@@ -105,6 +105,16 @@ jobs:
             --notes "Telefona kurmak için: SideStore'da kaynak olarak https://github.com/${{ github.repository }}/releases/latest/download/sidestore.json ekle ya da Ihya.ipa dosyasını SideStore ile aç." \
             --latest || gh release upload "v$VERSION" out/Ihya.ipa out/sidestore.json --clobber
 
+      - name: Kaynağı hızlı adrese yaz (raw.githubusercontent; sürüm indirme adresi SideStore'da zaman aşımına düşüyor)
+        if: env.ATLA != '1'
+        run: |
+          mkdir -p /tmp/kaynak && cp out/sidestore.json /tmp/kaynak/
+          cd /tmp/kaynak
+          git init -q -b kaynak
+          git config user.name "build-bot"; git config user.email "build-bot@users.noreply.github.com"
+          git add sidestore.json && git commit -qm "kaynak ${{ env.VERSION }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" kaynak:kaynak
+
       - name: Derleme özetini kaydet
         if: always() && env.ATLA != '1'
         run: |
