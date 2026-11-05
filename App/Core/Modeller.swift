@@ -91,6 +91,8 @@ struct Kitap: Codable, Identifiable, Hashable {
     var okumaSn: Double = 0
     /// Okuma bitti olarak işaretlendi
     var bitti = false
+    /// Sayfalar sağdan sola (Arapça, Osmanlıca kitap)
+    var sagdanSola = false
 
     var oran: Double { toplam > 0 ? Double(min(sayfa + 1, toplam)) / Double(toplam) : 0 }
     var tamam: Bool { bitti || (toplam > 0 && sayfa + 1 >= toplam) }
@@ -105,7 +107,7 @@ extension Kitap {
         func v<T: Decodable>(_ k: CodingKeys, _ d: T) -> T { (try? c.decodeIfPresent(T.self, forKey: k)) ?? d }
         id = v(.id, UUID()); sayfa = v(.sayfa, 0); toplam = v(.toplam, 0); eklenme = v(.eklenme, Date())
         son = try? c.decodeIfPresent(Date.self, forKey: .son)
-        yerImleri = v(.yerImleri, []); yakinlik = v(.yakinlik, 1); okumaSn = v(.okumaSn, 0); bitti = v(.bitti, false)
+        yerImleri = v(.yerImleri, []); yakinlik = v(.yakinlik, 1); okumaSn = v(.okumaSn, 0); bitti = v(.bitti, false); sagdanSola = v(.sagdanSola, false)
     }
 }
 

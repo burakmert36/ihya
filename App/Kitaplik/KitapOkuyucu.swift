@@ -248,6 +248,8 @@ struct OkumaEkrani: View {
     @State private var gizli = false
     @State private var sayfaGostergesi: Double = 0
     @State private var surukleniyor = false
+    @State private var bolumler: [KitapIcindekiler.Baslik] = []
+    @State private var uretici: KucukResim?
     @State private var acilis = Date()
     @State private var panel: Panel?
     @State private var okuyucu = SesliOkuyucu()
@@ -275,10 +277,10 @@ struct OkumaEkrani: View {
                     MetinOkuyucu(denetci: d, tema: tema, punto: a.okumaPunto, satir: a.satirBoslugu(a.okumaPunto),
                                  duz: a.kitapYaziTipi == 1, kenar: [14, 22, 36][max(0, min(2, a.kitapKenar))]) { cubuklar() }
                 } else {
-                    PDFGorunumu(denetci: d, baslangic: k.sayfa, yatay: a.kitapYatay, sagdanSola: a.kitapSagdanSola, zemin: tema.pdfZemin,
+                    PDFGorunumu(denetci: d, baslangic: k.sayfa, yatay: a.kitapYatay, sagdanSola: k.sagdanSola, zemin: tema.pdfZemin,
                                 sayfaDegisti: { sayfaKaydet($0) }, yakinlikDegisti: { y in kitapDegistir { $0.yakinlik = y } },
                                 dokunuldu: dokunus)
-                        .id("\(a.kitapYatay)-\(a.kitapSagdanSola)")
+                        .id("\(a.kitapYatay)-\(k.sagdanSola)")
                         .pdfTemasi(tema)
                         .ignoresSafeArea(edges: .bottom)
                 }
@@ -330,6 +332,8 @@ struct OkumaEkrani: View {
                 d.sayfa = k.sayfa
                 d.yakinlik = k.yakinlik
                 denetci = d
+                bolumler = KitapIcindekiler.basliklar(d.belge)
+                uretici = KucukResim(url: KitapDeposu.url(k))
                 if k.toplam != d.toplam, d.toplam > 0 { kitapDegistir { $0.toplam = d.toplam } }
             }
             acilis = .now
@@ -390,13 +394,8 @@ struct OkumaEkrani: View {
                 Text(kalanYazisi(k, d)).font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary).lineLimit(1)
             }
             if toplam > 1 {
-                Slider(value: $sayfaGostergesi, in: 0...Double(toplam - 1), step: 1, onEditingChanged: { s in
-                    surukleniyor = s
-                    if !s { d.git(Int(sayfaGostergesi)) }
-                })
-                .environment(\.layoutDirection, depo.ayarlar.kitapSagdanSola && depo.ayarlar.kitapYatay ? .rightToLeft : .leftToRight)
-                .accessibilityLabel("Sayfa")
-                .accessibilityValue("\(Int(sayfaGostergesi) + 1) / \(toplam)")
+                SayfaSurgusu(denetci: d, toplam: toplam, deger: $sayfaGostergesi, surukleniyor: $surukleniyor,
+                             bolumler: bolumler, uretici: uretici)
             }
             HStack(spacing: 0) {
                 dugme("list.bullet", "İçindekiler") { panel = .icindekiler }
@@ -452,7 +451,7 @@ struct OkumaEkrani: View {
     }
 
     private func dokunus(_ y: Dokunus) {
-        let rtl = depo.ayarlar.kitapSagdanSola
+        let rtl = kitap?.sagdanSola ?? false
         switch y {
         case .orta: cubuklar()
         case .sol: rtl ? denetci?.sonraki() : denetci?.onceki()
@@ -598,10 +597,11 @@ private struct KitapAyarlari: View {
                         if !a.kitapMetin {
                             CamSegment(secenekler: [false, true], secili: depo.ayar(\.kitapYatay), ad: { $0 ? "Yana çevir" : "Aşağı kaydır" })
                         }
-                        Toggle(isOn: depo.ayar(\.kitapSagdanSola)) {
+                        Toggle(isOn: Binding(get: { kitapIndeksi.map { depo.kayit.kitaplar[$0].sagdanSola } ?? false },
+                                             set: { y in if let i = kitapIndeksi { depo.degistir { $0.kitaplar[i].sagdanSola = y } } })) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Sağdan sola").font(.kalin(14))
-                                Text("Arapça ve Osmanlıca kitaplarda sayfa sırası").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
+                                Text("Yalnız bu kitap için: Arapça ve Osmanlıca kitaplarda sayfa sırası").font(.system(size: 12, weight: .medium)).foregroundStyle(.secondary)
                             }
                         }
                     }
@@ -668,6 +668,11 @@ private struct KitapAyarlari: View {
         }
     }
 
+    private var kitapIndeksi: Int? {
+        guard let u = denetci?.belge?.documentURL?.path else { return nil }
+        return depo.kayit.kitaplar.firstIndex { KitapDeposu.url($0).path == u }
+    }
+
     private var ekran: UIScreen? { (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.screen }
 
     private func degistirBoyut(_ y: Int) {
@@ -712,7 +717,7 @@ actor KucukResim {
     }
 }
 
-private struct KitapIcindekiler: View {
+struct KitapIcindekiler: View {
     let denetci: PDFDenetci
     let kitapID: UUID
     @Environment(Depo.self) private var depo
@@ -995,5 +1000,97 @@ final class SesliOkuyucu: NSObject, AVSpeechSynthesizerDelegate {
             guard self.okuyor, let d = self.denetci else { return }
             self.sayfayiOku(d.sayfa + 1)
         }
+    }
+}
+
+
+/// Sayfa sürgüsü: geniş dokunma alanı, iki yanda önceki/sonraki sayfa, sürüklerken sayfa önizlemesi ve bölüm adı.
+/// Her zaman soldan sağa ilerler (sağdan sola kitapta da sağ = ileri).
+private struct SayfaSurgusu: View {
+    let denetci: PDFDenetci
+    let toplam: Int
+    @Binding var deger: Double
+    @Binding var surukleniyor: Bool
+    let bolumler: [KitapIcindekiler.Baslik]
+    let uretici: KucukResim?
+    @Environment(\.palet) private var palet
+    @State private var onizleme: UIImage?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            adim("chevron.left", "Önceki sayfa") { denetci.git(denetci.sayfa - 1) }
+            GeometryReader { g in
+                let w = g.size.width
+                let oran = toplam > 1 ? CGFloat(deger) / CGFloat(toplam - 1) : 0
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.primary.opacity(0.14)).frame(height: 8)
+                    Capsule().fill(palet.vurgu).frame(width: max(8, w * oran), height: 8)
+                    Circle().fill(.white).frame(width: surukleniyor ? 30 : 24, height: surukleniyor ? 30 : 24)
+                        .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
+                        .offset(x: w * oran - (surukleniyor ? 15 : 12))
+                        .animation(.spring(response: 0.25), value: surukleniyor)
+                }
+                .frame(height: 44)
+                .contentShape(Rectangle())
+                .overlay(alignment: .topLeading) {
+                    if surukleniyor {
+                        balon.fixedSize()
+                            .offset(x: min(max(0, w * oran - 70), max(0, w - 140)), y: -168)
+                            .allowsHitTesting(false)
+                    }
+                }
+                .gesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { d in
+                            if !surukleniyor { surukleniyor = true }
+                            let yeni = Double(((d.location.x / max(w, 1)) * CGFloat(toplam - 1)).rounded())
+                            let s = min(Double(toplam - 1), max(0, yeni))
+                            if s != deger { deger = s; Dokunsal.hafif(0.25) }
+                        }
+                        .onEnded { _ in
+                            surukleniyor = false
+                            denetci.git(Int(deger))
+                        }
+                )
+            }
+            .frame(height: 44)
+            adim("chevron.right", "Sonraki sayfa") { denetci.git(denetci.sayfa + 1) }
+        }
+        .task(id: Int(deger)) {
+            guard surukleniyor else { return }
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            onizleme = await uretici?.resim(Int(deger), genislik: 90)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Sayfa")
+        .accessibilityValue("\(Int(deger) + 1) / \(toplam)")
+        .accessibilityAdjustableAction { y in
+            denetci.git(denetci.sayfa + (y == .increment ? 1 : -1))
+        }
+    }
+
+    private var balon: some View {
+        let i = Int(deger)
+        let bolum = bolumler.last { $0.sayfa <= i }?.ad
+        return VStack(spacing: 6) {
+            Group {
+                if let onizleme { Image(uiImage: onizleme).resizable().scaledToFit() } else { Color.white.opacity(0.85) }
+            }
+            .frame(width: 90, height: 120)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            Text("Sayfa \(i + 1)").font(.kalin(13)).monospacedDigit()
+            if let bolum { Text(bolum).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(1).frame(maxWidth: 120) }
+        }
+        .padding(10)
+        .camYuzey(palet.cam(), in: .rect(cornerRadius: 18))
+        .frame(width: 140)
+    }
+
+    private func adim(_ simge: String, _ ad: String, _ islem: @escaping () -> Void) -> some View {
+        Button { islem(); Dokunsal.hafif(0.4) } label: {
+            Image(systemName: simge).font(.system(size: 15, weight: .bold)).frame(width: 36, height: 44).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(ad)
     }
 }
