@@ -17,13 +17,13 @@ desc = ("Odaklandıkça büyüyen bahçe, Diyanet vakitleri, Sahîh-i Buhârî h
         "zikir, odak sesleri ve kitaplık. Kişisel kullanım içindir.")
 
 source = {
-    "name": "İhya",
+    "name": "Ihya",
     "identifier": f"io.github.{owner.lower()}.ihya",
     "subtitle": "Kişisel İslami odak ve ibadet uygulaması",
     "iconURL": icon,
     "apps": [
         {
-            "name": "İhya",
+            "name": "Ihya",
             "bundleIdentifier": "com.burakmert36.ihya",
             "developerName": owner,
             "subtitle": "Odaklandıkça büyüyen bahçe",
