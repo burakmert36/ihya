@@ -208,6 +208,8 @@ extension EnvironmentValues {
 /// Sahnenin zemini: renk geçişi, ışık lekeleri, gerekirse yıldızlar. Ekranın tamamını kaplar, dokunuş almaz.
 struct SahneZemini: View {
     let palet: Palet
+    @Environment(\.accessibilityReduceMotion) private var azHareket
+
     var body: some View {
         GeometryReader { g in
             let W = g.size.width, H = g.size.height
@@ -217,11 +219,20 @@ struct SahneZemini: View {
                 } else {
                     LinearGradient(stops: palet.duraklar, startPoint: .top, endPoint: .bottom)
                 }
-                ForEach(Array(palet.isiklar.enumerated()), id: \.offset) { _, i in
-                    Circle()
-                        .fill(RadialGradient(colors: [i.renk, i.renk.opacity(0)], center: .center, startRadius: 0, endRadius: i.r))
-                        .frame(width: i.r * 2, height: i.r * 2)
-                        .position(x: i.x * W, y: i.y * H)
+                // Işıklar çok yavaş süzülür: cam yüzeylerdeki kırılma ve yansıma canlı kalır.
+                TimelineView(.animation(minimumInterval: 1.0 / 10, paused: azHareket)) { z in
+                    let t = z.date.timeIntervalSinceReferenceDate
+                    ZStack {
+                        ForEach(Array(palet.isiklar.enumerated()), id: \.offset) { k, i in
+                            let d = Double(k) * 1.7
+                            Circle()
+                                .fill(RadialGradient(colors: [i.renk, i.renk.opacity(0)], center: .center, startRadius: 0, endRadius: i.r))
+                                .frame(width: i.r * 2, height: i.r * 2)
+                                .position(x: i.x * W + CGFloat(sin(t / 19 + d)) * W * 0.06,
+                                          y: i.y * H + CGFloat(cos(t / 27 + d)) * H * 0.04)
+                        }
+                        IsikHuzmeleri(koyu: palet.koyu, t: t)
+                    }
                 }
                 if palet.yildiz { YildizAlani().opacity(0.8) }
             }
@@ -229,6 +240,39 @@ struct SahneZemini: View {
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+}
+
+/// Yukarıdan çapraz inen yumuşak ışık huzmeleri ve kenarlarında hafif renk ayrışması (prizma).
+private struct IsikHuzmeleri: View {
+    let koyu: Bool
+    let t: Double
+
+    var body: some View {
+        GeometryReader { g in
+            let W = g.size.width, H = g.size.height
+            ZStack {
+                ForEach(0..<3, id: \.self) { k in
+                    let kayma = CGFloat(sin(t / 31 + Double(k) * 2.1)) * W * 0.05
+                    let gen = W * [0.28, 0.16, 0.22][k]
+                    LinearGradient(stops: [.init(color: .clear, location: 0),
+                                           .init(color: .white.opacity(koyu ? 0.07 : 0.16), location: 0.5),
+                                           .init(color: .clear, location: 1)],
+                                   startPoint: .leading, endPoint: .trailing)
+                        .frame(width: gen, height: H * 1.4)
+                        .overlay(alignment: .leading) {
+                            // prizma kenarı
+                            LinearGradient(colors: [Color(r: 120, g: 210, b: 255, a: koyu ? 0.06 : 0.1), Color(r: 255, g: 150, b: 220, a: koyu ? 0.05 : 0.08), .clear],
+                                           startPoint: .leading, endPoint: .trailing)
+                                .frame(width: gen * 0.35)
+                        }
+                        .rotationEffect(.degrees(-24))
+                        .position(x: W * [0.2, 0.55, 0.85][k] + kayma, y: H * 0.35)
+                        .blendMode(.plusLighter)
+                }
+            }
+            .mask(LinearGradient(colors: [.white, .white.opacity(0.4), .clear], startPoint: .top, endPoint: .bottom))
+        }
     }
 }
 
@@ -289,12 +333,26 @@ struct CamKenari<S: InsettableShape>: View {
     let sekil: S
     @Environment(\.palet) private var palet
     var body: some View {
-        sekil
-            .strokeBorder(LinearGradient(stops: [.init(color: .white.opacity(palet.koyu ? 0.42 : 0.9), location: 0),
-                                                 .init(color: .white.opacity(palet.koyu ? 0.06 : 0.25), location: 0.45),
-                                                 .init(color: .white.opacity(palet.koyu ? 0.18 : 0.55), location: 1)],
-                                         startPoint: .top, endPoint: .bottom), lineWidth: 1)
-            .allowsHitTesting(false)
+        ZStack {
+            // Üst köşede parlak yansıma (cam yüzeyin ışığı tutması)
+            sekil.fill(LinearGradient(stops: [.init(color: .white.opacity(palet.koyu ? 0.07 : 0.16), location: 0),
+                                              .init(color: .white.opacity(0), location: 0.38)],
+                                      startPoint: .topLeading, endPoint: .bottomTrailing))
+            // Beyaz kenar ışığı
+            sekil.strokeBorder(LinearGradient(stops: [.init(color: .white.opacity(palet.koyu ? 0.45 : 0.92), location: 0),
+                                                      .init(color: .white.opacity(palet.koyu ? 0.06 : 0.25), location: 0.45),
+                                                      .init(color: .white.opacity(palet.koyu ? 0.2 : 0.55), location: 1)],
+                                              startPoint: .top, endPoint: .bottom), lineWidth: 1)
+            // Kırılma: kenarda ince gökkuşağı ayrışması
+            sekil.strokeBorder(AngularGradient(colors: [Color(r: 120, g: 220, b: 255, a: 0.5), Color(r: 190, g: 140, b: 255, a: 0.45),
+                                                        Color(r: 255, g: 140, b: 200, a: 0.4), Color(r: 255, g: 210, b: 120, a: 0.45),
+                                                        Color(r: 120, g: 220, b: 255, a: 0.5)], center: .center, angle: .degrees(-35)),
+                               lineWidth: 0.8)
+                .opacity(palet.koyu ? 0.35 : 0.45)
+                .blendMode(.plusLighter)
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 }
 
