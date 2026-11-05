@@ -24,6 +24,7 @@ struct BugunEkrani: View {
                 SonrakiVakitKarti()
                 NamazTakibi()
                 BugunkuBahce()
+                if let h = Icerik.gunun(Icerik.hadisler.filter { $0.metin.count <= 140 }) { GununHadisiKarti(hadis: h) }
                 if let s = Icerik.gunun(Icerik.sozler.filter { $0.soz.count <= 110 }, kaydir: 3) { GununSozu(soz: s) }
                 kisayollar
             }

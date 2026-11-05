@@ -18,7 +18,7 @@ struct KitaplikEkrani: View {
             Bolum(rota: .duaDefteri, ad: "Dua Defterim", alt: "Sayaçlı zikirler", harf: "ن", r1: "#8FD6C8", r2: "#2E8F7E"),
             Bolum(rota: .zikir, ad: "Zikir", alt: "Tesbih ve tesbihat", harf: "ذ", r1: "#7FDB8A", r2: "#2A9C4A"),
             Bolum(rota: .kitaplar, ad: "Kitaplarım", alt: "PDF ekle ve oku", harf: "ك", r1: "#F4B884", r2: "#C77B3A"),
-            Bolum(rota: .esma, ad: "Esmâ-i Hüsnâ", alt: "99 isim · ezber", harf: "أ", r1: "#FFA07A", r2: "#D9573A"),
+            Bolum(rota: .esma, ad: "Esmâ-i Hüsnâ", alt: "99 isim ve duaları", harf: "أ", r1: "#FFA07A", r2: "#D9573A"),
             Bolum(rota: .kible, ad: "Kıble", alt: "Pusula ile yön", harf: "ق", r1: "#7CC4FF", r2: "#2F7FD1"),
             Bolum(rota: .diniGunler, ad: "Dinî günler", alt: "Kandiller · üç aylar", harf: "ي", r1: "#C9A2FF", r2: "#8452D6"),
             Bolum(rota: .favoriler, ad: "Kaydettiklerim", alt: "\(depo.kayit.favoriler.count) kayıt", harf: "م", r1: "#FF8FA3", r2: "#D93B5E"),
@@ -38,27 +38,12 @@ struct KitaplikEkrani: View {
                 if arama.trimmingCharacters(in: .whitespaces).count >= 2 {
                     AramaSonuclari(metin: arama)
                 } else {
-                    if let h = Icerik.gunun(Icerik.hadisler.filter { $0.metin.count <= 140 }) { GununHadisiKarti(hadis: h) }
-                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                    LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                         ForEach(bolumler) { b in
-                            NavigationLink(value: b.rota) {
-                                HStack(spacing: 10) {
-                                    HarfRozeti(harf: b.harf, renk1: b.r1, renk2: b.r2)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(b.ad).font(.kalin(14)).lineLimit(1).minimumScaleFactor(0.8)
-                                        Text(b.alt).font(.system(size: 11, weight: .semibold)).foregroundStyle(.secondary).lineLimit(1)
-                                    }
-                                    Spacer(minLength: 0)
-                                }
-                                .padding(.horizontal, 10)
-                                .frame(height: 60)
-                                .contentShape(RoundedRectangle(cornerRadius: 20))
-                            }
-                            .buttonStyle(.plain)
-                            .camYuzey(palet.cam(etkilesimli: true), in: .rect(cornerRadius: 20))
+                            NavigationLink(value: b.rota) { BolumKarti(b: b) }
+                                .buttonStyle(.plain)
                         }
                     }
-                    EsmaEzberKarti()
                 }
             }
             .padding(.horizontal, 16)
@@ -67,6 +52,33 @@ struct KitaplikEkrani: View {
         .scrollDismissesKeyboard(.interactively)
         .altCubukPayi()
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    /// Kitaplık menüsünün büyük kartı: renkli harf rozeti, ad ve kısa açıklama; kendi renginde hafif ışık.
+    private struct BolumKarti: View {
+        let b: Bolum
+        @Environment(\.palet) private var palet
+        var body: some View {
+            VStack(alignment: .leading, spacing: 0) {
+                HarfRozeti(harf: b.harf, renk1: b.r1, renk2: b.r2, boyut: 50)
+                Spacer(minLength: 10)
+                Text(b.ad).font(.kalin(17)).lineLimit(1).minimumScaleFactor(0.8)
+                Text(b.alt).font(.system(size: 12.5, weight: .semibold)).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.85)
+                    .padding(.top, 2)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, minHeight: 128, alignment: .topLeading)
+            .background(alignment: .topTrailing) {
+                Circle().fill(Color(hex: b.r1).opacity(palet.koyu ? 0.22 : 0.3)).frame(width: 110, height: 110)
+                    .blur(radius: 30).offset(x: 30, y: -30).allowsHitTesting(false)
+            }
+            .overlay(alignment: .topTrailing) {
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .heavy)).foregroundStyle(.tertiary).padding(14)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .camYuzey(palet.cam(etkilesimli: true), in: .rect(cornerRadius: 24))
+        }
     }
 
     private var aramaAlani: some View {
@@ -128,50 +140,6 @@ struct GununHadisiKarti: View {
             .kremKart(kose: 28, ic: 16)
         }
         .buttonStyle(.plain)
-    }
-}
-
-/// Esmâ ezberi: 99 nokta, sıradaki isim, "Ezberledim".
-struct EsmaEzberKarti: View {
-    @Environment(Depo.self) private var depo
-    @Environment(\.palet) private var palet
-
-    var body: some View {
-        let ezber = Set(depo.kayit.ezber)
-        let siradaki = Icerik.esma.first { !ezber.contains($0.no) }
-        HStack(spacing: 14) {
-            LazyVGrid(columns: Array(repeating: GridItem(.fixed(8), spacing: 3), count: 11), spacing: 3) {
-                ForEach(1...99, id: \.self) { n in
-                    Circle()
-                        .fill(ezber.contains(n) ? Color(hex: "#FFD66B") : Color.primary.opacity(0.16))
-                        .frame(width: 8, height: 8)
-                        .shadow(color: ezber.contains(n) ? Color(hex: "#FFD66B").opacity(0.7) : .clear, radius: 3)
-                }
-            }
-            .frame(width: 118)
-            .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("ESMÂ EZBERİ · \(ezber.count)/99").font(.kalin(10.5)).tracking(1).foregroundStyle(.secondary)
-                if let s = siradaki {
-                    Text(s.arapca).font(.arapca(25)).foregroundStyle(Color(hex: "#FFE08A")).lineLimit(1).minimumScaleFactor(0.6)
-                    (Text(s.ad).font(.kalin(13.5)) + Text(" · \(s.anlam)").font(.system(size: 13.5, weight: .semibold)).foregroundStyle(.secondary))
-                        .lineLimit(2)
-                    Button {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { depo.degistir { $0.ezber.append(s.no) } }
-                        Dokunsal.basari()
-                    } label: {
-                        Text("EZBERLEDİM").font(.kalin(12.5)).tracking(0.5).foregroundStyle(.white).frame(maxWidth: .infinity, minHeight: 26)
-                    }
-                    .buttonStyle(.glassProminent)
-                    .tint(Color(hex: "#1FB25A"))
-                    .padding(.top, 2)
-                } else {
-                    Text("Doksan dokuz ismin hepsini ezberledin.").font(.kalin(14))
-                    Button("Baştan başla") { depo.degistir { $0.ezber = [] } }.font(.system(size: 13, weight: .bold))
-                }
-            }
-        }
-        .camKart(kose: 28, ic: 14)
     }
 }
 
