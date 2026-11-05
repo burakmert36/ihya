@@ -1,0 +1,22 @@
+Test Case '-[IhyaTests.IhyaTests testEskiKitapKaydiAcilir]' passed (0.042 seconds).
+Test Case '-[IhyaTests.IhyaTests testEskiKoyuOkumaAyariTemayaTasinir]' passed (0.009 seconds).
+Test Case '-[IhyaTests.IhyaTests testEsmaDualariHerIsimde]' passed (0.052 seconds).
+Test Case '-[IhyaTests.IhyaTests testGurultuDuzeyiVeDikis]' passed (29.702 seconds).
+Test Case '-[IhyaTests.IhyaTests testHerGunDikilinceSeriVeRahmet]' passed (0.024 seconds).
+Test Case '-[IhyaTests.IhyaTests testIkiDikimleTelafi]' passed (0.027 seconds).
+Test Case '-[IhyaTests.IhyaTests testImsaktanOnceDikimOncekiGuneSayilir]' passed (0.019 seconds).
+Test Case '-[IhyaTests.IhyaTests testKilometreTaslari]' passed (0.013 seconds).
+Test Case '-[IhyaTests.IhyaTests testMealAramaKatlamasi]' passed (0.011 seconds).
+Test Case '-[IhyaTests.IhyaTests testMuezzinSecimi]' passed (0.011 seconds).
+Test Case '-[IhyaTests.IhyaTests testNida]' passed (0.009 seconds).
+Test Case '-[IhyaTests.IhyaTests testPdfYazisiDuzenlenir]' passed (0.014 seconds).
+Test Case '-[IhyaTests.IhyaTests testRahmetKacanGunuKapatir]' passed (0.022 seconds).
+Test Case '-[IhyaTests.IhyaTests testTelafiBekliyor]' passed (0.006 seconds).
+Test Case '-[IhyaTests.IhyaTests testTelafiOlmazsaSeriSifirlanir]' passed (0.006 seconds).
+Test Case '-[IhyaTests.IhyaTests testTilavetTablosu]' passed (0.006 seconds).
+Test Case '-[IhyaTests.IhyaTests testYedekGidipGelir]' passed (0.168 seconds).
+Test Case '-[IhyaTests.IhyaTests testZamanCetvelindenAyet]' passed (0.015 seconds).
+	 Executed 18 tests, with 0 failures (0 unexpected) in 30.156 (30.222) seconds
+	 Executed 18 tests, with 0 failures (0 unexpected) in 30.156 (30.228) seconds
+	 Executed 18 tests, with 0 failures (0 unexpected) in 30.156 (30.236) seconds
+** TEST SUCCEEDED **

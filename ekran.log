@@ -1,0 +1,53 @@
+✓ 01-bugun
+✓ 01b-seri
+✓ 02-kuran
+✓ 03-kuran-oku
+✓ 03b-kuran-dinle
+✓ 03c-kuran-ara
+✓ 03d-kaydedilenler
+✓ 04-odak
+✓ 05-odak-calisiyor
+✓ 06-odak-bitti
+✓ 07-takip-bahce
+✓ 08-takip-namaz
+✓ 09-takip-zikir
+✓ 10-istatistik
+✓ 11-koleksiyon
+✓ 12-sesler
+✓ 13-kitaplik
+✓ 13b-kitap-raf
+✓ 13c-kitap-sirt
+✓ 13d-kitap-oku
+✓ 13e-kitap-yatay
+✓ 13f-kitap-metin
+✓ 13g-kitap-ayar
+✓ 13h-kitap-icindekiler
+✓ 08b-kaza
+✓ 03e-hafiz
+✓ 21d-ezan
+✓ 14-hadis
+✓ 15-dualar
+✓ 16-dua-defteri
+✓ 17-esma
+✓ 17b-esma-dua
+✓ 18-kible
+✓ 19-zikir
+✓ 20-vakitler
+✓ 21b-ilce
+✓ 21c-okuma-ayar
+✓ 21-ayarlar
+✓ 22-tema-gece
+✓ 23-tema-fildisi
+✓ 24-tema-okyanus
+✓ 25-tema-mor
+✓ 26-tema-gunbatimi
+SES-SINAMA başladı
+SES-SINAMA ton bildirim_can var
+SES-SINAMA ton bildirim_damla var
+SES-SINAMA ton efekt_kutlama var
+SES-SINAMA çevrimdışı uzaklık=0 rms=0.0139 kare=90112
+SES-SINAMA çevrimdışı uzaklık=1 rms=0.0028 kare=90112
+SES-SINAMA gerçek motor çalışıyor=true çalan=2 örnek=116224 hata=- kategori=AVAudioSessionCategoryPlayback
+SES-SINAMA gürültü çalan=3 seçili=["deniz", "gurultu_pembe", "yagmur_hafif"]
+SES-SINAMA değişim sonrası çalan=3 seçili=["deniz", "gurultu_pembe", "yagmur_hafif"]
+SES-SINAMA bitti

@@ -1,0 +1,11 @@
+SES-SINAMA başladı
+SES-SINAMA ton bildirim_can var
+SES-SINAMA ton bildirim_damla var
+SES-SINAMA ton efekt_kutlama var
+SES-SINAMA çevrimdışı uzaklık=0 rms=0.0139 kare=90112
+SES-SINAMA çevrimdışı uzaklık=1 rms=0.0028 kare=90112
+SES-SINAMA gerçek motor çalışıyor=true çalan=2 örnek=116224 hata=- kategori=AVAudioSessionCategoryPlayback
+SES-SINAMA gürültü çalan=3 seçili=["deniz", "gurultu_pembe", "yagmur_hafif"]
+SES-SINAMA değişim sonrası çalan=3 seçili=["deniz", "gurultu_pembe", "yagmur_hafif"]
+SES-SINAMA bitti
+com.burakmert36.ihya: 10331
