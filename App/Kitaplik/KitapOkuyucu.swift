@@ -290,7 +290,10 @@ struct OkumaEkrani: View {
         }
         .sicakIsik()
         .overlay(alignment: .bottom) {
-            if !gizli, let d = denetci { altPanel(k, d).transition(.move(edge: .bottom).combined(with: .opacity)) }
+            if !gizli, let d = denetci {
+                altPanel(k, d).transition(.move(edge: .bottom).combined(with: .opacity))
+                    .environment(\.colorScheme, tema.koyu ? .dark : .light)
+            }
         }
         .overlay(alignment: .topTrailing) {
             if let d = denetci, d.kaydirmaHizi > 0 {
@@ -310,6 +313,7 @@ struct OkumaEkrani: View {
             }
         }
         .statusBarHidden(gizli)
+        .toolbarColorScheme(tema.koyu ? .dark : .light, for: .navigationBar)
         .toolbar(gizli ? .hidden : .visible, for: .navigationBar)
         .toolbar(.hidden, for: .tabBar)
         .navigationTitle(k.ad)
