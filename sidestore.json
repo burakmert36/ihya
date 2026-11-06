@@ -1,0 +1,37 @@
+{
+  "name": "Ihya",
+  "identifier": "io.github.burakmert36.ihya",
+  "subtitle": "Kişisel İslami odak ve ibadet uygulaması",
+  "iconURL": "https://raw.githubusercontent.com/burakmert36/ihya/main/Resources/Assets.xcassets/AppIcon.appiconset/icon.png",
+  "apps": [
+    {
+      "name": "Ihya",
+      "bundleIdentifier": "com.burakmert36.ihya",
+      "developerName": "burakmert36",
+      "subtitle": "Odaklandıkça büyüyen bahçe",
+      "localizedDescription": "Odaklandıkça büyüyen bahçe, Diyanet vakitleri, Sahîh-i Buhârî hadisleri, dualar, zikir, odak sesleri ve kitaplık. Kişisel kullanım içindir.",
+      "iconURL": "https://raw.githubusercontent.com/burakmert36/ihya/main/Resources/Assets.xcassets/AppIcon.appiconset/icon.png",
+      "tintColor": "1BA552",
+      "version": "1.3.72",
+      "versionDate": "2026-11-06T18:06:43Z",
+      "downloadURL": "https://github.com/burakmert36/ihya/releases/download/v1.3.72/Ihya.ipa",
+      "size": 26097659,
+      "versions": [
+        {
+          "version": "1.3.72",
+          "date": "2026-11-06T18:06:43Z",
+          "downloadURL": "https://github.com/burakmert36/ihya/releases/download/v1.3.72/Ihya.ipa",
+          "size": 26097659,
+          "minOSVersion": "26.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSLocationWhenInUseUsageDescription": "Kıble yönünü bulunduğun yere göre doğru göstermek için."
+        }
+      }
+    }
+  ],
+  "news": []
+}
